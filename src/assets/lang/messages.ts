@@ -62,6 +62,16 @@ export const messages = {
         updated: 'Category updated'
       }
     },
+    transaction: {
+      tab: {
+        all: {
+          title: 'All'
+        },
+        byMonth: {
+          title: 'By month'
+        }
+      }
+    },
     button: {
       cancel: 'Cancel',
       choose: 'Choose file',

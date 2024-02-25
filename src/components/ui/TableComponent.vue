@@ -1,0 +1,86 @@
+<template>
+  <div class="w-full">
+    <table class="min-w-full table-fixed divide-y divide-gray-300 dark:divide-gray-700">
+      <thead>
+        <tr>
+          <th
+            v-for="(column, index) in columns"
+            :key="index"
+            class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white rtl:text-right"
+          >
+            <slot
+              :name="`${column.key}-header`"
+              :column="column"
+            >
+              <!-- TODO: sortable -->
+              <template v-if="column.label">
+                {{ column.label }}
+              </template>
+            </slot>
+          </th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
+        <template v-if="loading">
+          <tr>
+            <td
+              v-for="(column, subIndex) in columns"
+              :key="subIndex"
+              class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400"
+            >
+              <span class="flex h-2 min-w-4 animate-ping rounded-full bg-pine-green-600 dark:bg-pine-green-300">&nbsp;</span>
+            </td>
+          </tr>
+        </template>
+        <template v-else>
+          <tr
+            v-for="(row, index) in rows"
+            :key="index"
+          >
+            <td
+              v-for="(column, subIndex) in columns"
+              :key="subIndex"
+              class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400"
+            >
+              <slot
+                :name="`${column.key}-data`"
+                :column="column"
+                :row="row"
+                :index="index"
+              >
+                {{ row[column.key] }}
+              </slot>
+            </td>
+          </tr>
+        </template>
+      </tbody>
+    </table>
+  </div>
+</template>
+
+<script setup lang="ts">
+import type { PropType } from 'vue';
+
+defineProps({
+  columns: {
+    type: Array as PropType<
+      {
+        key: string;
+        label?: string;
+        sortable?: boolean;
+        direction?: 'asc' | 'desc';
+        [key: string]: any;
+      }[]
+    >,
+    default: null
+  },
+  rows: {
+    type: Array as PropType<{ [key: string]: any }[]>,
+    default: () => []
+  },
+  loading: {
+    type: Boolean,
+    default: false
+  }
+});
+</script>

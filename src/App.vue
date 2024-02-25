@@ -1,7 +1,7 @@
 <template>
   <div class="fixed size-full overflow-auto bg-white text-black dark:bg-gray-900 dark:text-white">
     <navigation-component />
-    <main class="flex py-4">
+    <main class="m-auto flex max-w-6xl justify-center py-4">
       <RouterView />
     </main>
     <notifications-component />

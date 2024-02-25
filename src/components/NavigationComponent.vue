@@ -4,7 +4,7 @@
     class="bg-background/75 sticky top-0 z-50 -mb-px border-b border-gray-200 backdrop-blur dark:border-gray-800"
     v-slot="{ open }"
   >
-    <div class="mx-auto max-w-7xl px-2 md:px-6 lg:px-8">
+    <div class="mx-auto max-w-6xl px-2 md:px-6 lg:px-8">
       <div class="relative flex h-16 items-center justify-between">
         <div class="flex flex-1 items-center justify-center md:items-stretch md:justify-start">
           <div class="flex-shrink-1 flex items-center">

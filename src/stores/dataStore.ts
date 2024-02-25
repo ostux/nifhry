@@ -15,17 +15,29 @@ import {
   type Z_Budget,
   type Z_Budgets,
   z_budget,
-  type Z_ApiResponse
+  type Z_ApiResponse,
+  type Z_Year,
+  type Z_Month,
+  z_year,
+  z_month,
+  z_day,
+  type Z_Day
 } from '@/types';
-import { computed, ref, type Ref } from 'vue';
+import { computed, ref, type ComputedRef, type Ref } from 'vue';
+import { usePagination } from '@/composables/usePagination';
 
+const pagination = usePagination();
 export const useDataStore = defineStore(
   'dataStore',
   () => {
+    const loading: Ref<boolean> = ref(false);
+
     const accounts: Ref<Z_Accounts> = ref([]);
     const budgets: Ref<Z_Budgets> = ref([]);
     const categories: Ref<Z_Categories> = ref([]);
     const transactions: Ref<Z_Transactions> = ref([]);
+
+    const paginatedTransactions: Ref<Z_Transactions> = ref([]);
 
     const nullUUID = '00000000-0000-0000-0000-000000000000';
 
@@ -116,49 +128,80 @@ export const useDataStore = defineStore(
         }
     );
 
-    const getTransactionsBetween = computed(
-      () =>
-        (start: Date, end: Date, page: number, pageCount: number, sort: any = null): { items: Z_Transactions; total: number } => {
-          let data = transactions.value.filter((t) =>
-            moment(t.when).isBetween(moment(start).subtract(1, 'day'), moment(end).add(1, 'day'))
-          );
+    function fetchTransactions(): Z_Transactions {
+      loading.value = true;
 
-          if (sort) {
-            switch (sort.column) {
-              case 'when':
-                data = sortByTime(data);
-                break;
-              case 'amount':
-                data = sortBy('amount', data);
-                break;
-              case 'category':
-                data = sortBy('category', data);
-                break;
-              case 'from':
-                data = sortBy('from', data);
-                break;
-              case 'to':
-                data = sortBy('to', data);
-                break;
-              case 'status':
-                data = sortBy('status', data);
-                break;
+      let data: Z_Transactions = [];
 
-              default:
-                break;
-            }
+      if (pagination.dayFilter.value) {
+        let y: Z_Year | null = null;
+        let m: Z_Month | null = null;
+        let d: Z_Day | null = null;
 
-            if (sort.direction === 'desc') {
-              data = data.reverse();
-            }
-          }
-
-          return {
-            items: data.slice((page - 1) * pageCount, (page - 1) * pageCount + pageCount),
-            total: data.length
-          };
+        if (z_year.safeParse(pagination.dayFilter.value?.year).success) {
+          y = z_year.parse(pagination.dayFilter.value?.year);
         }
-    );
+
+        if (z_month.safeParse(pagination.dayFilter.value?.month).success) {
+          m = z_month.parse(pagination.dayFilter.value?.month);
+        }
+
+        if (z_day.safeParse(pagination.dayFilter.value?.day).success) {
+          d = z_day.parse(pagination.dayFilter.value?.day);
+        }
+
+        if (y && m && d) {
+          data = transactions.value.filter((t) => moment(t.when).isSame(moment().year(y!).month(m!).day(d!), 'day'));
+        } else if (y && m) {
+          data = transactions.value.filter((t) => moment(t.when).isSame(moment().year(y!).month(m!), 'month'));
+        } else if (y) {
+          data = transactions.value.filter((t) => moment(t.when).isSame(moment().year(y!), 'year'));
+        }
+      } else {
+        data = transactions.value;
+      }
+
+      // if (sort) {
+      //   switch (sort.column) {
+      //     case 'when':
+      //       data = sortByTime(data);
+      //       break;
+      //     case 'amount':
+      //       data = sortBy('amount', data);
+      //       break;
+      //     case 'category':
+      //       data = sortBy('category', data);
+      //       break;
+      //     case 'from':
+      //       data = sortBy('from', data);
+      //       break;
+      //     case 'to':
+      //       data = sortBy('to', data);
+      //       break;
+      //     case 'status':
+      //       data = sortBy('status', data);
+      //       break;
+
+      //     default:
+      //       break;
+      //   }
+
+      //   if (sort.direction === 'desc') {
+      //     data = data.reverse();
+      //   }
+      // }
+
+      pagination.setTotalCount(data.length);
+
+      data = data.slice(
+        (pagination.pagination.value.page - 1) * pagination.pagination.value.perPage,
+        (pagination.pagination.value.page - 1) * pagination.pagination.value.perPage + pagination.pagination.value.perPage
+      );
+
+      loading.value = false;
+
+      return data;
+    }
 
     function sortByTime(transactionsToSort: Z_Transactions) {
       const sortedTransactions = transactionsToSort.sort((a: Z_Transaction, b: Z_Transaction) => {
@@ -467,18 +510,22 @@ export const useDataStore = defineStore(
       const id = z.string().parse(i);
 
       const category = getCategory(id);
-      let childs: any[] = categories.value.filter((c) => c.parent === id);
 
-      childs = childs.map((c) => c.id);
+      if (category) {
+        let childs: any[] = categories.value.filter((c) => c.parent === category.id);
 
-      childs.push(id);
+        childs = childs.map((c) => c.id);
 
-      categories.value = categories.value.filter((c) => !childs.includes(c.id));
-      transactions.value = transactions.value.filter((t) => !childs.includes(t.category));
+        childs.push(id);
 
-      sortCategories();
+        categories.value = categories.value.filter((c) => !childs.includes(c.id));
+        transactions.value = transactions.value.filter((t) => !childs.includes(t.category));
 
-      return true;
+        sortCategories();
+
+        return true;
+      }
+      return false;
     }
 
     function addTransaction(transaction: Z_Transaction) {
@@ -575,17 +622,22 @@ export const useDataStore = defineStore(
     }
 
     return {
+      loading,
+
       accounts,
       budgets,
       categories,
       transactions,
+
+      paginatedTransactions,
 
       acountSelectList,
       budgetSelectList,
       categorySelectList,
       categoryTopLevelSelectList,
       getPaginatedBudgets,
-      getTransactionsBetween,
+
+      fetchTransactions,
 
       addAccount,
       editAccount,

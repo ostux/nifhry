@@ -6,8 +6,8 @@
       'hover:bg-fuchsia-700/10': account.aType === 'credit',
       'border-sky-800': account.aType === 'saving',
       'hover:bg-sky-700/10': account.aType === 'saving',
-      'border-green-800': account.aType === 'debit',
-      'hover:bg-green-700/10': account.aType === 'debit',
+      'border-pine-green-800': account.aType === 'debit',
+      'hover:bg-pine-green-700/10': account.aType === 'debit',
       'border-orange-800': account.aType === 'loan',
       'hover:bg-orange-700/10': account.aType === 'loan'
     }"
@@ -18,7 +18,7 @@
       :class="{
         'text-fuchsia-500': account.aType === 'credit',
         'text-sky-500': account.aType === 'saving',
-        'text-green-500': account.aType === 'debit',
+        'text-pine-green-500': account.aType === 'debit',
         'text-orange-500': account.aType === 'loan'
       }"
     >

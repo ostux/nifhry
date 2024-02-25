@@ -63,7 +63,7 @@
                   item.disabled ? 'cursor-not-allowed line-through opacity-50 dark:bg-slate-800 dark:text-white' : '',
                   'group flex w-full items-center px-2 py-2 text-sm'
                 ]"
-                @click="item.click ? item.click() : null"
+                @click="item.click ? item.click(data) : null"
               >
                 <component
                   v-if="item.icon"
@@ -98,6 +98,11 @@ defineProps({
   items: {
     type: Array as PropType<MenuItemObject[][]>,
     required: true
+  },
+  data: {
+    type: [String, Number, Object, Array],
+    required: false,
+    default: null
   },
   menuText: {
     type: String,

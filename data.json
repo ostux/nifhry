@@ -11,7 +11,7 @@
     {
       "id": "6abced2e-cf8f-4a07-b912-73d7cd4e99c1",
       "name": "Monzo",
-      "balance": 346.1099999999998,
+      "balance": 254.46999999999974,
       "startingBalance": 1097.27,
       "createdAt": "2024-01-04T10:46:55.166Z",
       "aType": "debit"
@@ -196,7 +196,7 @@
       "category": "37a1d1a4-19b7-4279-9f66-e3d733afbcc8",
       "account": "6abced2e-cf8f-4a07-b912-73d7cd4e99c1",
       "when": "2024-02",
-      "amount": 45
+      "amount": 65
     },
     {
       "id": "ae9e2649-dfa0-403f-87e0-addf3e83cec3",
@@ -4839,6 +4839,83 @@
       "when": "2024-02-22T00:00:00.000Z",
       "status": "paid",
       "sId": "8dc8f7cc-65f9-43d8-aa41-b90f41f2451a"
+    },
+    {
+      "id": "ddccd3c2-c5ed-445d-b093-e3868b6a4414",
+      "desc": "Waitrose",
+      "amount": 4.25,
+      "category": "8020f8a3-6ab6-4405-85a9-87664dce6192",
+      "from": "6abced2e-cf8f-4a07-b912-73d7cd4e99c1",
+      "to": "00000000-0000-0000-0000-000000000000",
+      "when": "2024-02-23",
+      "status": "paid",
+      "sId": null
+    },
+    {
+      "id": "56cf366c-7463-4923-89fa-78c249432334",
+      "desc": "Lidl",
+      "amount": 1.99,
+      "category": "8020f8a3-6ab6-4405-85a9-87664dce6192",
+      "from": "6abced2e-cf8f-4a07-b912-73d7cd4e99c1",
+      "to": "00000000-0000-0000-0000-000000000000",
+      "when": "2024-02-23",
+      "status": "paid",
+      "sId": null
+    },
+    {
+      "id": "408eafd7-b919-4df7-baef-7a78435a0403",
+      "desc": "Lidl",
+      "amount": 26.35,
+      "category": "8020f8a3-6ab6-4405-85a9-87664dce6192",
+      "from": "6abced2e-cf8f-4a07-b912-73d7cd4e99c1",
+      "to": "00000000-0000-0000-0000-000000000000",
+      "when": "2024-02-23",
+      "status": "paid",
+      "sId": null
+    },
+    {
+      "id": "d74a26b8-39d2-4b50-b531-d3297e3fdf97",
+      "desc": "GO Outdoors",
+      "amount": 22,
+      "category": "8020f8a3-6ab6-4405-85a9-87664dce6192",
+      "from": "6abced2e-cf8f-4a07-b912-73d7cd4e99c1",
+      "to": "00000000-0000-0000-0000-000000000000",
+      "when": "2024-02-23",
+      "status": "paid",
+      "sId": null
+    },
+    {
+      "id": "fc1db7c2-624e-4962-857c-96bb52783ba4",
+      "desc": "Utilities: It is too cold outside...",
+      "amount": 4.14,
+      "category": "ce6277c0-f9ba-46a0-9388-0909f3b27928",
+      "from": "6abced2e-cf8f-4a07-b912-73d7cd4e99c1",
+      "to": "00000000-0000-0000-0000-000000000000",
+      "when": "2024-02-24",
+      "status": "paid",
+      "sId": null
+    },
+    {
+      "id": "e6987f3d-84d4-4348-9fa6-f09e1940df18",
+      "desc": "BP Fuel",
+      "amount": 20.91,
+      "category": "21d23a9f-ba46-4915-a2f4-0df939aa51d6",
+      "from": "6abced2e-cf8f-4a07-b912-73d7cd4e99c1",
+      "to": "00000000-0000-0000-0000-000000000000",
+      "when": "2024-02-24",
+      "status": "paid",
+      "sId": null
+    },
+    {
+      "id": "d8436dc5-1419-47b8-8f22-a04e89754b2c",
+      "desc": "Forestry England - Parking",
+      "amount": 12,
+      "category": "4c92357b-6882-47b7-a447-429d4c105e4c",
+      "from": "6abced2e-cf8f-4a07-b912-73d7cd4e99c1",
+      "to": "00000000-0000-0000-0000-000000000000",
+      "when": "2024-02-24T00:00:00.000Z",
+      "status": "paid",
+      "sId": null
     },
     {
       "id": "571f8747-7eb8-4979-8a8e-74cfed1fab23",
