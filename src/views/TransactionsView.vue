@@ -25,7 +25,31 @@
           </Tab>
         </TabList>
         <TabPanels class="p-4">
-          <TabPanel>Content 1</TabPanel>
+          <TabPanel>
+            <div class="m-auto flex w-full gap-4">
+              <ArrowLeftCircleIcon
+                class="size-8 text-pine-green-700 hover:cursor-pointer hover:text-pine-green-500"
+                @click="changeMonth('previous')"
+              />
+              <span
+                class="w-[200px] self-center text-center"
+                v-if="pagination.dayFilter.value?.year !== undefined && pagination.dayFilter.value?.month !== undefined"
+              >
+                {{ pagination.dayFilter.value.year }} - {{ moment().month(pagination.dayFilter.value.month).format('MMMM') }}
+              </span>
+              <ArrowRightCircleIcon
+                class="size-8 text-pine-green-700 hover:cursor-pointer hover:text-pine-green-500"
+                @click="changeMonth('next')"
+              />
+              <ArrowUturnLeftIcon
+                v-if="
+                  pagination.dayFilter.value?.year !== moment().year() || pagination.dayFilter.value?.month !== moment().month()
+                "
+                class="size-8 text-pine-green-700 hover:cursor-pointer hover:text-pine-green-500"
+                @click="changeMonth('reset')"
+              />
+            </div>
+          </TabPanel>
           <TabPanel>Content 2</TabPanel>
         </TabPanels>
       </TabGroup>
@@ -76,10 +100,11 @@ import DropdownMenu from '@/components/ui/DropdownMenu.vue';
 import TableComponent from '@/components/ui/TableComponent.vue';
 import { usePagination } from '@/composables/usePagination';
 import { useDataStore } from '@/stores/dataStore';
-import type { Z_Transactions } from '@/types';
+import { z_year, type Z_Transactions, z_month } from '@/types';
 import { Tab, TabGroup, TabList, TabPanels, TabPanel } from '@headlessui/vue';
 import { PencilSquareIcon, TrashIcon } from '@heroicons/vue/24/outline';
-import moment from 'moment';
+import { ArrowLeftCircleIcon, ArrowRightCircleIcon, ArrowUturnLeftIcon } from '@heroicons/vue/24/solid';
+import moment, { type Moment } from 'moment';
 import { onUnmounted } from 'vue';
 import { onMounted } from 'vue';
 import { ref, type Ref } from 'vue';
@@ -186,6 +211,42 @@ const changeTab = (i: number) => {
   }
 };
 
+const changeMonth = (direction: 'previous' | 'next' | 'reset') => {
+  loading.value = true;
+
+  let y = moment().year();
+  let m = moment().month();
+
+  if (z_year.safeParse(pagination.dayFilter.value?.year).success) {
+    y = z_year.parse(pagination.dayFilter.value?.year);
+  }
+
+  if (z_month.safeParse(pagination.dayFilter.value?.month).success) {
+    m = z_month.parse(pagination.dayFilter.value?.month);
+  }
+
+  let t: Moment = moment();
+
+  switch (direction) {
+    case 'previous':
+      t = moment().year(y).month(m).startOf('month').subtract(1, 'month');
+      break;
+    case 'next':
+      t = moment().year(y).month(m).startOf('month').add(1, 'month');
+      break;
+    default:
+      t = moment();
+      break;
+  }
+
+  pagination.dayFilter.value = {
+    year: t.year(),
+    month: t.month()
+  };
+
+  rows.value = dataStore.fetchTransactions();
+};
+
 const unsubscribe = dataStore.$onAction(
   ({
     name, // name of the action
@@ -206,7 +267,7 @@ const unsubscribe = dataStore.$onAction(
         console.log(`Finished "${name}" after ${Date.now() - startTime}ms.\n`);
         setTimeout(() => {
           loading.value = false;
-        }, 1000);
+        }, 300);
       });
 
       // this will trigger if the action throws or returns a promise that rejects

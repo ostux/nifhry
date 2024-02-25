@@ -34,6 +34,9 @@ export const messages = {
         saving: 'Saving'
       }
     },
+    table: {
+      empty: 'No items found.'
+    },
     category: {
       card: {
         new: 'Create new category'

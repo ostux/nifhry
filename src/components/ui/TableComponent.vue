@@ -2,7 +2,7 @@
   <div class="w-full">
     <table class="min-w-full table-fixed divide-y divide-gray-300 dark:divide-gray-700">
       <thead>
-        <tr>
+        <tr class="border-b border-gray-200">
           <th
             v-for="(column, index) in columns"
             :key="index"
@@ -33,32 +33,42 @@
           </tr>
         </template>
         <template v-else>
-          <tr
-            v-for="(row, index) in rows"
-            :key="index"
-          >
-            <td
-              v-for="(column, subIndex) in columns"
-              :key="subIndex"
-              class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400"
+          <template v-if="rows.length > 0">
+            <tr
+              v-for="(row, index) in rows"
+              :key="index"
             >
-              <slot
-                :name="`${column.key}-data`"
-                :column="column"
-                :row="row"
-                :index="index"
+              <td
+                v-for="(column, subIndex) in columns"
+                :key="subIndex"
+                class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400"
               >
-                {{ row[column.key] }}
-              </slot>
-            </td>
-          </tr>
+                <slot
+                  :name="`${column.key}-data`"
+                  :column="column"
+                  :row="row"
+                  :index="index"
+                >
+                  {{ row[column.key] }}
+                </slot>
+              </td>
+            </tr>
+          </template>
         </template>
       </tbody>
     </table>
+    <div
+      v-if="!loading && rows.length === 0"
+      class="flex w-full flex-col items-center justify-center gap-4 p-4"
+    >
+      <DocumentMagnifyingGlassIcon class="size-12" />
+      {{ $t('table.empty') }}
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { DocumentMagnifyingGlassIcon } from '@heroicons/vue/24/outline';
 import type { PropType } from 'vue';
 
 defineProps({
