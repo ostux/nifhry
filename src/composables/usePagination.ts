@@ -23,6 +23,14 @@ export function usePagination() {
     };
   };
 
+  const setPage = (p: number) => {
+    pagination.value.page = p;
+  };
+
+  const setPerPage = (pp: number) => {
+    pagination.value.perPage = pp;
+  };
+
   const setTotalCount = (tc: number) => {
     pagination.value.totalCount = tc;
   };
@@ -39,5 +47,17 @@ export function usePagination() {
     dayFilter.value = df;
   };
 
-  return { pagination, sort, filter, dayFilter, setPagination, setTotalCount, setSort, setFilter, setDayFilter };
+  return {
+    pagination,
+    sort,
+    filter,
+    dayFilter,
+    setPagination,
+    setPage,
+    setPerPage,
+    setTotalCount,
+    setSort,
+    setFilter,
+    setDayFilter
+  };
 }

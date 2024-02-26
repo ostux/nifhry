@@ -55,6 +55,7 @@
       </TabGroup>
     </div>
 
+    <pagination-componnt @change="refresh" />
     <table-component
       :columns="columns"
       :rows="rows"
@@ -108,6 +109,7 @@ import moment, { type Moment } from 'moment';
 import { onUnmounted } from 'vue';
 import { onMounted } from 'vue';
 import { ref, type Ref } from 'vue';
+import PaginationComponnt from '@/components/ui/PaginationComponnt.vue';
 
 interface TransactionTab {
   id: string;
@@ -191,6 +193,12 @@ const sortIt = (event: any) => {
   // todo: setSort
 };
 
+const refresh = () => {
+  loading.value = true;
+
+  rows.value = dataStore.fetchTransactions();
+};
+
 const changeTab = (i: number) => {
   loading.value = true;
 
@@ -201,7 +209,7 @@ const changeTab = (i: number) => {
       rows.value = dataStore.fetchTransactions();
       break;
     default:
-      pagination.setPagination(1, 12);
+      pagination.setPagination(1, 10);
       pagination.setDayFilter({
         year: moment().year(),
         month: moment().month()

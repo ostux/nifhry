@@ -11,7 +11,7 @@
     {
       "id": "6abced2e-cf8f-4a07-b912-73d7cd4e99c1",
       "name": "Monzo",
-      "balance": 254.46999999999974,
+      "balance": 224.51999999999975,
       "startingBalance": 1097.27,
       "createdAt": "2024-01-04T10:46:55.166Z",
       "aType": "debit"
@@ -245,7 +245,7 @@
       "category": "2a16837a-0ac9-4834-b288-debf374098fa",
       "account": "f7bfc2b3-a1c5-4af2-9738-53cd295284cb",
       "when": "2024-03",
-      "amount": 5
+      "amount": 6
     },
     {
       "id": "9552a4d2-37dd-470d-8551-0e8167bcb757",
@@ -315,7 +315,7 @@
       "category": "2a16837a-0ac9-4834-b288-debf374098fa",
       "account": "f7bfc2b3-a1c5-4af2-9738-53cd295284cb",
       "when": "2024-04",
-      "amount": 5
+      "amount": 6
     },
     {
       "id": "5cd1cd23-cece-4fa2-9cd1-b74f7a278121",
@@ -385,7 +385,7 @@
       "category": "2a16837a-0ac9-4834-b288-debf374098fa",
       "account": "f7bfc2b3-a1c5-4af2-9738-53cd295284cb",
       "when": "2024-05",
-      "amount": 5
+      "amount": 6
     },
     {
       "id": "cb677ef0-652b-495e-a301-850879f6201e",
@@ -455,7 +455,7 @@
       "category": "2a16837a-0ac9-4834-b288-debf374098fa",
       "account": "f7bfc2b3-a1c5-4af2-9738-53cd295284cb",
       "when": "2024-06",
-      "amount": 5
+      "amount": 6
     },
     {
       "id": "254c4135-68aa-4b57-b53c-e3560d58927b",
@@ -4918,6 +4918,39 @@
       "sId": null
     },
     {
+      "id": "7d2bf26b-62cd-4289-9848-6f0cea52553c",
+      "desc": "Morrisons",
+      "amount": 3.5,
+      "category": "8020f8a3-6ab6-4405-85a9-87664dce6192",
+      "from": "6abced2e-cf8f-4a07-b912-73d7cd4e99c1",
+      "to": "00000000-0000-0000-0000-000000000000",
+      "when": "2024-02-26",
+      "status": "paid",
+      "sId": null
+    },
+    {
+      "id": "b98d8699-527d-4825-8a83-075ef7a19385",
+      "desc": "Morrisons",
+      "amount": 24,
+      "category": "eae5560b-41c7-4903-b4f3-79af7f1036f6",
+      "from": "6abced2e-cf8f-4a07-b912-73d7cd4e99c1",
+      "to": "00000000-0000-0000-0000-000000000000",
+      "when": "2024-02-26",
+      "status": "paid",
+      "sId": null
+    },
+    {
+      "id": "6e356d4d-83e6-45bb-8abb-33d48c7a994d",
+      "desc": "Waitrose",
+      "amount": 2.45,
+      "category": "8020f8a3-6ab6-4405-85a9-87664dce6192",
+      "from": "6abced2e-cf8f-4a07-b912-73d7cd4e99c1",
+      "to": "00000000-0000-0000-0000-000000000000",
+      "when": "2024-02-26",
+      "status": "paid",
+      "sId": null
+    },
+    {
       "id": "571f8747-7eb8-4979-8a8e-74cfed1fab23",
       "desc": "Transfer between accounts",
       "amount": 300,
@@ -4997,7 +5030,7 @@
     {
       "id": "9043ef1e-242f-4e8d-a182-25eb963870a8",
       "desc": "Technology: andrastoth.eu google workplace bill",
-      "amount": 4.6,
+      "amount": 6,
       "category": "19682258-1bf7-4876-9f17-61f43899ecfb",
       "from": "f7bfc2b3-a1c5-4af2-9738-53cd295284cb",
       "to": "00000000-0000-0000-0000-000000000000",
@@ -5107,7 +5140,7 @@
     {
       "id": "4c54be27-246f-4d75-b815-19584625f025",
       "desc": "Technology: andrastoth.eu google workplace bill",
-      "amount": 4.6,
+      "amount": 6,
       "category": "19682258-1bf7-4876-9f17-61f43899ecfb",
       "from": "f7bfc2b3-a1c5-4af2-9738-53cd295284cb",
       "to": "00000000-0000-0000-0000-000000000000",
@@ -5217,7 +5250,7 @@
     {
       "id": "012f4a7c-6aca-4e44-ac7d-402cf1799a0e",
       "desc": "Technology: andrastoth.eu google workplace bill",
-      "amount": 4.6,
+      "amount": 6,
       "category": "19682258-1bf7-4876-9f17-61f43899ecfb",
       "from": "f7bfc2b3-a1c5-4af2-9738-53cd295284cb",
       "to": "00000000-0000-0000-0000-000000000000",
@@ -5327,7 +5360,7 @@
     {
       "id": "618b93de-63bd-44f9-922e-2e74b0a2d489",
       "desc": "Technology: andrastoth.eu google workplace bill",
-      "amount": 4.6,
+      "amount": 6,
       "category": "19682258-1bf7-4876-9f17-61f43899ecfb",
       "from": "f7bfc2b3-a1c5-4af2-9738-53cd295284cb",
       "to": "00000000-0000-0000-0000-000000000000",
@@ -5437,7 +5470,7 @@
     {
       "id": "05483d88-ab07-40a3-888b-08221c715afa",
       "desc": "Technology: andrastoth.eu google workplace bill",
-      "amount": 4.6,
+      "amount": 6,
       "category": "19682258-1bf7-4876-9f17-61f43899ecfb",
       "from": "f7bfc2b3-a1c5-4af2-9738-53cd295284cb",
       "to": "00000000-0000-0000-0000-000000000000",
@@ -5547,7 +5580,7 @@
     {
       "id": "3a53f429-7618-4df7-a2b0-b2374caea870",
       "desc": "Technology: andrastoth.eu google workplace bill",
-      "amount": 4.6,
+      "amount": 6,
       "category": "19682258-1bf7-4876-9f17-61f43899ecfb",
       "from": "f7bfc2b3-a1c5-4af2-9738-53cd295284cb",
       "to": "00000000-0000-0000-0000-000000000000",
@@ -5657,7 +5690,7 @@
     {
       "id": "3214e9f2-8a16-41ea-9ff5-5dca9787b183",
       "desc": "Technology: andrastoth.eu google workplace bill",
-      "amount": 4.6,
+      "amount": 6,
       "category": "19682258-1bf7-4876-9f17-61f43899ecfb",
       "from": "f7bfc2b3-a1c5-4af2-9738-53cd295284cb",
       "to": "00000000-0000-0000-0000-000000000000",
@@ -5767,7 +5800,7 @@
     {
       "id": "14f6e85a-57a0-417f-8e88-bc04b2ae9767",
       "desc": "Technology: andrastoth.eu google workplace bill",
-      "amount": 4.6,
+      "amount": 6,
       "category": "19682258-1bf7-4876-9f17-61f43899ecfb",
       "from": "f7bfc2b3-a1c5-4af2-9738-53cd295284cb",
       "to": "00000000-0000-0000-0000-000000000000",
@@ -5877,7 +5910,7 @@
     {
       "id": "11ab2a2b-a5d1-4617-bd2d-fb5b307351d2",
       "desc": "Technology: andrastoth.eu google workplace bill",
-      "amount": 4.6,
+      "amount": 6,
       "category": "19682258-1bf7-4876-9f17-61f43899ecfb",
       "from": "f7bfc2b3-a1c5-4af2-9738-53cd295284cb",
       "to": "00000000-0000-0000-0000-000000000000",
@@ -5987,7 +6020,7 @@
     {
       "id": "b093f77c-efd1-4164-8ba7-ade8f3c48b06",
       "desc": "Technology: andrastoth.eu google workplace bill",
-      "amount": 4.6,
+      "amount": 6,
       "category": "19682258-1bf7-4876-9f17-61f43899ecfb",
       "from": "f7bfc2b3-a1c5-4af2-9738-53cd295284cb",
       "to": "00000000-0000-0000-0000-000000000000",
