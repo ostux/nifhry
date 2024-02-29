@@ -14,7 +14,7 @@
   >
     <dropdown-menu :items="items"> </dropdown-menu>
     <div
-      class="sixtyfour flex flex-row"
+      class="flex flex-row"
       :class="{
         'text-fuchsia-500': account.aType === 'credit',
         'text-sky-500': account.aType === 'saving',
@@ -23,7 +23,13 @@
       }"
     >
       <CreditCardIcon class="mr-4 size-6" />
-      {{ account.name }}
+      <div class="flex flex-col">
+        <span>{{ account.name }}</span>
+        <rovas-component
+          class="text-3xl"
+          :msg="account.name"
+        />
+      </div>
     </div>
     <div class="mt-4 flex flex-grow justify-center font-mono text-4xl text-gray-700 dark:text-white">
       {{
@@ -54,14 +60,15 @@
 <script setup lang="ts">
 import { type Z_Account } from '@/types';
 
-import { CreditCardIcon, PencilSquareIcon, TrashIcon } from '@heroicons/vue/24/outline'; //ArchiveBoxIcon,
-import { ref, type PropType, type Ref } from 'vue';
-import DropdownMenu from '@/components/ui/DropdownMenu.vue';
 import EditAccountForm from '@/components/account/EditAccountForm.vue';
 import DeleteConfirmationForm from '@/components/ui/BaseModal.vue';
-import { useI18n } from 'vue-i18n';
-import { useDataStore } from '@/stores/dataStore';
+import DropdownMenu from '@/components/ui/DropdownMenu.vue';
 import { useNotification } from '@/composables/useNotification';
+import { useDataStore } from '@/stores/dataStore';
+import { CreditCardIcon, PencilSquareIcon, TrashIcon } from '@heroicons/vue/24/outline'; //ArchiveBoxIcon,
+import { ref, type PropType, type Ref } from 'vue';
+import { useI18n } from 'vue-i18n';
+import RovasComponent from '../ui/RovasComponent.vue';
 
 const { t } = useI18n();
 const dataStore = useDataStore();

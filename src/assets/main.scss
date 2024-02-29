@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Sixtyfour&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Old+Hungarian&display=swap');
 
 $pine-green-50: #f1fcfa;
 $pine-green-100: #cef9ee;
@@ -22,6 +22,13 @@ $pine-green-950: #062d2a;
     'SCAN' 0;
 }
 
+.noto-sans-old-hungarian-regular {
+  font-display: auto; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+  font-family: 'Noto Sans Old Hungarian', sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
 ::-webkit-scrollbar {
   width: 8px;
 }
@@ -34,4 +41,12 @@ $pine-green-950: #062d2a;
 ::-webkit-scrollbar-thumb {
   background: $pine-green-600;
   border-radius: 16px;
+}
+
+html,
+body {
+  font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+  font-family: 'Noto Sans Old Hungarian', sans-serif;
+  font-weight: 400;
+  font-style: normal;
 }

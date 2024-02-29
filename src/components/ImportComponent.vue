@@ -61,6 +61,7 @@ import { useDataStore } from '@/stores/dataStore';
 import { ref, type Ref } from 'vue';
 import { useNotification } from '@/composables/useNotification';
 import { PaperClipIcon } from '@heroicons/vue/24/solid';
+import { z } from 'zod';
 
 interface ImportData {
   accounts?: Z_Accounts;
@@ -139,7 +140,11 @@ const doImport = () => {
 
   if (data.value.accounts && z_accounts.safeParse(data.value.accounts).success) {
     transactions.value = [];
-    accounts.value = data.value.accounts;
+    accounts.value = data.value.accounts.map((a) => {
+      a.balance = Number.parseFloat(a.balance.toFixed(2));
+      a.startingBalance = Number.parseFloat(a.startingBalance.toFixed(2));
+      return a;
+    });
   } else {
     success = false;
   }
@@ -152,7 +157,10 @@ const doImport = () => {
   }
 
   if (data.value.transactions && z_transactions.safeParse(data.value.transactions).success) {
-    transactions.value = data.value.transactions;
+    transactions.value = data.value.transactions.map((t) => {
+      t.amount = z.coerce.number().parse(t.amount.toFixed(2));
+      return t;
+    });
   } else {
     success = false;
   }
@@ -162,6 +170,8 @@ const doImport = () => {
   } else {
     success = false;
   }
+
+  dataStore.recalculateBalances();
 
   if (success) {
     addNotification('success', t('notification.import.success'));

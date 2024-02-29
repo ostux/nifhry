@@ -7,7 +7,13 @@
       @click="modalOpen = true"
     >
       <FolderPlusIcon class="mr-4 size-6" />
-      {{ $t('account.card.new') }}
+      <div class="flex flex-col">
+        <span> {{ $t('category.card.new') }} </span>
+        <rovas-component
+          class="text-2xl"
+          :msg="$t('category.card.new')"
+        />
+      </div>
     </div>
     <div class="mt-4 flex flex-grow justify-center font-mono text-4xl text-gray-800"></div>
     <edit-category-form
@@ -21,6 +27,7 @@
 import EditCategoryForm from '@/components/category/EditCategoryForm.vue';
 import { FolderPlusIcon } from '@heroicons/vue/24/outline';
 import { ref, type Ref } from 'vue';
+import RovasComponent from '../ui/RovasComponent.vue';
 
 const modalOpen: Ref<boolean> = ref(false);
 </script>

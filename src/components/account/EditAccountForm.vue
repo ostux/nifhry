@@ -43,7 +43,7 @@
         {{ $t('account.form.edit.accountType') }}
 
         <select-box
-          :items="accountTypes"
+          :options="accountTypes"
           :pre-selected="selectedType"
           @select="setAccountType"
         />

@@ -1,30 +1,31 @@
-import { acceptHMRUpdate, defineStore } from 'pinia';
-import moment from 'moment';
-import { z } from 'zod';
+import { usePagination } from '@/composables/usePagination';
 import {
+  nullUUID,
   z_account,
+  z_budget,
   z_category,
+  z_day,
+  z_month,
+  z_transaction,
+  z_transactionStatus,
+  z_year,
   type Z_Account,
   type Z_Accounts,
-  type Z_Categories,
-  type Z_Category,
-  type Z_Transactions,
-  z_transaction,
-  type Z_Transaction,
-  z_transactionStatus,
+  type Z_ApiResponse,
   type Z_Budget,
   type Z_Budgets,
-  z_budget,
-  type Z_ApiResponse,
-  type Z_Year,
+  type Z_Categories,
+  type Z_Category,
+  type Z_Day,
   type Z_Month,
-  z_year,
-  z_month,
-  z_day,
-  type Z_Day
+  type Z_Transaction,
+  type Z_Transactions,
+  type Z_Year
 } from '@/types';
-import { computed, ref, type ComputedRef, type Ref } from 'vue';
-import { usePagination } from '@/composables/usePagination';
+import moment from 'moment';
+import { acceptHMRUpdate, defineStore } from 'pinia';
+import { computed, ref, type Ref } from 'vue';
+import { z } from 'zod';
 
 const pagination = usePagination();
 export const useDataStore = defineStore(
@@ -39,16 +40,14 @@ export const useDataStore = defineStore(
 
     const paginatedTransactions: Ref<Z_Transactions> = ref([]);
 
-    const nullUUID = '00000000-0000-0000-0000-000000000000';
-
-    const acountSelectList = computed(() => {
+    const accountSelectList = computed(() => {
       const selectList = accounts.value.map((a) => {
-        return { label: a.name, value: a.id };
+        return { id: a.id, name: a.name };
       });
 
       selectList.push({
-        label: 'null',
-        value: nullUUID
+        id: nullUUID,
+        name: 'null'
       });
 
       return selectList;
@@ -152,7 +151,7 @@ export const useDataStore = defineStore(
 
         if (y && m && d) {
           data = transactions.value.filter((t) => moment(t.when).isSame(moment().year(y!).month(m!).day(d!), 'day'));
-        } else if (y && m) {
+        } else if (y && (m || m === 0)) {
           data = transactions.value.filter((t) => moment(t.when).isSame(moment().year(y!).month(m!), 'month'));
         } else if (y) {
           data = transactions.value.filter((t) => moment(t.when).isSame(moment().year(y!), 'year'));
@@ -295,7 +294,7 @@ export const useDataStore = defineStore(
 
     function recalculateBalances() {
       accounts.value = accounts.value.map((a) => {
-        a.balance = a.startingBalance;
+        a.balance = z.coerce.number().parse(a.startingBalance.toFixed(2));
         return a;
       });
 
@@ -317,11 +316,11 @@ export const useDataStore = defineStore(
       const toIndex = accounts.value.findIndex((a) => a.id === t.to);
 
       if (fromIndex !== -1) {
-        accounts.value[fromIndex].balance = accounts.value[fromIndex].balance - t.amount;
+        accounts.value[fromIndex].balance = z.coerce.number().parse((accounts.value[fromIndex].balance - t.amount).toFixed(2));
       }
 
       if (toIndex !== -1) {
-        accounts.value[toIndex].balance = accounts.value[toIndex].balance + t.amount;
+        accounts.value[toIndex].balance = z.coerce.number().parse((accounts.value[toIndex].balance + t.amount).toFixed(2));
       }
 
       // const category = getTopLevelCategory(t.category);
@@ -529,13 +528,20 @@ export const useDataStore = defineStore(
     }
 
     function addTransaction(transaction: Z_Transaction) {
+      const response: Z_ApiResponse = { success: true, errors: [] };
+
       if (z_transaction.safeParse(transaction).success) {
         const tr = z_transaction.parse(transaction);
 
         const exist = transactions.value.find((d) => d.id === tr.id);
         if (exist) {
-          return false;
+          response.success = false;
+          response.errors.push('transaction.error.already_exist');
+          return response;
         }
+
+        tr.amount = z.coerce.number().parse(tr.amount.toFixed(2));
+        tr.when = moment(tr.when).format('YYYY-MM-DD');
 
         transactions.value = [...transactions.value, tr];
 
@@ -543,17 +549,21 @@ export const useDataStore = defineStore(
 
         recalculateBalanceForTransaction(tr);
 
-        return true;
+        return response;
       }
     }
 
     function editTransaction(transaction: Z_Transaction) {
+      const response: Z_ApiResponse = { success: true, errors: [] };
+
       if (z_transaction.safeParse(transaction).success) {
         const newtransaction = z_transaction.parse(transaction);
 
         const transactionIndex = transactions.value.findIndex((t) => t.id === transaction.id);
         if (transactionIndex < 0) {
-          return false;
+          response.success = false;
+          response.errors.push('transaction.error.not_found');
+          return response;
         }
 
         transactions.value[transactionIndex] = newtransaction;
@@ -562,7 +572,7 @@ export const useDataStore = defineStore(
 
         recalculateBalances();
 
-        return true;
+        return response;
       }
     }
 
@@ -631,7 +641,7 @@ export const useDataStore = defineStore(
 
       paginatedTransactions,
 
-      acountSelectList,
+      accountSelectList,
       budgetSelectList,
       categorySelectList,
       categoryTopLevelSelectList,

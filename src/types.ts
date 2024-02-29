@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+export const nullUUID = '00000000-0000-0000-0000-000000000000';
+
 export const z_year = z.coerce.number().min(1900).max(3000);
 export type Z_Year = z.infer<typeof z_year>;
 
@@ -111,12 +113,12 @@ export type Z_TransactionStatus = z.infer<typeof z_transactionStatus>;
 
 export const z_transaction = z.object({
   id: z.string().uuid(),
-  desc: z.string(),
+  desc: z.string().min(1),
   amount: z.coerce.number(),
   category: z.string().uuid(),
   from: z.string().uuid().nullable(),
   to: z.string().uuid().nullable(),
-  when: z.coerce.date(),
+  when: z.string(),
   status: z_transactionStatus,
   sId: z.string().uuid().nullable()
 });

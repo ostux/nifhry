@@ -42,7 +42,7 @@
         {{ $t('category.form.edit.parent') }}
 
         <select-box
-          :items="categorySelectList"
+          :options="categorySelectList"
           :pre-selected="selectedParentCategory"
           @select="setCategoryParent"
         />

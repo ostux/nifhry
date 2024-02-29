@@ -1,41 +1,50 @@
 <template>
-  <div class="flex flex-grow">
-    <button
-      class="hover:text-pine-green-700 disabled:cursor-not-allowed disabled:text-gray-600"
-      :disabled="isFirstPage"
-      @click="firstPage"
-    >
-      <ChevronDoubleLeftIcon class="h-6 w-10" />
-    </button>
-    <button
-      class="hover:text-pine-green-700 disabled:cursor-not-allowed disabled:text-gray-600"
-      :disabled="isFirstPage"
-      @click="previousPage"
-    >
-      <ChevronLeftIcon class="h-6 w-10" />
-    </button>
-    <button
-      class="h-6 w-10 hover:text-pine-green-700 disabled:cursor-not-allowed disabled:text-gray-600"
-      v-for="page in pages"
-      :key="page"
-      @click="page !== '...' ? setPage(page) : null"
-    >
-      <span :class="[page === pagination.pagination.value?.page ? 'text-pine-green-500' : '']"> {{ page }}&nbsp; </span>
-    </button>
-    <button
-      class="hover:text-pine-green-700 disabled:cursor-not-allowed disabled:text-gray-600"
-      :disabled="isLastPage"
-      @click="nextPage"
-    >
-      <ChevronRightIcon class="h-6 w-10" />
-    </button>
-    <button
-      class="hover:text-pine-green-700 disabled:cursor-not-allowed disabled:text-gray-600"
-      :disabled="isLastPage"
-      @click="lastPage"
-    >
-      <ChevronDoubleRightIcon class="h-6 w-10" />
-    </button>
+  <div class="flex w-full justify-between">
+    <div class="flex">
+      <button
+        class="hover:text-pine-green-700 disabled:cursor-not-allowed disabled:text-gray-600"
+        :disabled="isFirstPage"
+        @click="firstPage"
+      >
+        <ChevronDoubleLeftIcon class="h-6 w-10" />
+      </button>
+      <button
+        class="hover:text-pine-green-700 disabled:cursor-not-allowed disabled:text-gray-600"
+        :disabled="isFirstPage"
+        @click="previousPage"
+      >
+        <ChevronLeftIcon class="h-6 w-10" />
+      </button>
+    </div>
+
+    <div class="flex">
+      <button
+        class="h-6 w-10 hover:text-pine-green-700 disabled:cursor-not-allowed disabled:text-gray-600"
+        v-for="page in pages"
+        :key="page"
+        @click="page !== '...' ? setPage(page) : null"
+        :disabled="pagination.pagination.value.page === page"
+      >
+        <span :class="[page === pagination.pagination.value?.page ? 'text-pine-green-500' : '']"> {{ page }}&nbsp; </span>
+      </button>
+    </div>
+
+    <div class="flex">
+      <button
+        class="hover:text-pine-green-700 disabled:cursor-not-allowed disabled:text-gray-600"
+        :disabled="isLastPage"
+        @click="nextPage"
+      >
+        <ChevronRightIcon class="h-6 w-10" />
+      </button>
+      <button
+        class="hover:text-pine-green-700 disabled:cursor-not-allowed disabled:text-gray-600"
+        :disabled="isLastPage"
+        @click="lastPage"
+      >
+        <ChevronDoubleRightIcon class="h-6 w-10" />
+      </button>
+    </div>
   </div>
 </template>
 
@@ -83,7 +92,7 @@ const pagesCount = computed(() => {
 });
 
 const isFirstPage: Ref<boolean> = computed(() => {
-  return pagination.pagination.value.page === 1;
+  return pagination.pagination.value.page === 1 || pagination.pagination.value.totalCount === 0;
 });
 
 const firstPage = () => {
@@ -101,7 +110,7 @@ const previousPage = () => {
 };
 
 const isLastPage: Ref<boolean> = computed(() => {
-  return pagination.pagination.value.page === pagesCount.value;
+  return pagination.pagination.value.page === pagesCount.value || pagination.pagination.value.totalCount === 0;
 });
 
 const nextPage = () => {

@@ -1,61 +1,33 @@
 <template>
   <div class="mx-auto w-full max-w-6xl px-4 sm:px-0">
-    <div class="">
-      <TabGroup
-        @change="changeTab"
-        :defaultIndex="0"
-      >
-        <TabList class="flex gap-4 rounded-md p-2 shadow-md">
-          <Tab
-            v-for="tab in tabs"
-            as="template"
-            :key="tab.id"
-            v-slot="{ selected }"
-          >
-            <button
-              :class="[
-                'button w-full',
-                selected
-                  ? 'border-0 bg-pine-green-500/50 text-black shadow ring-2 ring-pine-green-500 dark:text-white'
-                  : ' hover:bg-pine-green-200/[0.12] hover:text-white'
-              ]"
-            >
-              {{ $t(tab.label) }}
-            </button>
-          </Tab>
-        </TabList>
-        <TabPanels class="p-4">
-          <TabPanel>
-            <div class="m-auto flex w-full gap-4">
-              <ArrowLeftCircleIcon
-                class="size-8 text-pine-green-700 hover:cursor-pointer hover:text-pine-green-500"
-                @click="changeMonth('previous')"
-              />
-              <span
-                class="w-[200px] self-center text-center"
-                v-if="pagination.dayFilter.value?.year !== undefined && pagination.dayFilter.value?.month !== undefined"
-              >
-                {{ pagination.dayFilter.value.year }} - {{ moment().month(pagination.dayFilter.value.month).format('MMMM') }}
-              </span>
-              <ArrowRightCircleIcon
-                class="size-8 text-pine-green-700 hover:cursor-pointer hover:text-pine-green-500"
-                @click="changeMonth('next')"
-              />
-              <ArrowUturnLeftIcon
-                v-if="
-                  pagination.dayFilter.value?.year !== moment().year() || pagination.dayFilter.value?.month !== moment().month()
-                "
-                class="size-8 text-pine-green-700 hover:cursor-pointer hover:text-pine-green-500"
-                @click="changeMonth('reset')"
-              />
-            </div>
-          </TabPanel>
-          <TabPanel>Content 2</TabPanel>
-        </TabPanels>
-      </TabGroup>
+    <div class="mb-4 flex justify-between">
+      <div class="flex p-2">
+        <button
+          class="mr-4 flex h-10 cursor-pointer items-center justify-center gap-2 rounded-md border border-gray-300 px-4 py-2 hover:bg-pine-green-100/50 focus:border-pine-green-500 focus:outline-none focus:ring-1 focus:ring-pine-green-500"
+          @click="
+            selectedTransaction = undefined;
+            openTransactionEditForm = true;
+          "
+        >
+          <Squares2X2Icon class="size-6" />
+          <span>{{ $t('transaction.form.add.single.title') }}</span>
+        </button>
+        <button
+          class="mr-4 flex h-10 cursor-pointer items-center justify-center gap-2 rounded-md border border-gray-300 px-4 py-2 hover:bg-pine-green-100/50 focus:border-pine-green-500 focus:outline-none focus:ring-1 focus:ring-pine-green-500"
+          @click="
+            selectedTransaction = undefined;
+            openScheduledTransactionEditForm = true;
+          "
+        >
+          <SquaresPlusIcon class="size-6" />
+          <span>{{ $t('transaction.form.add.multi.title') }}</span>
+        </button>
+      </div>
+      <transaction-range-control-tab @change="refetch" />
     </div>
 
-    <pagination-componnt @change="refresh" />
+    <pagination-componnt @change="refetch" />
+
     <table-component
       :columns="columns"
       :rows="rows"
@@ -87,45 +59,74 @@
 
       <template #actions-data="{ row }">
         <dropdown-menu
-          :items="items"
+          :items="items(row as unknown as Z_Transaction)"
           :data="row"
         >
         </dropdown-menu>
       </template>
     </table-component>
   </div>
+  <transaction-edit-form
+    v-if="openTransactionEditForm"
+    :modal-open="openTransactionEditForm"
+    @close="openTransactionEditForm = false"
+    :transaction="selectedTransaction"
+    @saved="refetch"
+  />
+  <scheduled-transaction-edit-form
+    v-if="openScheduledTransactionEditForm"
+    :modal-open="openScheduledTransactionEditForm"
+    @close="openScheduledTransactionEditForm = false"
+    :transaction="selectedTransaction"
+    @saved="refetch"
+  />
+  <remove-transaction-form
+    v-if="openRemoveTransactionForm"
+    :modal-open="openRemoveTransactionForm"
+    @close="openRemoveTransactionForm = false"
+    :transactions="transactionsToRemove"
+    @done="refetch"
+  />
 </template>
 
 <script setup lang="ts">
 import DropdownMenu from '@/components/ui/DropdownMenu.vue';
-import TableComponent from '@/components/ui/TableComponent.vue';
-import { usePagination } from '@/composables/usePagination';
-import { useDataStore } from '@/stores/dataStore';
-import { z_year, type Z_Transactions, z_month } from '@/types';
-import { Tab, TabGroup, TabList, TabPanels, TabPanel } from '@headlessui/vue';
-import { PencilSquareIcon, TrashIcon } from '@heroicons/vue/24/outline';
-import { ArrowLeftCircleIcon, ArrowRightCircleIcon, ArrowUturnLeftIcon } from '@heroicons/vue/24/solid';
-import moment, { type Moment } from 'moment';
-import { onUnmounted } from 'vue';
-import { onMounted } from 'vue';
-import { ref, type Ref } from 'vue';
 import PaginationComponnt from '@/components/ui/PaginationComponnt.vue';
+import TableComponent from '@/components/ui/TableComponent.vue';
+import { useDataStore } from '@/stores/dataStore';
+import { z_transaction, z_transactionStatus, type Z_Transaction, type Z_Transactions } from '@/types';
+import {
+  BanknotesIcon,
+  DocumentDuplicateIcon,
+  PencilSquareIcon,
+  Squares2X2Icon,
+  SquaresPlusIcon,
+  TrashIcon
+} from '@heroicons/vue/24/outline';
+import moment from 'moment';
+import { onUnmounted, ref, type Ref } from 'vue';
+import TransactionRangeControlTab from '@/components/transaction/TransactionRangeControlTab.vue';
+import TransactionEditForm from '@/components/transaction/TransactionEditForm.vue';
+import { useI18n } from 'vue-i18n';
+import { useNotification } from '@/composables/useNotification';
+import ScheduledTransactionEditForm from '@/components/transaction/ScheduledTransactionEditForm.vue';
+import RemoveTransactionForm from '@/components/transaction/RemoveTransactionForm.vue';
 
-interface TransactionTab {
-  id: string;
-  label: string;
-}
+const { t } = useI18n();
+
+const dataStore = useDataStore();
+const { transactions, accountFromId, categoryFromId } = dataStore;
+
+const notifications = useNotification();
+const { addNotification } = notifications;
 
 const loading: Ref<boolean> = ref(true);
+const selectedTransaction: Ref<Z_Transaction | undefined> = ref(undefined);
+const transactionsToRemove: Ref<Z_Transactions> = ref([]);
 
-const pagination = usePagination();
-const dataStore = useDataStore();
-const { accountFromId, categoryFromId } = dataStore;
-
-const tabs: TransactionTab[] = [
-  { id: 'by-month', label: 'transaction.tab.byMonth.title' },
-  { id: 'all', label: 'transaction.tab.all.title' }
-];
+const openTransactionEditForm: Ref<boolean> = ref(false);
+const openScheduledTransactionEditForm: Ref<boolean> = ref(false);
+const openRemoveTransactionForm: Ref<boolean> = ref(false);
 
 const columns = [
   // { key: "sId", label: "sId" },
@@ -170,87 +171,115 @@ const columns = [
 
 const rows: Ref<Z_Transactions> = ref([]);
 
-const items = [
-  [
-    {
-      label: 'menu.edit',
+const items = (row: Z_Transaction) => {
+  const menuItems: any = [
+    [
+      {
+        label: 'menu.edit',
+        icon: PencilSquareIcon,
+        click: () => {
+          selectedTransaction.value = row;
+          openTransactionEditForm.value = true;
+        }
+      }
+    ],
+    [
+      {
+        label: 'menu.duplicate',
+        icon: DocumentDuplicateIcon,
+        click: () => {
+          const tCopy = z_transaction.parse(row);
+          tCopy.id = crypto.randomUUID();
+          const res = dataStore.addTransaction(tCopy);
+          if (res && res.success) {
+            addNotification('success', t('transaction.form.saved'));
+            refetch();
+          } else {
+            addNotification('danger', t('transaction.form.saveFailed'));
+          }
+        }
+      }
+    ],
+    [
+      {
+        label: 'menu.delete',
+        icon: TrashIcon,
+        click: () => {
+          console.log('remove clicked...');
+          transactionsToRemove.value = [row];
+          openRemoveTransactionForm.value = true;
+        }
+      }
+    ]
+  ];
+
+  if (row.sId !== null) {
+    menuItems[0].push({
+      label: 'menu.all.edit',
       icon: PencilSquareIcon,
-      click: (data: any) => {
-        console.log(data);
+      click: () => {
+        selectedTransaction.value = row;
+        openScheduledTransactionEditForm.value = true;
       }
-    },
-    {
-      label: 'menu.delete',
+    });
+    menuItems[2].push({
+      label: 'menu.all.delete',
       icon: TrashIcon,
-      click: (data: any) => {
-        console.log;
+      disabled: false,
+      click: () => {
+        if (!row.sId) {
+          return;
+        }
+
+        const items = dataStore.transactions.filter((t) => {
+          return t.sId === row.sId && t.status === z_transactionStatus.enum.Pending;
+        });
+
+        transactionsToRemove.value = items;
+        openRemoveTransactionForm.value = true;
       }
-    }
-  ]
-];
+    });
+  }
 
-const sortIt = (event: any) => {
-  // todo: setSort
+  if (row.status === z_transactionStatus.enum.Paid) {
+    menuItems[1].push({
+      label: 'menu.pending',
+      icon: BanknotesIcon,
+      click: () => {
+        const transaction = z_transaction.parse(row);
+        transaction.status = z_transactionStatus.enum.Pending;
+        const res = dataStore.editTransaction(transaction);
+        if (res && res.success) {
+          addNotification('success', t('transaction.form.saved'));
+          refetch();
+        } else {
+          addNotification('danger', t('transaction.form.saveFailed'));
+        }
+      }
+    });
+  } else {
+    menuItems[1].push({
+      label: 'menu.paid',
+      icon: BanknotesIcon,
+      click: () => {
+        const transaction = z_transaction.parse(row);
+        transaction.status = z_transactionStatus.enum.Paid;
+        const res = dataStore.editTransaction(transaction);
+        if (res && res.success) {
+          addNotification('success', t('transaction.form.saved'));
+          refetch();
+        } else {
+          addNotification('danger', t('transaction.form.saveFailed'));
+        }
+      }
+    });
+  }
+
+  return menuItems;
 };
 
-const refresh = () => {
+const refetch = () => {
   loading.value = true;
-
-  rows.value = dataStore.fetchTransactions();
-};
-
-const changeTab = (i: number) => {
-  loading.value = true;
-
-  switch (tabs[i].id) {
-    case 'all':
-      pagination.setDayFilter(null);
-      pagination.setPagination(1, 1_000);
-      rows.value = dataStore.fetchTransactions();
-      break;
-    default:
-      pagination.setPagination(1, 10);
-      pagination.setDayFilter({
-        year: moment().year(),
-        month: moment().month()
-      });
-      rows.value = dataStore.fetchTransactions();
-      break;
-  }
-};
-
-const changeMonth = (direction: 'previous' | 'next' | 'reset') => {
-  loading.value = true;
-
-  let y = moment().year();
-  let m = moment().month();
-
-  if (z_year.safeParse(pagination.dayFilter.value?.year).success) {
-    y = z_year.parse(pagination.dayFilter.value?.year);
-  }
-
-  if (z_month.safeParse(pagination.dayFilter.value?.month).success) {
-    m = z_month.parse(pagination.dayFilter.value?.month);
-  }
-
-  let t: Moment = moment();
-
-  switch (direction) {
-    case 'previous':
-      t = moment().year(y).month(m).startOf('month').subtract(1, 'month');
-      break;
-    case 'next':
-      t = moment().year(y).month(m).startOf('month').add(1, 'month');
-      break;
-    default:
-      t = moment();
-      break;
-  }
-
-  pagination.dayFilter.value = {
-    year: t.year(),
-    month: t.month()
-  };
 
   rows.value = dataStore.fetchTransactions();
 };
@@ -285,10 +314,6 @@ const unsubscribe = dataStore.$onAction(
     }
   }
 );
-
-onMounted(() => {
-  changeTab(0);
-});
 
 onUnmounted(() => {
   // manually remove the listener
