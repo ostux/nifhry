@@ -4,23 +4,18 @@
       @change="changeTab"
       :defaultIndex="0"
     >
-      <TabList class="flex gap-4 rounded-md p-2 shadow-md">
+      <TabList class="flex justify-between gap-4 rounded-md p-2 shadow-md">
         <Tab
           v-for="tab in tabs"
-          as="template"
+          as="component"
           :key="tab.id"
           v-slot="{ selected }"
         >
-          <button
-            :class="[
-              'button w-full',
-              selected
-                ? 'border-0 bg-pine-green-500/50 text-black shadow ring-2 ring-pine-green-500 dark:text-white'
-                : ' hover:text-balck hover:bg-pine-green-200/[0.12] dark:hover:text-white'
-            ]"
-          >
-            {{ $t(tab.label) }}
-          </button>
+          <simple-button
+            class="w-full"
+            :label="tab.label"
+            :active="selected"
+          />
         </Tab>
       </TabList>
       <TabPanels class="p-4">
@@ -62,6 +57,7 @@ import { Tab, TabGroup, TabList, TabPanels, TabPanel } from '@headlessui/vue';
 import { ArrowLeftCircleIcon, ArrowRightCircleIcon, ArrowUturnLeftIcon } from '@heroicons/vue/24/solid';
 import moment, { type Moment } from 'moment';
 import { onMounted } from 'vue';
+import SimpleButton from '../ui/SimpleButton.vue';
 
 interface TransactionTab {
   id: string;

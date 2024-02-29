@@ -16,46 +16,31 @@
     </template>
 
     <div class="flex flex-col gap-4">
-      <label class="block text-sm font-medium leading-6 text-gray-900 dark:text-white">
-        {{ $t('category.form.edit.name') }}
+      <input-field
+        name="name"
+        type="text"
+        v-model="state.name"
+        :label="$t('category.form.edit.name')"
+        :errors="errors?.name"
+        required
+      />
 
-        <input
-          type="text"
-          name="name"
-          v-model="state.name"
-          class="button w-full text-gray-800 dark:text-white"
-        />
-      </label>
+      <input-field
+        name="description"
+        type="text"
+        v-model="state.description"
+        :label="$t('category.form.edit.description')"
+        :errors="errors?.description"
+      />
 
-      <label class="block text-sm font-medium leading-6 text-gray-900 dark:text-white">
-        {{ $t('category.form.edit.description') }}
-
-        <textarea
-          rows="4"
-          name="descri"
-          v-model="state.description"
-          class="button w-full text-gray-800 dark:text-white"
-        ></textarea>
-      </label>
-
-      <label class="block text-sm font-medium leading-6 text-gray-900 dark:text-white">
-        {{ $t('category.form.edit.parent') }}
-
-        <select-box
-          :options="categorySelectList"
-          :pre-selected="selectedParentCategory"
-          @select="setCategoryParent"
-        />
-      </label>
+      <select-box
+        name="status"
+        :options="categorySelectList"
+        :pre-selected="selectedParentCategory?.id"
+        @select="setCategoryParent"
+        :label="$t('category.form.edit.parent')"
+      />
     </div>
-
-    <template v-slot:errors>
-      <span
-        v-for="error in errors"
-        :key="error"
-        >{{ error }}</span
-      >
-    </template>
   </base-modal>
 </template>
 
@@ -64,10 +49,11 @@ import BaseModal from '@/components/ui/BaseModal.vue';
 import SelectBox from '@/components/ui/SelectBox.vue';
 import { useNotification } from '@/composables/useNotification';
 import { useDataStore } from '@/stores/dataStore';
-import { type Z_Category, type Z_ApiResponse, z_category } from '@/types';
+import { type Z_Category, type Z_ApiResponse, z_category, type Z_FormError } from '@/types';
 import { storeToRefs } from 'pinia';
 import { ref, watch, type PropType, type Ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import InputField from '../ui/InputField.vue';
 
 const emit = defineEmits(['close']);
 const props = defineProps({
@@ -98,7 +84,7 @@ const state: Ref<Z_Category> = ref({
 const selectedParentCategory = ref(categorySelectList.value.find((c) => c.id === state.value.parent));
 
 const okDisabled: Ref<boolean> = ref(true);
-const errors: Ref<string[]> = ref([]);
+const errors: Ref<Z_FormError> = ref({});
 
 const setCategoryParent = (e: { id: string }) => {
   const t = categorySelectList.value.find((a) => a.id === e.id)?.id;
@@ -111,16 +97,23 @@ const setCategoryParent = (e: { id: string }) => {
 watch(
   [state],
   () => {
-    errors.value = [];
+    errors.value = {};
 
     const valid = z_category.safeParse(state.value);
 
     if (!valid.success) {
-      valid.error.errors.forEach((err) => {
-        errors.value.push(err.message);
+      valid.error.issues.forEach((err) => {
+        err.path.forEach((p) => {
+          if (!errors.value[p]) {
+            errors.value[p] = [];
+          }
+
+          errors.value[p].push(err.message);
+        });
       });
     }
 
+    console.log(state.value);
     okDisabled.value = !valid.success;
   },
   { deep: true }
@@ -139,9 +132,6 @@ const save = () => {
     addNotification('success', t('category.form.saved'));
     emit('close');
   } else {
-    res?.errors.forEach((e) => {
-      errors.value.push(e);
-    });
     addNotification('danger', t('category.form.saveFailed'));
   }
 };

@@ -18,7 +18,7 @@
 
         <label
           for="fileToLoad"
-          class="button focus-within:outline-none focus-within:ring-2 focus-within:ring-pine-green-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pine-green-700 dark:focus-within:ring-pine-green-300 dark:focus-visible:ring-pine-green-300"
+          class="button f-w"
         >
           {{ $t('button.choose') }}
           <input

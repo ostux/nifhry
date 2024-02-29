@@ -2,6 +2,10 @@ import { z } from 'zod';
 
 export const nullUUID = '00000000-0000-0000-0000-000000000000';
 
+export interface Z_FormError {
+  [index: string]: string[];
+}
+
 export const z_year = z.coerce.number().min(1900).max(3000);
 export type Z_Year = z.infer<typeof z_year>;
 

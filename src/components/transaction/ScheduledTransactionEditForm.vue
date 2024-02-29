@@ -30,7 +30,7 @@
       <select-box
         name="frequency"
         :options="frequencyOptions"
-        :pre-selected="{ id: z_frequency.enum.Monthly, name: z_frequency.enum.Monthly }"
+        :pre-selected="z_frequency.enum.Monthly"
         @select="setFrequency"
         :label="$t('transaction.form.edit.frequency')"
         :disabled="!!transaction"
@@ -50,7 +50,7 @@
       <select-box
         name="category"
         :options="categorySelectList"
-        :pre-selected="categorySelectList.find((c) => c.id === state.category)"
+        :pre-selected="categorySelectList.find((c) => c.id === state.category)?.id"
         @select="
           setCategory($event);
           autoDescription();
@@ -80,7 +80,7 @@
       <select-box
         name="from"
         :options="accountSelectList"
-        :pre-selected="accountSelectList.find((a) => a.id === state.from)"
+        :pre-selected="accountSelectList.find((a) => a.id === state.from)?.id"
         @select="setFrom"
         :label="$t('transaction.form.edit.from')"
       />
@@ -88,7 +88,7 @@
       <select-box
         name="to"
         :options="accountSelectList"
-        :pre-selected="accountSelectList.find((a) => a.id === state.to)"
+        :pre-selected="accountSelectList.find((a) => a.id === state.to)?.id"
         @select="setTo"
         :label="$t('transaction.form.edit.to')"
       />
@@ -106,7 +106,7 @@
       <select-box
         name="status"
         :options="paidOptions"
-        :pre-selected="paidOptions.find((s) => s.id === state.status)"
+        :pre-selected="paidOptions.find((s) => s.id === state.status)?.id"
         @select="setPaid"
         :label="$t('transaction.form.edit.status')"
       />

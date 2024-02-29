@@ -16,58 +16,45 @@
     </template>
 
     <div class="flex flex-col gap-4">
-      <label class="block text-sm font-medium leading-6 text-gray-900 dark:text-white">
-        {{ $t('account.form.edit.name') }}
+      <input-field
+        name="name"
+        type="text"
+        v-model="state.name"
+        :label="$t('account.form.edit.name')"
+        :errors="errors?.name"
+        required
+      />
 
-        <input
-          type="text"
-          name="name"
-          v-model="state.name"
-          class="button w-full text-gray-800 dark:text-white"
-        />
-      </label>
+      <input-field
+        name="starting-balance"
+        type="number"
+        step="any"
+        v-model="state.startingBalance"
+        :label="$t('account.form.edit.startingBalance')"
+        :errors="errors?.startingBalance"
+        required
+      />
 
-      <label class="block text-sm font-medium leading-6 text-gray-900 dark:text-white">
-        {{ $t('account.form.edit.startingBalance') }}
-
-        <input
-          type="number"
-          step="any"
-          name="starting-balance"
-          v-model="state.startingBalance"
-          class="button w-full text-gray-800 dark:text-white"
-        />
-      </label>
-
-      <label class="block text-sm font-medium leading-6 text-gray-900 dark:text-white">
-        {{ $t('account.form.edit.accountType') }}
-
-        <select-box
-          :options="accountTypes"
-          :pre-selected="selectedType"
-          @select="setAccountType"
-        />
-      </label>
+      <select-box
+        name="status"
+        :options="accountTypes"
+        :pre-selected="state.aType"
+        @select="setAccountType"
+        :label="$t('account.form.edit.accountType')"
+      />
     </div>
-
-    <template v-slot:errors>
-      <span
-        v-for="error in errors"
-        :key="error"
-        >{{ error }}</span
-      >
-    </template>
   </base-modal>
 </template>
 
 <script setup lang="ts">
 import BaseModal from '@/components/ui/BaseModal.vue';
-import SelectBox from '@/components/ui/SelectBox.vue';
 import { useNotification } from '@/composables/useNotification';
 import { useDataStore } from '@/stores/dataStore';
-import { z_account, z_acctountType, type Z_Account, type Z_ApiResponse } from '@/types';
+import { z_account, z_acctountType, type Z_Account, type Z_ApiResponse, type Z_FormError } from '@/types';
 import { ref, watch, type PropType, type Ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import InputField from '@/components/ui/InputField.vue';
+import SelectBox from '@/components/ui/SelectBox.vue';
 
 const emit = defineEmits(['close']);
 const props = defineProps({
@@ -87,10 +74,10 @@ const notifications = useNotification();
 const { addNotification } = notifications;
 
 const accountTypes = [
-  { id: z_acctountType.enum.Credit, label: `account.type.${z_acctountType.enum.Credit}` },
-  { id: z_acctountType.enum.Debit, label: `account.type.${z_acctountType.enum.Debit}` },
-  { id: z_acctountType.enum.Loan, label: `account.type.${z_acctountType.enum.Loan}` },
-  { id: z_acctountType.enum.Saving, label: `account.type.${z_acctountType.enum.Saving}` }
+  { id: z_acctountType.enum.Credit, name: t(`account.type.${z_acctountType.enum.Credit}`) },
+  { id: z_acctountType.enum.Debit, name: t(`account.type.${z_acctountType.enum.Debit}`) },
+  { id: z_acctountType.enum.Loan, name: t(`account.type.${z_acctountType.enum.Loan}`) },
+  { id: z_acctountType.enum.Saving, name: t(`account.type.${z_acctountType.enum.Saving}`) }
 ];
 
 const state: Ref<Z_Account> = ref({
@@ -102,10 +89,10 @@ const state: Ref<Z_Account> = ref({
   aType: accountTypes.find((a) => a.id === props.account?.aType)?.id || z_acctountType.enum.Debit
 } as Z_Account);
 
-const selectedType = ref(accountTypes.find((a) => a.id === state.value.aType));
+// const selectedType = ref(accountTypes.find((a) => a.id === state.value.aType));
 
 const okDisabled: Ref<boolean> = ref(true);
-const errors: Ref<string[]> = ref([]);
+const errors: Ref<Z_FormError> = ref({});
 
 const setAccountType = (e: { id: string }) => {
   const t = accountTypes.find((a) => a.id === e.id)?.id;
@@ -118,16 +105,23 @@ const setAccountType = (e: { id: string }) => {
 watch(
   [state],
   () => {
-    errors.value = [];
+    errors.value = {};
 
     const valid = z_account.safeParse(state.value);
 
     if (!valid.success) {
-      valid.error.errors.forEach((err) => {
-        errors.value.push(err.message);
+      valid.error.issues.forEach((err) => {
+        err.path.forEach((p) => {
+          if (!errors.value[p]) {
+            errors.value[p] = [];
+          }
+
+          errors.value[p].push(err.message);
+        });
       });
     }
 
+    console.log(state.value);
     okDisabled.value = !valid.success;
   },
   { deep: true }
@@ -146,9 +140,6 @@ const save = () => {
     addNotification('success', t('account.form.saved'));
     emit('close');
   } else {
-    res?.errors.forEach((e) => {
-      errors.value.push(e);
-    });
     addNotification('danger', t('account.form.saveFailed'));
   }
 };

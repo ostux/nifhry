@@ -37,7 +37,8 @@
           leave-to="opacity-0 scale-95"
         >
           <DialogPanel
-            class="z-30 h-fit max-h-screen w-full max-w-xl transform self-center overflow-y-auto overflow-x-hidden rounded-lg bg-slate-100 text-left text-gray-800 shadow-xl transition-all dark:border dark:border-gray-400/20 dark:bg-slate-800 dark:text-gray-200"
+            class="z-30 h-fit max-h-screen w-full max-w-xl transform self-center rounded-lg bg-slate-100 text-left text-gray-800 shadow-xl transition-all dark:border dark:border-gray-400/20 dark:bg-slate-800 dark:text-gray-200"
+            style="overflow: unset"
           >
             <DialogTitle class="border-b border-slate-200 p-4 text-lg font-medium leading-6 dark:border-slate-700">
               <slot name="header"></slot>
@@ -59,19 +60,18 @@
             </div>
 
             <div class="flex justify-between border-t border-slate-200 p-4 dark:border-slate-700">
-              <button
-                class="button z-40 w-1/4 hover:bg-orange-400/20"
+              <simple-button
+                class="z-40"
+                label="button.cancel"
                 @click="$emit('modal-close', true)"
-              >
-                {{ $t('button.cancel') }}
-              </button>
-              <button
-                class="button z-40 w-1/4 hover:bg-pine-green-400/20 disabled:cursor-not-allowed disabled:hover:bg-gray-400/20 disabled:hover:text-black dark:disabled:hover:text-white"
+              />
+
+              <simple-button
+                class="z-40"
+                :label="okTranslationSlug"
                 :disabled="okDisabled"
                 @click="$emit('modal-ok-clicked', true)"
-              >
-                {{ $t(okTranslationSlug) }}
-              </button>
+              />
             </div>
           </DialogPanel>
         </TransitionChild>
@@ -82,6 +82,7 @@
 
 <script setup lang="ts">
 import { TransitionRoot, TransitionChild, Dialog, DialogPanel, DialogTitle } from '@headlessui/vue';
+import SimpleButton from './SimpleButton.vue';
 
 defineEmits(['modal-close', 'modal-ok-clicked']);
 defineProps({

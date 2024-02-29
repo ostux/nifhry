@@ -1,27 +1,23 @@
 <template>
   <div class="mx-auto w-full max-w-6xl px-4 sm:px-0">
     <div class="mb-4 flex justify-between">
-      <div class="flex p-2">
-        <button
-          class="mr-4 flex h-10 cursor-pointer items-center justify-center gap-2 rounded-md border border-gray-300 px-4 py-2 hover:bg-pine-green-100/50 focus:border-pine-green-500 focus:outline-none focus:ring-1 focus:ring-pine-green-500"
+      <div class="flex gap-4 p-2">
+        <simple-button
+          label="transaction.form.add.single.title"
+          :icon="Squares2X2Icon"
           @click="
             selectedTransaction = undefined;
             openTransactionEditForm = true;
           "
-        >
-          <Squares2X2Icon class="size-6" />
-          <span>{{ $t('transaction.form.add.single.title') }}</span>
-        </button>
-        <button
-          class="mr-4 flex h-10 cursor-pointer items-center justify-center gap-2 rounded-md border border-gray-300 px-4 py-2 hover:bg-pine-green-100/50 focus:border-pine-green-500 focus:outline-none focus:ring-1 focus:ring-pine-green-500"
+        />
+        <simple-button
+          label="transaction.form.add.single.title"
+          :icon="SquaresPlusIcon"
           @click="
             selectedTransaction = undefined;
             openScheduledTransactionEditForm = true;
           "
-        >
-          <SquaresPlusIcon class="size-6" />
-          <span>{{ $t('transaction.form.add.multi.title') }}</span>
-        </button>
+        />
       </div>
       <transaction-range-control-tab @change="refetch" />
     </div>
@@ -111,6 +107,7 @@ import { useI18n } from 'vue-i18n';
 import { useNotification } from '@/composables/useNotification';
 import ScheduledTransactionEditForm from '@/components/transaction/ScheduledTransactionEditForm.vue';
 import RemoveTransactionForm from '@/components/transaction/RemoveTransactionForm.vue';
+import SimpleButton from '@/components/ui/SimpleButton.vue';
 
 const { t } = useI18n();
 

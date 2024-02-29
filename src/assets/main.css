@@ -3,7 +3,15 @@
 @tailwind utilities;
 
 .button {
-  @apply block rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm placeholder-slate-400 shadow-sm invalid:border-pink-500 invalid:text-pink-600 focus:border-pine-green-500 focus:outline-none focus:ring-1 focus:ring-pine-green-500 focus:invalid:border-pink-500 focus:invalid:ring-pink-500 disabled:border-slate-200  disabled:text-slate-500 disabled:shadow-none;
+  @apply flex h-fit min-w-24 items-center justify-evenly gap-2 rounded-md border border-gray-400/30 px-3 py-2 text-sm placeholder-gray-500 shadow-sm invalid:border-pink-500 invalid:text-pink-600 hover:bg-pine-green-200/20 focus:border-pine-green-500 focus:outline-none focus:ring-1 focus:ring-pine-green-500  focus:invalid:border-pink-500 focus:invalid:ring-pink-500 disabled:cursor-not-allowed disabled:border-gray-200/50 disabled:text-gray-500 disabled:shadow-none disabled:hover:bg-gray-400/20;
+}
+
+.disabled-select {
+  @apply disabled:cursor-not-allowed disabled:border-2 disabled:border-gray-200/50 disabled:border-gray-500 disabled:bg-gray-200/10 disabled:text-gray-500 disabled:shadow-none disabled:hover:bg-gray-400/20 dark:text-white dark:[color-scheme:dark];
+}
+
+.f-w {
+  @apply focus-within:outline-none focus-within:ring-1 focus-within:ring-pine-green-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pine-green-700 dark:focus-within:ring-pine-green-300 dark:focus-visible:ring-pine-green-300;
 }
 
 #app {

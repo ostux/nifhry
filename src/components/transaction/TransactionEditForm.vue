@@ -19,7 +19,7 @@
       <select-box
         name="category"
         :options="categorySelectList"
-        :pre-selected="categorySelectList.find((c) => c.id === state.category)"
+        :pre-selected="categorySelectList.find((c) => c.id === state.category)?.id"
         @select="
           setCategory($event);
           autoDescription();
@@ -49,7 +49,7 @@
       <select-box
         name="from"
         :options="accountSelectList"
-        :pre-selected="accountSelectList.find((a) => a.id === state.from)"
+        :pre-selected="accountSelectList.find((a) => a.id === state.from)?.id"
         @select="setFrom"
         :label="$t('transaction.form.edit.from')"
       />
@@ -57,7 +57,7 @@
       <select-box
         name="to"
         :options="accountSelectList"
-        :pre-selected="accountSelectList.find((a) => a.id === state.to)"
+        :pre-selected="accountSelectList.find((a) => a.id === state.to)?.id"
         @select="setTo"
         :label="$t('transaction.form.edit.to')"
       />
@@ -74,7 +74,7 @@
       <select-box
         name="status"
         :options="paidOptions"
-        :pre-selected="paidOptions.find((s) => s.id === state.status)"
+        :pre-selected="paidOptions.find((s) => s.id === state.status)?.id"
         @select="setPaid"
         :label="$t('transaction.form.edit.status')"
       />
@@ -88,17 +88,20 @@ import InputField from '@/components/ui/InputField.vue';
 import SelectBox from '@/components/ui/SelectBox.vue';
 import { useNotification } from '@/composables/useNotification';
 import { useDataStore } from '@/stores/dataStore';
-import { nullUUID, z_transaction, z_transactionStatus, type Z_ApiResponse, type Z_Transaction, type Z_Category } from '@/types';
+import {
+  nullUUID,
+  z_transaction,
+  z_transactionStatus,
+  type Z_ApiResponse,
+  type Z_Category,
+  type Z_FormError,
+  type Z_Transaction
+} from '@/types';
 import moment from 'moment';
 import { storeToRefs } from 'pinia';
 import type { ComputedRef } from 'vue';
-import { computed } from 'vue';
-import { onMounted, ref, watch, type PropType, type Ref } from 'vue';
+import { computed, onMounted, ref, watch, type PropType, type Ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-
-interface Z_FormError {
-  [index: string]: string[];
-}
 
 const emit = defineEmits(['close', 'saved']);
 const props = defineProps({

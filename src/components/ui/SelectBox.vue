@@ -2,76 +2,69 @@
   <label class="flex w-full flex-col text-sm font-medium leading-6 text-gray-900 dark:text-white">
     <span v-if="label">{{ label }}</span>
     <Combobox
-      :name="name"
       v-model="selected"
       @update:modelValue="(value) => $emit('select', value)"
     >
       <div class="relative mt-1">
         <div
-          class="relative w-full cursor-default overflow-hidden rounded-lg border border-gray-400/30 bg-transparent text-left shadow-md focus-within:border-pine-green-500 focus-within:ring-1 focus-within:ring-pine-green-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-pine-green-500/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm"
+          class="f-w relative w-full cursor-default overflow-hidden rounded-lg border border-gray-400/30 bg-transparent text-left shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm"
         >
           <ComboboxInput
+            class="disabled-select w-full border-none bg-transparent py-2 pl-3 pr-10 text-sm leading-5 text-black focus:ring-0 dark:text-white"
             :displayValue="(item: any) => item.name"
             @change="query = $event.target.value"
-            class="w-full border-none bg-transparent py-2 pl-3 pr-10 text-sm leading-5 text-gray-900 focus:border-pine-green-500 focus:outline-none focus:ring-1 focus:ring-pine-green-500 disabled:cursor-not-allowed disabled:bg-gray-200/10 dark:text-white dark:[color-scheme:dark]"
             :disabled="disabled"
           />
-          <ComboboxButton
-            class="absolute inset-y-0 right-0 flex items-center pr-2 disabled:cursor-not-allowed disabled:bg-gray-200/10 disabled:focus:ring-gray-200/20"
-            :disabled="disabled"
-          >
+          <ComboboxButton class="absolute inset-y-0 right-0 flex items-center pr-2">
             <ChevronUpDownIcon
               class="h-5 w-5 text-gray-400"
               aria-hidden="true"
             />
           </ComboboxButton>
         </div>
-        <transition
-          enter-active-class="transition duration-100 ease-out"
-          enter-from-class="transform scale-95 opacity-0"
-          enter-to-class="transform scale-100 opacity-100"
-          leave-active-class="transition duration-75 ease-out"
-          leave-from-class="transform scale-100 opacity-100"
-          leave-to-class="transform scale-95 opacity-0"
+        <TransitionRoot
+          leave="transition ease-in duration-100"
+          leaveFrom="opacity-100"
+          leaveTo="opacity-0"
           @after-leave="query = ''"
         >
           <ComboboxOptions
-            class="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md border bg-white py-1 text-base ring-1 ring-black/5 focus:outline-none dark:border-gray-400/30 dark:bg-gray-800 sm:text-sm"
+            class="absolute mt-1 max-h-60 w-full overflow-visible rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none dark:border-gray-400/30 dark:bg-gray-800 sm:text-sm"
+            style="z-index: 999; max-height: 250px; overflow-y: auto"
           >
             <div
               v-if="filteredOptions.length === 0 && query !== ''"
-              class="relative cursor-default select-none px-4 py-2 text-gray-700 dark:text-white"
+              class="relative cursor-default select-none px-4 py-2 text-gray-700"
             >
               Nothing found.
             </div>
 
             <ComboboxOption
-              v-slot="{ active, selected }"
               v-for="item in filteredOptions"
+              as="template"
               :key="item.id"
               :value="item"
               :disabled="item.disabled"
-              class=""
+              v-slot="{ selected, active }"
             >
               <li
+                class="relative cursor-default select-none py-2 pl-10 pr-4"
                 :class="[
                   active ? 'bg-pine-green-100 text-pine-green-900' : 'text-gray-900 dark:text-white',
                   'relative cursor-default select-none py-2 pl-10 pr-4',
                   item.disabled ? 'cursor-not-allowed bg-gray-200 line-through opacity-50' : ''
                 ]"
               >
-                <span :class="[selected ? 'font-medium' : 'font-normal', 'block truncate']">
-                  <template v-if="item?.label">
-                    {{ $t(item.label) }}
-                  </template>
-                  <template v-if="item?.name">
-                    {{ item.name }}
-                  </template>
-                  {{}}
+                <span
+                  class="block truncate"
+                  :class="{ 'font-medium': selected, 'font-normal': !selected }"
+                >
+                  {{ item.name }}
                 </span>
                 <span
                   v-if="selected"
                   class="absolute inset-y-0 left-0 flex items-center pl-3 text-pine-green-600"
+                  :class="{ 'text-white': active, 'text-teal-600': !active }"
                 >
                   <CheckIcon
                     class="h-5 w-5"
@@ -81,20 +74,20 @@
               </li>
             </ComboboxOption>
           </ComboboxOptions>
-        </transition>
+        </TransitionRoot>
       </div>
     </Combobox>
   </label>
 </template>
+
 <script setup lang="ts">
-import { Combobox, ComboboxButton, ComboboxInput, ComboboxOption, ComboboxOptions } from '@headlessui/vue';
+import { Combobox, ComboboxButton, ComboboxInput, ComboboxOption, ComboboxOptions, TransitionRoot } from '@headlessui/vue';
 import { CheckIcon, ChevronUpDownIcon } from '@heroicons/vue/20/solid';
-import { computed, ref, type PropType } from 'vue';
+import { computed, onMounted, ref, type PropType, type Ref } from 'vue';
 
 interface SelectItemObject {
   id: string;
-  label?: string;
-  name?: string;
+  name: string;
   disabled?: boolean;
 }
 
@@ -105,7 +98,7 @@ const props = defineProps({
     required: true
   },
   preSelected: {
-    type: Object as PropType<SelectItemObject>,
+    type: String,
     required: false
   },
   label: {
@@ -122,19 +115,21 @@ const props = defineProps({
   }
 });
 
-const query = ref('');
+let selected: Ref<SelectItemObject | undefined> = ref(undefined);
 
-const queryOptions = computed(() => {
-  return query.value === '' ? null : { id: null, name: query.value };
-});
+let query = ref('');
 
-const filteredOptions = computed(() =>
+let filteredOptions = computed(() =>
   query.value === ''
     ? props.options
-    : props.options.filter((o) => {
-        return o.name?.toLowerCase().includes(query.value.toLowerCase());
-      })
+    : props.options.filter((item) =>
+        item?.name?.toLowerCase().replace(/\s+/g, '').includes(query.value.toLowerCase().replace(/\s+/g, ''))
+      )
 );
 
-const selected = ref(props.preSelected);
+onMounted(() => {
+  if (props.preSelected) {
+    selected.value = props.options.find((o) => o.id === props.preSelected);
+  }
+});
 </script>

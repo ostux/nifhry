@@ -1,32 +1,30 @@
 <template>
-  <div>
-    <label class="flex w-full flex-col text-sm font-medium leading-6 text-gray-900 dark:text-white">
-      <span v-if="label">{{ label }}</span>
+  <label class="flex w-full flex-col text-sm font-medium leading-6 text-gray-900 dark:text-white">
+    <span v-if="label">{{ label }}</span>
 
-      <input
-        ref="input"
-        :name="name"
-        v-model="model"
-        :type="type"
-        :required="required"
-        :placeholder="placeholder"
-        :disabled="disabled"
-        :step="step"
-        @change="onChange"
-        class="button mb-1 mt-2 w-full text-gray-800 focus:border-pine-green-500 focus:outline-none focus:ring-1 focus:ring-pine-green-500 disabled:cursor-not-allowed disabled:bg-gray-200/10 dark:text-white dark:[color-scheme:dark]"
-      />
+    <input
+      ref="input"
+      :name="name"
+      v-model="model"
+      :type="type"
+      :required="required"
+      :placeholder="placeholder"
+      :disabled="disabled"
+      :step="step"
+      @change="onChange"
+      class="button mb-1 mt-2 w-full bg-transparent text-gray-800 focus:border-pine-green-500 focus:outline-none focus:ring-1 focus:ring-pine-green-500 disabled:cursor-not-allowed disabled:bg-gray-200/10 dark:text-white dark:[color-scheme:dark]"
+    />
 
-      <template v-if="errors?.length">
-        <span
-          class="text-xs text-rose-800 dark:text-rose-300"
-          v-for="(error, index) in errors"
-          :key="index"
-        >
-          {{ error }}
-        </span>
-      </template>
-    </label>
-  </div>
+    <template v-if="errors?.length">
+      <span
+        class="text-xs text-rose-800 dark:text-rose-300"
+        v-for="(error, index) in errors"
+        :key="index"
+      >
+        {{ error }}
+      </span>
+    </template>
+  </label>
 </template>
 
 <script setup lang="ts">
