@@ -41,7 +41,7 @@
               <td
                 v-for="(column, subIndex) in columns"
                 :key="subIndex"
-                class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400"
+                class="relative whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400"
               >
                 <slot
                   :name="`${column.key}-data`"

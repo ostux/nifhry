@@ -24,7 +24,7 @@
         :label="$t('transaction.form.edit.start')"
         :errors="errors?.when"
         :disabled="!!transaction"
-        @change="state.when = moment(start).format('YYYY-MM-DD')"
+        @change="state.when = moment(start).toDate()"
       />
 
       <select-box
@@ -94,12 +94,12 @@
       />
 
       <input-field
-        name="when"
+        :name="state.when.toString()"
         type="date"
-        v-model="state.when"
+        v-model="when"
+        @change="setWhen"
         :label="$t('transaction.form.edit.when')"
         :errors="errors?.when"
-        :disabled="!!transaction"
         required
       />
 
@@ -166,14 +166,20 @@ const state: Ref<Z_Transaction> = ref({
   category: props.transaction?.category || undefined,
   from: props.transaction?.from || nullUUID,
   to: props.transaction?.to || nullUUID,
-  when: moment(props.transaction?.when).format('YYYY-MM-DD') || moment().format('YYYY-MM-DD'),
+  when: moment(props.transaction?.when).toDate() || moment().toDate(),
   status: props.transaction?.status || z_transactionStatus.enum.Paid,
   sId: props.transaction?.sId || null
 } as unknown as Z_Transaction);
 
+const when: Ref<string> = ref(moment(props.transaction?.when).format('YYYY-MM-DD') || moment().format('YYYY-MM-DD'));
+
 const okDisabled: Ref<boolean> = ref(true);
 const errors: Ref<Z_FormError> = ref({});
-const start: Ref<string> = ref(moment().format('YYYY-MM-DD'));
+const start: Ref<Date> = ref(moment().toDate());
+
+const setWhen = (e: Event) => {
+  state.value.when = moment((e.target as HTMLInputElement).value).toDate();
+};
 
 const setCategory = (e: { id: string }) => {
   const category = categorySelectList.value.find((a) => a.id === e.id)?.id;
@@ -279,7 +285,7 @@ onMounted(() => {
       category: props.transaction?.category,
       from: props.transaction?.from || nullUUID,
       to: props.transaction?.to || nullUUID,
-      when: moment(props.transaction?.when).format('YYYY-MM-DD') || moment().format('YYYY-MM-DD'),
+      when: moment(props.transaction?.when).toDate() || moment().toDate(),
       status: props.transaction?.status || z_transactionStatus.enum.Paid,
       sId: props.transaction?.sId || null
     } as unknown as Z_Transaction;
@@ -298,7 +304,7 @@ const addTransactions = () => {
       category: state.value.category,
       from: state.value.from || null,
       to: state.value.to || null,
-      when: moment().format('YYYY-MM-DD'),
+      when: moment().toDate(),
       status: state.value.status,
       sId: scheduleId
     };
@@ -306,25 +312,25 @@ const addTransactions = () => {
     if (t > 0) {
       switch (selectedFrequency.value) {
         case z_frequency.enum.Yearly:
-          transaction.when = moment(start.value).add(t, 'years').format('YYYY-MM-DD');
+          transaction.when = moment(start.value).add(t, 'years').toDate();
           if (moment(transaction.when).isAfter(moment(), 'year')) {
             transaction.status = z_transactionStatus.enum.Pending;
           }
           break;
         case z_frequency.enum.Monthly:
-          transaction.when = moment(start.value).add(t, 'months').format('YYYY-MM-DD');
+          transaction.when = moment(start.value).add(t, 'months').toDate();
           if (moment(transaction.when).isAfter(moment(), 'month')) {
             transaction.status = z_transactionStatus.enum.Pending;
           }
           break;
         case z_frequency.enum.Weekly:
-          transaction.when = moment(start.value).add(t, 'weeks').format('YYYY-MM-DD');
+          transaction.when = moment(start.value).add(t, 'weeks').toDate();
           if (moment(transaction.when).isAfter(moment(), 'week')) {
             transaction.status = z_transactionStatus.enum.Pending;
           }
           break;
         case z_frequency.enum.Daily:
-          transaction.when = moment(start.value).add(t, 'days').format('YYYY-MM-DD');
+          transaction.when = moment(start.value).add(t, 'days').toDate();
           if (moment(transaction.when).isAfter(moment(), 'day')) {
             transaction.status = z_transactionStatus.enum.Pending;
           }
@@ -333,32 +339,32 @@ const addTransactions = () => {
     } else if (t < 0) {
       switch (selectedFrequency.value) {
         case z_frequency.enum.Yearly:
-          transaction.when = moment(start.value).subtract(t, 'years').format('YYYY-MM-DD');
+          transaction.when = moment(start.value).subtract(t, 'years').toDate();
           if (moment(transaction.when).isAfter(moment(), 'year')) {
             transaction.status = z_transactionStatus.enum.Pending;
           }
           break;
         case z_frequency.enum.Monthly:
-          transaction.when = moment(start.value).subtract(t, 'months').format('YYYY-MM-DD');
+          transaction.when = moment(start.value).subtract(t, 'months').toDate();
           if (moment(transaction.when).isAfter(moment(), 'month')) {
             transaction.status = z_transactionStatus.enum.Pending;
           }
           break;
         case z_frequency.enum.Weekly:
-          transaction.when = moment(start.value).subtract(t, 'weeks').format('YYYY-MM-DD');
+          transaction.when = moment(start.value).subtract(t, 'weeks').toDate();
           if (moment(transaction.when).isAfter(moment(), 'week')) {
             transaction.status = z_transactionStatus.enum.Pending;
           }
           break;
         case z_frequency.enum.Daily:
-          transaction.when = moment(start.value).subtract(t, 'days').format('YYYY-MM-DD');
+          transaction.when = moment(start.value).subtract(t, 'days').toDate();
           if (moment(transaction.when).isAfter(moment(), 'day')) {
             transaction.status = z_transactionStatus.enum.Pending;
           }
           break;
       }
     } else {
-      transaction.when = moment(start.value).format('YYYY-MM-DD');
+      transaction.when = moment(start.value).toDate();
       if (moment(transaction.when).isAfter(moment(), 'day')) {
         transaction.status = z_transactionStatus.enum.Pending;
       }

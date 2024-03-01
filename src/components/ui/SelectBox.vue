@@ -10,7 +10,7 @@
           class="f-w relative w-full cursor-default overflow-hidden rounded-lg border border-gray-400/30 bg-transparent text-left shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm"
         >
           <ComboboxInput
-            class="disabled-select w-full border-none bg-transparent py-2 pl-3 pr-10 text-sm leading-5 text-black focus:ring-0 dark:text-white"
+            class="disabled-select w-full border-none bg-transparent py-2 pl-3 pr-10 text-sm leading-5 text-black outline-none focus:ring-0 dark:text-white"
             :displayValue="(item: any) => item.name"
             @change="query = $event.target.value"
             :disabled="disabled"

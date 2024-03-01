@@ -1,11 +1,18 @@
 <template>
-  <div
-    class="h-[175px] w-[350px] rounded-lg border border-pine-green-500 bg-transparent pb-4 pl-4 pr-2 pt-1 hover:bg-pine-green-500/10"
-  >
-    <dropdown-menu :items="items"> </dropdown-menu>
-    <div class="sixtyfour flex flex-row">
+  <div class="relative h-[175px] w-[350px] rounded-lg border border-pine-green-500 bg-transparent p-4 hover:bg-pine-green-500/10">
+    <dropdown-menu
+      :items="items"
+      class="-mt-2"
+    />
+    <div class="flex flex-row">
       <QueueListIcon class="mr-4 size-6" />
-      {{ category.name }}
+      <div class="flex flex-col">
+        <span>{{ category.name }}</span>
+        <rovas-component
+          class="text-3xl"
+          :msg="category.name"
+        />
+      </div>
     </div>
     <div
       v-if="categoryParent"
@@ -42,6 +49,7 @@ import DeleteConfirmationForm from '@/components/ui/BaseModal.vue';
 import { useI18n } from 'vue-i18n';
 import { useDataStore } from '@/stores/dataStore';
 import { useNotification } from '@/composables/useNotification';
+import RovasComponent from '../ui/RovasComponent.vue';
 
 const { t } = useI18n();
 const dataStore = useDataStore();

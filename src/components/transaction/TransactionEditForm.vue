@@ -65,7 +65,8 @@
       <input-field
         :name="state.when.toString()"
         type="date"
-        v-model="state.when"
+        v-model="when"
+        @change="setWhen"
         :label="$t('transaction.form.edit.when')"
         :errors="errors?.when"
         required
@@ -129,13 +130,19 @@ const state: Ref<Z_Transaction> = ref({
   category: props.transaction?.category || undefined,
   from: props.transaction?.from || nullUUID,
   to: props.transaction?.to || nullUUID,
-  when: moment(props.transaction?.when).format('YYYY-MM-DD') || moment().format('YYYY-MM-DD'),
+  when: moment(props.transaction?.when).toDate() || moment().toDate(),
   status: props.transaction?.status || z_transactionStatus.enum.Paid,
   sId: props.transaction?.sId || null
 } as unknown as Z_Transaction);
 
+const when: Ref<string> = ref(moment(props.transaction?.when).format('YYYY-MM-DD') || moment().format('YYYY-MM-DD'));
+
 const okDisabled: Ref<boolean> = ref(true);
 const errors: Ref<Z_FormError> = ref({});
+
+const setWhen = (e: Event) => {
+  state.value.when = moment((e.target as HTMLInputElement).value).toDate();
+};
 
 const setCategory = (e: { id: string }) => {
   const category = categorySelectList.value.find((a) => a.id === e.id)?.id;
@@ -230,7 +237,7 @@ onMounted(() => {
       category: props.transaction?.category,
       from: props.transaction?.from || nullUUID,
       to: props.transaction?.to || nullUUID,
-      when: moment(props.transaction?.when).format('YYYY-MM-DD') || moment().format('YYYY-MM-DD'),
+      when: moment(props.transaction?.when).toDate() || moment().toDate(),
       status: props.transaction?.status || z_transactionStatus.enum.Paid,
       sId: props.transaction?.sId || null
     } as unknown as Z_Transaction;
@@ -239,6 +246,8 @@ onMounted(() => {
 
 const save = () => {
   let res: Z_ApiResponse | undefined = undefined;
+
+  console.log(state.value);
 
   if (props.transaction) {
     res = dataStore.editTransaction(state.value);

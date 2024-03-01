@@ -10,12 +10,32 @@ const router = createRouter({
       component: HomeView
     },
     {
-      path: '/account',
-      name: 'account',
+      path: '/accounts',
+      name: 'accounts',
       // route level code-splitting
       // this generates a separate chunk (About.[hash].js) for this route
       // which is lazy-loaded when the route is visited.
       component: () => import('../views/AccountsView.vue')
+    },
+    {
+      path: '/account/:id',
+      name: 'account',
+      component: () => import('../views/account/MainView.vue'),
+      children: [
+        {
+          // UserPosts will be rendered inside User's <router-view>
+          // when /account/:id/posts is matched
+          path: 'posts',
+          component: () => import('../views/AboutView.vue')
+        }
+      ]
+    },
+    {
+      // UserProfile will be rendered inside User's <router-view>
+      // when /account/:id/import-transactions is matched
+      path: '/account/:id/import-transactions',
+      name: 'import-transactions',
+      component: () => import('../views/account/ImportTransactions.vue')
     },
     {
       path: '/category',

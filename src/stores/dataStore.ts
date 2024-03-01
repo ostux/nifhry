@@ -527,7 +527,7 @@ export const useDataStore = defineStore(
       return false;
     }
 
-    function addTransaction(transaction: Z_Transaction) {
+    function addTransaction(transaction: Z_Transaction, batch: boolean = false) {
       const response: Z_ApiResponse = { success: true, errors: [] };
 
       if (z_transaction.safeParse(transaction).success) {
@@ -541,13 +541,15 @@ export const useDataStore = defineStore(
         }
 
         tr.amount = z.coerce.number().parse(tr.amount.toFixed(2));
-        tr.when = moment(tr.when).format('YYYY-MM-DD');
+        tr.when = moment(tr.when).format('YYYY-MM-DD') as unknown as Date;
 
         transactions.value = [...transactions.value, tr];
 
-        sortTransactions();
+        if (!batch) {
+          sortTransactions();
 
-        recalculateBalanceForTransaction(tr);
+          recalculateBalanceForTransaction(tr);
+        }
 
         return response;
       }
@@ -603,6 +605,7 @@ export const useDataStore = defineStore(
             (t) =>
               moment(t.when).isSame(moment(when), 'month') &&
               t.status === z_transactionStatus.enum.Paid &&
+              t.category &&
               categoryIds.includes(t.category)
           );
 
@@ -625,6 +628,7 @@ export const useDataStore = defineStore(
         (t) =>
           moment(t.when).isSame(moment(month), 'month') &&
           t.status === z_transactionStatus.enum.Paid &&
+          t.category &&
           categoryIds.includes(t.category)
       );
 

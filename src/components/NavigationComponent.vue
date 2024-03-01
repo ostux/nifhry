@@ -113,22 +113,40 @@
     </DisclosurePanel>
   </Disclosure>
   <import-component
+    v-if="isImportModalOpen"
     :modal-open="isImportModalOpen"
     @modal-close="isImportModalOpen = false"
   />
+  <reset-confirmation-form
+    :modal-open="showConfirmResetModal"
+    :ok-disabled="false"
+    ok-translation-slug="button.ok"
+    info-text="data.reset.warning"
+    @modal-close="showConfirmResetModal = false"
+    @modal-ok-clicked="resetData"
+  >
+    <template v-slot:header> {{ $t('data.reset.title') }} </template>
+  </reset-confirmation-form>
 </template>
 
 <script setup lang="ts">
-import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/vue';
-import { Bars3Icon, XMarkIcon, CloudArrowDownIcon, CloudArrowUpIcon } from '@heroicons/vue/24/outline';
-import { ref, type Ref } from 'vue';
-import { RouterLink } from 'vue-router';
-import { SunIcon, MoonIcon } from '@heroicons/vue/24/solid';
+import ResetConfirmationForm from '@/components/ui/BaseModal.vue';
+import { useNotification } from '@/composables/useNotification';
 import { useAppSettingStore } from '@/stores/appSetting';
-import { storeToRefs } from 'pinia';
-import ImportComponent from './ImportComponent.vue';
 import { useDataStore } from '@/stores/dataStore';
-import { computed } from 'vue';
+import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/vue';
+import { ArrowPathIcon, Bars3Icon, CloudArrowDownIcon, CloudArrowUpIcon, TrashIcon, XMarkIcon } from '@heroicons/vue/24/outline';
+import { MoonIcon, SunIcon } from '@heroicons/vue/24/solid';
+import { storeToRefs } from 'pinia';
+import { computed, ref, type Ref } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { RouterLink } from 'vue-router';
+import ImportComponent from './ImportComponent.vue';
+
+const { t } = useI18n();
+
+const notifications = useNotification();
+const { addNotification } = notifications;
 
 const appSettingStore = useAppSettingStore();
 const { theme } = storeToRefs(appSettingStore);
@@ -137,15 +155,19 @@ const dataStore = useDataStore();
 const { accounts, budgets, categories, transactions } = storeToRefs(dataStore);
 
 const isImportModalOpen: Ref<boolean> = ref(false);
+const showConfirmResetModal: Ref<boolean> = ref(false);
+
 const navigation = computed(() => {
   return [
-    { name: 'nav.account', href: '/account', current: true },
+    { name: 'nav.account', href: '/accounts', current: true },
     { name: 'nav.category', href: '/category', current: false },
     { name: 'nav.transaction', href: '/transaction', current: false },
     { name: 'nav.todo', href: '/todo', current: false },
     { name: 'nav.about', href: '/about', current: false },
     { name: 'nav.export', icon: CloudArrowDownIcon, click: () => downloadExportedAccounts(), id: 'downloadAnchorElem' },
     { name: 'nav.import', icon: CloudArrowUpIcon, click: () => (isImportModalOpen.value = true) },
+    { name: 'nav.recalculate', icon: ArrowPathIcon, click: () => dataStore.recalculateBalances() },
+    { name: 'nav.trash', icon: TrashIcon, click: () => (showConfirmResetModal.value = true) },
     {
       name: 'nav.theme',
       icon: theme.value === 'dark' ? SunIcon : MoonIcon,
@@ -173,5 +195,16 @@ const downloadExportedAccounts = () => {
     dlAnchorElem.setAttribute('download', 'nifhry.json');
     dlAnchorElem.click();
   }
+};
+
+const resetData = () => {
+  accounts.value = [];
+  budgets.value = [];
+  categories.value = [];
+  transactions.value = [];
+  dataStore.recalculateBalances();
+
+  addNotification('success', t('notification.reset.success'));
+  showConfirmResetModal.value = false;
 };
 </script>

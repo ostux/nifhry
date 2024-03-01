@@ -12,9 +12,8 @@
       :disabled="disabled"
       :step="step"
       @change="onChange"
-      class="button mb-1 mt-2 w-full bg-transparent text-gray-800 focus:border-pine-green-500 focus:outline-none focus:ring-1 focus:ring-pine-green-500 disabled:cursor-not-allowed disabled:bg-gray-200/10 dark:text-white dark:[color-scheme:dark]"
+      class="button mb-1 mt-2 w-full bg-transparent text-gray-800 outline-none focus:border-pine-green-500 focus:outline-none focus:ring-1 focus:ring-pine-green-500 disabled:cursor-not-allowed disabled:bg-gray-200/10 dark:text-white dark:[color-scheme:dark]"
     />
-
     <template v-if="errors?.length">
       <span
         class="text-xs text-rose-800 dark:text-rose-300"
@@ -36,6 +35,10 @@ const props = defineProps({
   label: {
     type: String,
     default: null
+  },
+  value: {
+    type: String,
+    required: false
   },
   type: {
     type: String,

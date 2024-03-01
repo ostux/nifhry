@@ -1,6 +1,6 @@
 <template>
   <div
-    class="h-[175px] w-[350px] rounded-lg border-2 bg-transparent pb-4 pl-4 pr-2 pt-1"
+    class="relative h-[175px] w-[350px] rounded-lg border-2 bg-transparent p-4"
     :class="{
       'border-fuchsia-800': account.aType === 'credit',
       'hover:bg-fuchsia-700/10': account.aType === 'credit',
@@ -12,7 +12,10 @@
       'hover:bg-orange-700/10': account.aType === 'loan'
     }"
   >
-    <dropdown-menu :items="items"> </dropdown-menu>
+    <dropdown-menu
+      :items="items"
+      class="-mt-2"
+    />
     <div
       class="flex flex-row"
       :class="{
@@ -38,6 +41,11 @@
           currency: 'GBP'
         }).format(account.balance)
       }}
+    </div>
+    <div class="flex justify-end gap-4">
+      <RouterLink :to="`/account/${account.id}/import-transactions`">
+        <CloudArrowUpIcon class="size-6" />
+      </RouterLink>
     </div>
     <edit-account-form
       :account="account"
@@ -65,7 +73,7 @@ import DeleteConfirmationForm from '@/components/ui/BaseModal.vue';
 import DropdownMenu from '@/components/ui/DropdownMenu.vue';
 import { useNotification } from '@/composables/useNotification';
 import { useDataStore } from '@/stores/dataStore';
-import { CreditCardIcon, PencilSquareIcon, TrashIcon } from '@heroicons/vue/24/outline'; //ArchiveBoxIcon,
+import { CloudArrowUpIcon, CreditCardIcon, PencilSquareIcon, TrashIcon } from '@heroicons/vue/24/outline'; //ArchiveBoxIcon,
 import { ref, type PropType, type Ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import RovasComponent from '../ui/RovasComponent.vue';

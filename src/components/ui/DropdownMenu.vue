@@ -1,5 +1,8 @@
 <template>
-  <div class="relative flex justify-end self-center">
+  <div
+    class="absolute right-4 flex justify-end self-center"
+    @click.prevent
+  >
     <Menu
       as="div"
       class="relative inline-block text-left"

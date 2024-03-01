@@ -57,6 +57,7 @@
         <dropdown-menu
           :items="items(row as unknown as Z_Transaction)"
           :data="row"
+          class="-mt-4"
         >
         </dropdown-menu>
       </template>
@@ -76,19 +77,29 @@
     :transaction="selectedTransaction"
     @saved="refetch"
   />
-  <remove-transaction-form
+  <delete-confirmation-form
     v-if="openRemoveTransactionForm"
     :modal-open="openRemoveTransactionForm"
-    @close="openRemoveTransactionForm = false"
-    :transactions="transactionsToRemove"
-    @done="refetch"
-  />
+    :ok-disabled="false"
+    ok-translation-slug="button.confirm"
+    :info-text="transactions.length > 1 ? 'transaction.form.delete.all.warning' : 'transaction.form.delete.warning'"
+    @modal-close="openRemoveTransactionForm = false"
+    @modal-ok-clicked="removeTransactions"
+  >
+    <template v-slot:header> {{ $t('account.form.delete.title') }} </template>
+  </delete-confirmation-form>
 </template>
 
 <script setup lang="ts">
+import ScheduledTransactionEditForm from '@/components/transaction/ScheduledTransactionEditForm.vue';
+import TransactionEditForm from '@/components/transaction/TransactionEditForm.vue';
+import TransactionRangeControlTab from '@/components/transaction/TransactionRangeControlTab.vue';
+import DeleteConfirmationForm from '@/components/ui/BaseModal.vue';
 import DropdownMenu from '@/components/ui/DropdownMenu.vue';
 import PaginationComponnt from '@/components/ui/PaginationComponnt.vue';
+import SimpleButton from '@/components/ui/SimpleButton.vue';
 import TableComponent from '@/components/ui/TableComponent.vue';
+import { useNotification } from '@/composables/useNotification';
 import { useDataStore } from '@/stores/dataStore';
 import { z_transaction, z_transactionStatus, type Z_Transaction, type Z_Transactions } from '@/types';
 import {
@@ -101,13 +112,7 @@ import {
 } from '@heroicons/vue/24/outline';
 import moment from 'moment';
 import { onUnmounted, ref, type Ref } from 'vue';
-import TransactionRangeControlTab from '@/components/transaction/TransactionRangeControlTab.vue';
-import TransactionEditForm from '@/components/transaction/TransactionEditForm.vue';
 import { useI18n } from 'vue-i18n';
-import { useNotification } from '@/composables/useNotification';
-import ScheduledTransactionEditForm from '@/components/transaction/ScheduledTransactionEditForm.vue';
-import RemoveTransactionForm from '@/components/transaction/RemoveTransactionForm.vue';
-import SimpleButton from '@/components/ui/SimpleButton.vue';
 
 const { t } = useI18n();
 
@@ -275,6 +280,14 @@ const items = (row: Z_Transaction) => {
   return menuItems;
 };
 
+const removeTransactions = () => {
+  transactionsToRemove.value.forEach((t) => {
+    dataStore.removeTransaction(t.id);
+  });
+
+  openRemoveTransactionForm.value = false;
+};
+
 const refetch = () => {
   loading.value = true;
 
@@ -293,7 +306,7 @@ const unsubscribe = dataStore.$onAction(
       // a shared variable for this specific action call
       const startTime = Date.now();
       // this will trigger before an action on `store` is executed
-      console.log(`Start "${name}" with params [${args.join(', ')}].`);
+      console.log(`Start "${name}" with params [${args.join(', ')}] in ${store}.`);
 
       // this will trigger if the action succeeds and after it has fully run.
       // it waits for any returned promised

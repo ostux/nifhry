@@ -1,11 +1,9 @@
 <template>
   <div
-    class="h-[175px] w-[350px] rounded-lg border-2 border-pine-green-800 bg-pine-green-400/20 pb-4 pl-4 pr-2 pt-1 text-purple-900 dark:bg-pine-green-400"
+    class="h-[175px] w-[350px] cursor-pointer rounded-lg border-2 border-pine-green-800 bg-pine-green-400/20 pb-4 pl-4 pr-2 pt-1 text-purple-900 dark:bg-pine-green-400"
+    @click="modalOpen = true"
   >
-    <div
-      class="sixtyfour flex cursor-pointer flex-row p-4 pt-8"
-      @click="modalOpen = true"
-    >
+    <div class="flex flex-row p-4 pt-8">
       <FolderPlusIcon class="mr-4 size-6" />
       <div class="flex flex-col">
         <span> {{ $t('category.card.new') }} </span>

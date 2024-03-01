@@ -71,6 +71,23 @@ export const messages = {
         updated: 'Category updated'
       }
     },
+    data: {
+      reset: {
+        title: 'Are you sure?',
+        warning: 'This will delete everything witouth asking again...'
+      }
+    },
+    import_transactions: {
+      title: 'Import transactions for account: "{accountName}"',
+      step_one: 'Please select the appropriate columns from the bank provided CSV file.',
+      select: {
+        date: 'Transaction date',
+        description: 'Description',
+        category: 'Category',
+        in: 'Credit / In',
+        out: 'Debit / out'
+      }
+    },
     menu: {
       account: {
         new: 'Create a new account'
@@ -107,7 +124,8 @@ export const messages = {
         somethingWrong: 'Something went wrong during import, The local data may messed up 😞',
         success: 'Import finished with success.',
         warningText: 'All existing data will be replaced with the new one if the import are valid!'
-      }
+      },
+      reset: { success: 'All data succesfuly erased.' }
     },
     table: {
       empty: 'No items found.'

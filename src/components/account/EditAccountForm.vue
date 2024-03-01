@@ -97,8 +97,6 @@ const errors: Ref<Z_FormError> = ref({});
 const setAccountType = (e: { id: string }) => {
   const t = accountTypes.find((a) => a.id === e.id)?.id;
 
-  console.log(t);
-
   if (t) state.value.aType = t;
 };
 
@@ -121,7 +119,6 @@ watch(
       });
     }
 
-    console.log(state.value);
     okDisabled.value = !valid.success;
   },
   { deep: true }

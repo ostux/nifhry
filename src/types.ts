@@ -119,10 +119,10 @@ export const z_transaction = z.object({
   id: z.string().uuid(),
   desc: z.string().min(1),
   amount: z.coerce.number(),
-  category: z.string().uuid(),
+  category: z.string().uuid().nullable(),
   from: z.string().uuid().nullable(),
   to: z.string().uuid().nullable(),
-  when: z.string(),
+  when: z.coerce.date(),
   status: z_transactionStatus,
   sId: z.string().uuid().nullable()
 });
