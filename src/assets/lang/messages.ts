@@ -34,6 +34,9 @@ export const messages = {
         saving: 'Saving'
       }
     },
+    select: {
+      nothingFound: 'Nothing Found'
+    },
     button: {
       cancel: 'Cancel',
       choose: 'Choose file',

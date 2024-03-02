@@ -140,10 +140,12 @@ import { MoonIcon, SunIcon } from '@heroicons/vue/24/solid';
 import { storeToRefs } from 'pinia';
 import { computed, ref, type Ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { RouterLink } from 'vue-router';
+import { RouterLink, useRouter } from 'vue-router';
 import ImportComponent from './ImportComponent.vue';
 
 const { t } = useI18n();
+
+const router = useRouter();
 
 const notifications = useNotification();
 const { addNotification } = notifications;
@@ -206,5 +208,6 @@ const resetData = () => {
 
   addNotification('success', t('notification.reset.success'));
   showConfirmResetModal.value = false;
+  router.push('/accounts');
 };
 </script>

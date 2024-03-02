@@ -133,6 +133,8 @@ const save = () => {
     res = dataStore.addAccount(state.value);
   }
 
+  dataStore.recalculateBalances();
+
   if (res && res.success) {
     addNotification('success', t('account.form.saved'));
     emit('close');

@@ -140,8 +140,8 @@ const when: Ref<string> = ref(moment(props.transaction?.when).format('YYYY-MM-DD
 const okDisabled: Ref<boolean> = ref(true);
 const errors: Ref<Z_FormError> = ref({});
 
-const setWhen = (e: Event) => {
-  state.value.when = moment((e.target as HTMLInputElement).value).toDate();
+const setWhen = (e: string) => {
+  state.value.when = moment(e).toDate();
 };
 
 const setCategory = (e: { id: string }) => {
@@ -190,6 +190,7 @@ const prestine: ComputedRef<boolean> = computed(() => {
 const autoDescription = () => {
   let desc = '';
 
+  if (state.value.desc) return;
   if (state.value.category) {
     const category: Z_Category | undefined = dataStore.getCategory(state.value.category);
     let parentCategory: Z_Category | undefined = undefined;

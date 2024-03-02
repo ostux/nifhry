@@ -284,6 +284,7 @@ const removeTransactions = () => {
   transactionsToRemove.value.forEach((t) => {
     dataStore.removeTransaction(t.id);
   });
+  refetch();
 
   openRemoveTransactionForm.value = false;
 };

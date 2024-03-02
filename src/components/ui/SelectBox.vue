@@ -34,9 +34,9 @@
           >
             <div
               v-if="filteredOptions.length === 0 && query !== ''"
-              class="relative cursor-default select-none px-4 py-2 text-gray-700"
+              class="relative cursor-default select-none px-4 py-2 text-gray-700 dark:border dark:border-gray-400/30 dark:bg-gray-800 dark:text-white sm:text-sm"
             >
-              Nothing found.
+              {{ $t('select.nothingFound') }}
             </div>
 
             <ComboboxOption
