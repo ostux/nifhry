@@ -116,7 +116,7 @@ const deleteAccount = () => {
     dataStore.removeAccount(props.account.id);
     dataStore.recalculateBalances();
 
-    addNotification('success', t('account.form.delete.info', { name: props.account.id }));
+    addNotification('success', t('account.form.delete.info', { name: props.account.name }));
 
     confirmDeletionModal.value = false;
   }

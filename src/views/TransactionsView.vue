@@ -47,7 +47,7 @@
       </template>
 
       <template #category-data="{ row }">
-        {{ row.category }}
+        {{ categoryById(row.category)?.name }}
       </template>
 
       <template #when-data="{ row }">
@@ -119,7 +119,7 @@ import { useI18n } from 'vue-i18n';
 const { t } = useI18n();
 
 const dataStore = useDataStore();
-const { accountById } = dataStore;
+const { accountById, categoryById } = dataStore;
 const { accounts, transactions } = storeToRefs(dataStore);
 
 const notifications = useNotification();

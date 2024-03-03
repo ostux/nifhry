@@ -337,23 +337,12 @@ export const useDataStore = defineStore(
     }
 
     function recalculateCategoryUsage() {
-      const usageToZero = (v: Z_Category, k: string, m: Map<string, Z_Category>) => {
-        v.used = 0;
+      const countUsage = (v: Z_Category, k: string, m: Map<string, Z_Category>) => {
+        v.used = transactions.value.filter((t) => t.category === v.id).length;
         m.set(k, v);
       };
 
-      categories.value.forEach(usageToZero);
-
-      transactions.value.forEach((t: Z_Transaction) => {
-        if (t.category) {
-          const c = categories.value.get(t.category);
-
-          if (c) {
-            c.used = c.used + 1;
-            categories.value.set(c.id, c);
-          }
-        }
-      });
+      categories.value.forEach(countUsage);
 
       return true;
     }
@@ -526,27 +515,6 @@ export const useDataStore = defineStore(
             response.success = false;
             response.errors.push('transaction.error.already_exist');
             return response;
-          }
-        }
-
-        if (t.category) {
-          t.category = capitalize(t.category);
-
-          const aExist: Z_Account | undefined = Array.from(accounts.value.values()).find((a) => a.name === t.category);
-
-          if (aExist) {
-            t.category = nullUUID;
-          }
-
-          const cat = categories.value.get(t.category);
-          if (!cat) {
-            addCategory({
-              id: crypto.randomUUID(),
-              name: t.category,
-              description: t.category,
-              parent: null,
-              used: 1
-            });
           }
         }
 

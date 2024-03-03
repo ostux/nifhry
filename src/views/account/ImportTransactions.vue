@@ -90,7 +90,7 @@ import SelectBox from '@/components/ui/SelectBox.vue';
 import SimpleButton from '@/components/ui/SimpleButton.vue';
 import { useCapitalize } from '@/composables/useCapitalize';
 import { useDataStore } from '@/stores/dataStore';
-import { z_transaction, z_transactionStatus, type Z_Account, type Z_Transaction } from '@/types';
+import { z_transaction, z_transactionStatus, type Z_Account, type Z_Transaction, nullUUID } from '@/types';
 import { Cog6ToothIcon } from '@heroicons/vue/24/outline';
 import moment from 'moment';
 import Papa, { type ParseResult } from 'papaparse';
@@ -104,7 +104,7 @@ const route = useRoute();
 const router = useRouter();
 
 const dataStore = useDataStore();
-const { accounts } = storeToRefs(dataStore);
+const { accounts, categories } = storeToRefs(dataStore);
 
 const capitalizeComposable = useCapitalize();
 const { capitalize } = capitalizeComposable;
@@ -249,7 +249,7 @@ const createTransactions = () => {
         id: crypto.randomUUID(),
         desc: capitalize(row[state.value.desc]),
         amount: 0,
-        category: categoryName,
+        category: null,
         account: account.id,
         when: moment(date).toDate(),
         status: z_transactionStatus.enum.Paid,
@@ -257,8 +257,32 @@ const createTransactions = () => {
         created: new Date()
       };
 
-      if (transaction.desc === '') transaction.desc = 'missing';
-      // let tExist: Z_Transaction[] = [];
+      if (categoryName) {
+        const aExist: Z_Account | undefined = Array.from(accounts.value.values()).find((a) => a.name === categoryName);
+
+        if (aExist) {
+          transaction.category = nullUUID;
+        }
+
+        const cat = Array.from(categories.value.values()).find((a) => a.name === categoryName);
+        const catID = crypto.randomUUID();
+
+        if (!cat) {
+          dataStore.addCategory({
+            id: catID,
+            name: categoryName,
+            description: categoryName,
+            parent: null,
+            used: 1
+          });
+
+          transaction.category = catID;
+        } else {
+          transaction.category = cat.id;
+        }
+      }
+
+      if (transaction.desc === '') transaction.desc = 'n/a';
 
       if (parseFloat(row[state.value.in])) {
         const a = parseFloat(row[state.value.in]);
