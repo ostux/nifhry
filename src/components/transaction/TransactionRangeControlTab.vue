@@ -106,7 +106,6 @@ const changeMonth = (direction: 'previous' | 'next' | 'reset') => {
     month: t.month()
   };
 
-  console.log(pagination.dayFilter.value);
   emit('change', true);
 };
 

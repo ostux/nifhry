@@ -36,11 +36,25 @@
       <select-box
         name="status"
         :options="categorySelectList"
-        :pre-selected="selectedParentCategory?.id"
+        :pre-selected="selectedParentCategory?.name"
         @select="setCategoryParent"
         :label="$t('category.form.edit.parent')"
       />
     </div>
+
+    <template
+      v-slot:errors
+      v-if="resError.length"
+    >
+      <ul>
+        <li
+          v-for="er in resError"
+          :key="er"
+        >
+          {{ $t(er) }}
+        </li>
+      </ul>
+    </template>
   </base-modal>
 </template>
 
@@ -49,7 +63,7 @@ import BaseModal from '@/components/ui/BaseModal.vue';
 import SelectBox from '@/components/ui/SelectBox.vue';
 import { useNotification } from '@/composables/useNotification';
 import { useDataStore } from '@/stores/dataStore';
-import { type Z_Category, type Z_ApiResponse, z_category, type Z_FormError } from '@/types';
+import { z_category, type Z_ApiResponse, type Z_Category, type Z_FormError } from '@/types';
 import { storeToRefs } from 'pinia';
 import { ref, watch, type PropType, type Ref } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -78,20 +92,19 @@ const state: Ref<Z_Category> = ref({
   id: props.category?.id || crypto.randomUUID(),
   name: props.category?.name || '',
   description: props.category?.description || '',
-  parent: props.category?.parent || null
+  parent: props.category?.parent || null,
+  used: 0
 } as Z_Category);
 
-const selectedParentCategory = ref(categorySelectList.value.find((c) => c.id === state.value.parent));
+const resError: Ref<string[]> = ref([]);
+
+const selectedParentCategory = ref(categorySelectList.value.find((c) => c.name === state.value.parent));
 
 const okDisabled: Ref<boolean> = ref(true);
 const errors: Ref<Z_FormError> = ref({});
 
 const setCategoryParent = (e: { id: string }) => {
-  const t = categorySelectList.value.find((a) => a.id === e.id)?.id;
-
-  console.log(t);
-
-  if (t) state.value.parent = t;
+  state.value.parent = e.id;
 };
 
 watch(
@@ -113,7 +126,6 @@ watch(
       });
     }
 
-    console.log(state.value);
     okDisabled.value = !valid.success;
   },
   { deep: true }
@@ -123,6 +135,7 @@ const save = () => {
   let res: Z_ApiResponse | undefined = undefined;
 
   if (props.category) {
+    console.log(state.value);
     res = dataStore.editCategory(state.value);
   } else {
     res = dataStore.addCategory(state.value);
@@ -132,6 +145,7 @@ const save = () => {
     addNotification('success', t('category.form.saved'));
     emit('close');
   } else {
+    resError.value = res.errors;
     addNotification('danger', t('category.form.saveFailed'));
   }
 };

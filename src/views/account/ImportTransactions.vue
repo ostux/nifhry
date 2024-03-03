@@ -50,17 +50,17 @@
         />
 
         <select-box
-          name="in"
-          :options="fields"
-          @select="setInField"
-          :label="$t('import_transactions.select.in')"
-        />
-
-        <select-box
           name="out"
           :options="fields"
           @select="setOutField"
           :label="$t('import_transactions.select.out')"
+        />
+
+        <select-box
+          name="in"
+          :options="fields"
+          @select="setInField"
+          :label="$t('import_transactions.select.in')"
         />
       </div>
       <div
@@ -88,8 +88,9 @@
 <script setup lang="ts">
 import SelectBox from '@/components/ui/SelectBox.vue';
 import SimpleButton from '@/components/ui/SimpleButton.vue';
+import { useCapitalize } from '@/composables/useCapitalize';
 import { useDataStore } from '@/stores/dataStore';
-import { nullUUID, z_transaction, z_transactionStatus, type Z_Account, type Z_Transaction, type Z_Category } from '@/types';
+import { z_transaction, z_transactionStatus, type Z_Account, type Z_Transaction } from '@/types';
 import { Cog6ToothIcon } from '@heroicons/vue/24/outline';
 import moment from 'moment';
 import Papa, { type ParseResult } from 'papaparse';
@@ -103,7 +104,10 @@ const route = useRoute();
 const router = useRouter();
 
 const dataStore = useDataStore();
-const { accounts, categories } = storeToRefs(dataStore);
+const { accounts } = storeToRefs(dataStore);
+
+const capitalizeComposable = useCapitalize();
+const { capitalize } = capitalizeComposable;
 
 const res: Ref<ParseResult<any> | null> = ref(null);
 const fileSelected: Ref<boolean> = ref(false);
@@ -112,7 +116,7 @@ const stepTwo: Ref<boolean> = ref(false);
 
 const importing: Ref<boolean> = ref(false);
 
-const account: ComputedRef<Z_Account | undefined> = computed(() => accounts.value.find((a) => a.id === route.params.id));
+const account: ComputedRef<Z_Account | undefined> = computed(() => accounts.value.get(route.params.slug as unknown as string));
 
 interface Field {
   id: string;
@@ -165,9 +169,7 @@ watch(
 
     if (!valid.success) {
       stepTwo.value = false;
-      console.log(valid.error.issues);
     } else {
-      console.log('ready to import');
       stepTwo.value = true;
     }
   },
@@ -197,8 +199,6 @@ const fileChanged = (e: Event) => {
   stepOne.value = false;
   stepTwo.value = false;
 
-  console.log((e.target as HTMLInputElement)?.files?.length);
-
   if ((e.target as HTMLInputElement)?.files?.length || 0 > 0) {
     fileSelected.value = true;
   }
@@ -227,117 +227,67 @@ function importTransactions() {
   }
 }
 
+const createTransactions = () => {
+  const account = accounts.value.get(route.params.slug as unknown as string);
+  if (!account) {
+    console.error('account not exist!');
+    return;
+  }
+
+  res.value?.data.forEach((row) => {
+    if (row[state.value.desc] || row[state.value.date] || row[state.value.in] || row[state.value.out]) {
+      let categoryName: string | null = null;
+
+      if (state.value.category?.trim().length) {
+        categoryName = capitalize(row[state.value.category!]);
+      }
+
+      let date = row[state.value.date].split('/');
+      date = `${date[2]}-${date[1]}-${date[0]}`;
+
+      const transaction: Z_Transaction = {
+        id: crypto.randomUUID(),
+        desc: capitalize(row[state.value.desc]),
+        amount: 0,
+        category: categoryName,
+        account: account.id,
+        when: moment(date).toDate(),
+        status: z_transactionStatus.enum.Paid,
+        sId: null,
+        created: new Date()
+      };
+
+      if (transaction.desc === '') transaction.desc = 'missing';
+      // let tExist: Z_Transaction[] = [];
+
+      if (parseFloat(row[state.value.in])) {
+        const a = parseFloat(row[state.value.in]);
+        transaction.amount = a;
+      }
+
+      if (parseFloat(row[state.value.out])) {
+        const a = parseFloat(row[state.value.out]);
+        transaction.amount = Math.abs(a) * -1;
+      }
+
+      if (z_transaction.safeParse(transaction).success) {
+        dataStore.addTransaction(transaction, true);
+      } else {
+        console.error(transaction, z_transaction.safeParse(transaction));
+      }
+    }
+  });
+
+  dataStore.sortTransactions();
+  dataStore.recalculateBalances();
+  dataStore.recalculateCategoryUsage();
+
+  router.push('/accounts');
+};
+
 const doImport = () => {
   importing.value = true;
-  const capitalize = (str: string): string => {
-    let words: string | string[] = str.trim();
 
-    if (words.length < 3) return words;
-
-    words = words.split(' ');
-
-    words = words.map((word) => {
-      if (word.length > 1) {
-        return word[0].toUpperCase() + word.substring(1).toLowerCase();
-      }
-      return word;
-    });
-
-    return words.join(' ');
-  };
-
-  const createCategory = (cName: string): Z_Category | null => {
-    if (cName.trim() === '') return null;
-
-    const c: Z_Category = {
-      id: crypto.randomUUID(),
-      name: capitalize(cName),
-      description: capitalize(cName),
-      parent: null
-    };
-
-    const res = dataStore.addCategory(c);
-
-    if (res?.success) {
-      return c;
-    }
-
-    console.error(res?.errors);
-
-    return null;
-  };
-
-  const doIt = () => {
-    res.value?.data.forEach((transactionRow) => {
-      const acc = dataStore.accounts.find((a) => a.id === route.params.id);
-
-      if (!acc) {
-        console.error('account not exist!');
-        return;
-      }
-
-      if (
-        transactionRow[state.value.desc] ||
-        transactionRow[state.value.date] ||
-        transactionRow[state.value.in] ||
-        transactionRow[state.value.out]
-      ) {
-        let date = transactionRow[state.value.date].split('/');
-        date = `${date[2]}-${date[1]}-${date[0]}`;
-
-        let category: string | null = null;
-
-        if (state.value.category?.trim().length) {
-          const cat: Z_Category | undefined = categories.value.find(
-            (c) => c.name === capitalize(transactionRow[state.value.category!])
-          );
-          if (!cat) {
-            category = createCategory(transactionRow[state.value.category])?.id || null;
-          } else {
-            category = cat.id;
-          }
-        }
-
-        const t: Z_Transaction = {
-          id: crypto.randomUUID(),
-          desc: capitalize(transactionRow[state.value.desc]),
-          amount: 0,
-          category: category,
-          from: nullUUID,
-          to: nullUUID,
-          when: moment(date).toDate(),
-          status: z_transactionStatus.enum.Paid,
-          sId: null
-        };
-
-        if (parseFloat(transactionRow[state.value.in])) {
-          const a = parseFloat(transactionRow[state.value.in]);
-          t.amount = Math.abs(a as unknown as number);
-
-          t.to = acc.id;
-        }
-
-        if (parseFloat(transactionRow[state.value.out])) {
-          const a = parseFloat(transactionRow[state.value.out]);
-          t.amount = Math.abs(a as unknown as number);
-
-          t.from = acc.id;
-        }
-
-        if (z_transaction.safeParse(t).success) {
-          dataStore.addTransaction(t, true);
-        } else {
-          console.log(z_transaction.safeParse(t));
-        }
-      }
-    });
-
-    dataStore.sortTransactions();
-    dataStore.recalculateBalances();
-
-    router.push('/accounts');
-  };
-
-  setTimeout(doIt, 100);
+  setTimeout(createTransactions, 100);
 };
 </script>

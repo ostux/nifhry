@@ -5,6 +5,7 @@
         <simple-button
           label="transaction.form.add.single.title"
           :icon="Squares2X2Icon"
+          :disabled="accounts.size === 0"
           @click="
             selectedTransaction = undefined;
             openTransactionEditForm = true;
@@ -13,6 +14,7 @@
         <simple-button
           label="transaction.form.add.single.title"
           :icon="SquaresPlusIcon"
+          :disabled="accounts.size === 0"
           @click="
             selectedTransaction = undefined;
             openScheduledTransactionEditForm = true;
@@ -29,24 +31,23 @@
       :rows="rows"
       :loading="loading"
     >
+      <template #account-data="{ row }">
+        {{ accountById(row.account)?.name }}
+      </template>
+
       <template #amount-data="{ row }">
-        {{
-          new Intl.NumberFormat('en-GB', {
-            style: 'currency',
-            currency: 'GBP'
-          }).format(parseFloat(row.amount))
-        }}
+        <span :class="[row.amount < 0 ? 'text-rose-500' : 'text-pine-green-500']">
+          {{
+            new Intl.NumberFormat('en-GB', {
+              style: 'currency',
+              currency: 'GBP'
+            }).format(parseFloat(row.amount))
+          }}
+        </span>
       </template>
+
       <template #category-data="{ row }">
-        {{ categoryFromId(row.category)?.name }}
-      </template>
-
-      <template #from-data="{ row }">
-        {{ accountFromId(row.from)?.name ? accountFromId(row.from)?.name : row.amount > 0 ? '💰' : '🤬' }}
-      </template>
-
-      <template #to-data="{ row }">
-        {{ accountFromId(row.to)?.name || '🤬' }}
+        {{ row.category }}
       </template>
 
       <template #when-data="{ row }">
@@ -111,13 +112,15 @@ import {
   TrashIcon
 } from '@heroicons/vue/24/outline';
 import moment from 'moment';
+import { storeToRefs } from 'pinia';
 import { onUnmounted, ref, type Ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
 
 const dataStore = useDataStore();
-const { transactions, accountFromId, categoryFromId } = dataStore;
+const { accountById } = dataStore;
+const { accounts, transactions } = storeToRefs(dataStore);
 
 const notifications = useNotification();
 const { addNotification } = notifications;
@@ -137,6 +140,11 @@ const columns = [
     label: 'Description'
   },
   {
+    key: 'account',
+    label: 'Account',
+    sortable: true
+  },
+  {
     key: 'amount',
     label: 'Amount',
     sortable: true
@@ -146,16 +154,7 @@ const columns = [
     label: 'Category',
     sortable: true
   },
-  {
-    key: 'from',
-    label: 'From',
-    sortable: true
-  },
-  {
-    key: 'to',
-    label: 'To',
-    sortable: true
-  },
+
   {
     key: 'when',
     label: 'When',
@@ -207,7 +206,6 @@ const items = (row: Z_Transaction) => {
         label: 'menu.delete',
         icon: TrashIcon,
         click: () => {
-          console.log('remove clicked...');
           transactionsToRemove.value = [row];
           openRemoveTransactionForm.value = true;
         }

@@ -18,13 +18,13 @@ const router = createRouter({
       component: () => import('../views/AccountsView.vue')
     },
     {
-      path: '/account/:id',
+      path: '/account/:slug',
       name: 'account',
       component: () => import('../views/account/MainView.vue'),
       children: [
         {
           // UserPosts will be rendered inside User's <router-view>
-          // when /account/:id/posts is matched
+          // when /account/:slug/posts is matched
           path: 'posts',
           component: () => import('../views/AboutView.vue')
         }
@@ -32,8 +32,8 @@ const router = createRouter({
     },
     {
       // UserProfile will be rendered inside User's <router-view>
-      // when /account/:id/import-transactions is matched
-      path: '/account/:id/import-transactions',
+      // when /account/:slug/import-transactions is matched
+      path: '/account/:slug/import-transactions',
       name: 'import-transactions',
       component: () => import('../views/account/ImportTransactions.vue')
     },

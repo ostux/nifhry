@@ -2,9 +2,9 @@
   <div class="flex flex-wrap justify-center gap-4 py-4">
     <new-category-card />
     <category-card
+      v-for="category in Array.from(categories.values())"
       :category="category"
-      v-for="category in categories"
-      :key="category.id"
+      :key="category.name"
     />
   </div>
 </template>
@@ -16,6 +16,5 @@ import { useDataStore } from '@/stores/dataStore';
 import { storeToRefs } from 'pinia';
 
 const dataStore = useDataStore();
-
 const { categories } = storeToRefs(dataStore);
 </script>

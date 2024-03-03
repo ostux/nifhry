@@ -25,36 +25,40 @@
         required
       />
 
-      <input-field
-        name="starting-balance"
-        type="number"
-        step="any"
-        v-model="state.startingBalance"
-        :label="$t('account.form.edit.startingBalance')"
-        :errors="errors?.startingBalance"
-        required
-      />
-
       <select-box
         name="status"
         :options="accountTypes"
-        :pre-selected="state.aType"
+        :pre-selected="state.aType || z_acctountType.enum.Debit"
         @select="setAccountType"
         :label="$t('account.form.edit.accountType')"
       />
     </div>
+
+    <template
+      v-slot:errors
+      v-if="resError.length"
+    >
+      <ul>
+        <li
+          v-for="er in resError"
+          :key="er"
+        >
+          {{ $t(er) }}
+        </li>
+      </ul>
+    </template>
   </base-modal>
 </template>
 
 <script setup lang="ts">
 import BaseModal from '@/components/ui/BaseModal.vue';
+import InputField from '@/components/ui/InputField.vue';
+import SelectBox from '@/components/ui/SelectBox.vue';
 import { useNotification } from '@/composables/useNotification';
 import { useDataStore } from '@/stores/dataStore';
 import { z_account, z_acctountType, type Z_Account, type Z_ApiResponse, type Z_FormError } from '@/types';
 import { ref, watch, type PropType, type Ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import InputField from '@/components/ui/InputField.vue';
-import SelectBox from '@/components/ui/SelectBox.vue';
 
 const emit = defineEmits(['close']);
 const props = defineProps({
@@ -69,9 +73,11 @@ const props = defineProps({
 });
 
 const { t } = useI18n();
-const dataStore = useDataStore();
+
 const notifications = useNotification();
 const { addNotification } = notifications;
+
+const dataStore = useDataStore();
 
 const accountTypes = [
   { id: z_acctountType.enum.Credit, name: t(`account.type.${z_acctountType.enum.Credit}`) },
@@ -84,10 +90,9 @@ const state: Ref<Z_Account> = ref({
   id: props.account?.id || crypto.randomUUID(),
   name: props.account?.name || '',
   balance: props.account?.balance || 0,
-  startingBalance: props.account?.startingBalance || 0,
-  createdAt: props.account?.createdAt || new Date(),
   aType: accountTypes.find((a) => a.id === props.account?.aType)?.id || z_acctountType.enum.Debit
 } as Z_Account);
+const resError: Ref<string[]> = ref([]);
 
 // const selectedType = ref(accountTypes.find((a) => a.id === state.value.aType));
 
@@ -133,12 +138,11 @@ const save = () => {
     res = dataStore.addAccount(state.value);
   }
 
-  dataStore.recalculateBalances();
-
   if (res && res.success) {
     addNotification('success', t('account.form.saved'));
     emit('close');
   } else {
+    resError.value = res.errors;
     addNotification('danger', t('account.form.saveFailed'));
   }
 };

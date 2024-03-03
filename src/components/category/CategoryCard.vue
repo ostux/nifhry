@@ -1,6 +1,7 @@
 <template>
   <div class="relative h-[175px] w-[350px] rounded-lg border border-pine-green-500 bg-transparent p-4 hover:bg-pine-green-500/10">
     <dropdown-menu
+      v-if="!(props.category && props.category.name === 'Transfer')"
       :items="items"
       class="-mt-2"
     />
@@ -21,6 +22,7 @@
       belongs to: &nbsp;<strong>{{ categoryParent.name }}</strong>
     </div>
     <edit-category-form
+      v-if="openEditModal"
       :category="category"
       :modal-open="openEditModal"
       @close="openEditModal = false"
@@ -50,11 +52,14 @@ import { useI18n } from 'vue-i18n';
 import { useDataStore } from '@/stores/dataStore';
 import { useNotification } from '@/composables/useNotification';
 import RovasComponent from '../ui/RovasComponent.vue';
+import { storeToRefs } from 'pinia';
 
 const { t } = useI18n();
-const dataStore = useDataStore();
 const notifications = useNotification();
 const { addNotification } = notifications;
+
+const dataStore = useDataStore();
+const { categories } = storeToRefs(dataStore);
 
 const props = defineProps({
   category: {
@@ -98,7 +103,7 @@ const deleteCategory = () => {
 
 onMounted(() => {
   if (props.category.parent) {
-    categoryParent.value = dataStore.getCategory(props.category.parent);
+    categoryParent.value = categories.value.get(props.category.parent);
   }
 });
 </script>

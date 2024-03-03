@@ -6,6 +6,12 @@ export interface Z_FormError {
   [index: string]: string[];
 }
 
+export interface Z_SelectItemObject {
+  id: string;
+  name: string;
+  disabled?: boolean;
+}
+
 export const z_year = z.coerce.number().min(1900).max(3000);
 export type Z_Year = z.infer<typeof z_year>;
 
@@ -77,37 +83,24 @@ export const z_account = z.object({
   id: z.string().uuid(),
   name: z.coerce.string().min(1),
   balance: z.coerce.number(),
-  startingBalance: z.coerce.number(),
-  createdAt: z.coerce.date(),
   aType: z_acctountType
 });
 export type Z_Account = z.infer<typeof z_account>;
 
-export const z_accounts = z_account.array();
+export const z_accounts = z.map(z.string(), z_account);
 export type Z_Accounts = z.infer<typeof z_accounts>;
 
 export const z_category = z.object({
   id: z.string().uuid(),
-  name: z.string(),
+  name: z.string().min(3),
   description: z.string(),
-  parent: z.string().uuid().nullable()
+  parent: z.string().uuid().nullable(),
+  used: z.number().nonnegative()
 });
 export type Z_Category = z.infer<typeof z_category>;
 
-export const z_categories = z_category.array();
+export const z_categories = z.map(z.string(), z_category);
 export type Z_Categories = z.infer<typeof z_categories>;
-
-export const z_budget = z.object({
-  id: z.string().uuid(),
-  category: z.string().uuid(),
-  account: z.string().uuid(),
-  when: z.string(), // format("YYYY-MM")
-  amount: z.number()
-});
-export type Z_Budget = z.infer<typeof z_budget>;
-
-export const z_budgets = z_budget.array();
-export type Z_Budgets = z.infer<typeof z_budgets>;
 
 export const z_transactionStatus = z.nativeEnum({
   Paid: 'paid',
@@ -118,13 +111,13 @@ export type Z_TransactionStatus = z.infer<typeof z_transactionStatus>;
 export const z_transaction = z.object({
   id: z.string().uuid(),
   desc: z.string().min(1),
+  category: z.string().nullable(),
+  account: z.string().min(1),
   amount: z.coerce.number(),
-  category: z.string().uuid().nullable(),
-  from: z.string().uuid().nullable(),
-  to: z.string().uuid().nullable(),
   when: z.coerce.date(),
   status: z_transactionStatus,
-  sId: z.string().uuid().nullable()
+  sId: z.string().uuid().nullable(),
+  created: z.coerce.date()
 });
 export type Z_Transaction = z.infer<typeof z_transaction>;
 

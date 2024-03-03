@@ -67,7 +67,6 @@
 
 <script setup lang="ts">
 import { type Z_Account } from '@/types';
-
 import EditAccountForm from '@/components/account/EditAccountForm.vue';
 import DeleteConfirmationForm from '@/components/ui/BaseModal.vue';
 import DropdownMenu from '@/components/ui/DropdownMenu.vue';
@@ -115,8 +114,9 @@ const items = [
 const deleteAccount = () => {
   if (props.account && props.account.id) {
     dataStore.removeAccount(props.account.id);
+    dataStore.recalculateBalances();
 
-    addNotification('success', t('account.form.delete.info', { name: props.account.name }));
+    addNotification('success', t('account.form.delete.info', { name: props.account.id }));
 
     confirmDeletionModal.value = false;
   }

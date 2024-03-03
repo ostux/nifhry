@@ -42,7 +42,7 @@
             <ComboboxOption
               v-for="item in filteredOptions"
               as="template"
-              :key="item.id"
+              :key="item.name"
               :value="item"
               :disabled="item.disabled"
               v-slot="{ selected, active }"
@@ -81,20 +81,15 @@
 </template>
 
 <script setup lang="ts">
+import type { Z_SelectItemObject } from '@/types';
 import { Combobox, ComboboxButton, ComboboxInput, ComboboxOption, ComboboxOptions, TransitionRoot } from '@headlessui/vue';
 import { CheckIcon, ChevronUpDownIcon } from '@heroicons/vue/20/solid';
 import { computed, onMounted, ref, type PropType, type Ref } from 'vue';
 
-interface SelectItemObject {
-  id: string;
-  name: string;
-  disabled?: boolean;
-}
-
 defineEmits(['select']);
 const props = defineProps({
   options: {
-    type: Array as PropType<SelectItemObject[]>,
+    type: Array as PropType<Z_SelectItemObject[]>,
     required: true
   },
   preSelected: {
@@ -115,7 +110,7 @@ const props = defineProps({
   }
 });
 
-let selected: Ref<SelectItemObject | undefined> = ref(undefined);
+let selected: Ref<Z_SelectItemObject | undefined> = ref(undefined);
 
 let query = ref('');
 

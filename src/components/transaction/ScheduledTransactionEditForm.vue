@@ -24,7 +24,7 @@
         :label="$t('transaction.form.edit.start')"
         :errors="errors?.when"
         :disabled="!!transaction"
-        @change="state.when = moment(start).toDate()"
+        @change="setStart"
       />
 
       <select-box
@@ -50,7 +50,7 @@
       <select-box
         name="category"
         :options="categorySelectList"
-        :pre-selected="categorySelectList.find((c) => c.id === state.category)?.id"
+        :pre-selected="categorySelectList.find((c) => c.name === state.category)?.name"
         @select="
           setCategory($event);
           autoDescription();
@@ -78,26 +78,26 @@
       />
 
       <select-box
-        name="from"
+        name="account"
         :options="accountSelectList"
-        :pre-selected="accountSelectList.find((a) => a.id === state.from)?.id"
-        @select="setFrom"
-        :label="$t('transaction.form.edit.from')"
+        :pre-selected="accountSelectList.find((a) => a.name === state.account)?.name"
+        @select="setAccount"
+        :label="$t('transaction.form.edit.account')"
       />
 
       <select-box
         name="to"
         :options="accountSelectList"
-        :pre-selected="accountSelectList.find((a) => a.id === state.to)?.id"
         @select="setTo"
         :label="$t('transaction.form.edit.to')"
+        :disabled="!!transaction"
       />
 
       <input-field
-        :name="state.when.toString()"
+        name="when"
         type="date"
         v-model="when"
-        @change="setWhen"
+        :disabled="true"
         :label="$t('transaction.form.edit.when')"
         :errors="errors?.when"
         required
@@ -121,7 +121,6 @@ import SelectBox from '@/components/ui/SelectBox.vue';
 import { useNotification } from '@/composables/useNotification';
 import { useDataStore } from '@/stores/dataStore';
 import {
-  nullUUID,
   z_frequency,
   z_transaction,
   z_transactionStatus,
@@ -156,47 +155,48 @@ const dataStore = useDataStore();
 const notifications = useNotification();
 const { addNotification } = notifications;
 
-const { transactions, accountSelectList, categorySelectList } = storeToRefs(dataStore);
+const { accounts, transactions, categories, accountSelectList, categorySelectList } = storeToRefs(dataStore);
 
 const repeat: Ref<number> = ref(12);
 const state: Ref<Z_Transaction> = ref({
   id: props.transaction?.id || crypto.randomUUID(),
   desc: props.transaction?.desc || undefined,
   amount: props.transaction?.amount || undefined,
-  category: props.transaction?.category || undefined,
-  from: props.transaction?.from || nullUUID,
-  to: props.transaction?.to || nullUUID,
+  category: props.transaction?.category || null,
+  account: props.transaction?.account || undefined,
   when: moment(props.transaction?.when).toDate() || moment().toDate(),
   status: props.transaction?.status || z_transactionStatus.enum.Paid,
-  sId: props.transaction?.sId || null
+  sId: props.transaction?.sId || null,
+  created: props.transaction?.created || new Date()
 } as unknown as Z_Transaction);
 
 const when: Ref<string> = ref(moment(props.transaction?.when).format('YYYY-MM-DD') || moment().format('YYYY-MM-DD'));
+const accountTo: Ref<string | undefined> = ref(undefined);
 
 const okDisabled: Ref<boolean> = ref(true);
 const errors: Ref<Z_FormError> = ref({});
-const start: Ref<Date> = ref(moment().toDate());
+const start: Ref<string> = ref(moment().format('YYYY-MM-DD'));
 
-const setWhen = (e: Event) => {
-  state.value.when = moment((e.target as HTMLInputElement).value).toDate();
+const setStart = (e: string) => {
+  console.log(e);
+  state.value.when = moment(e).toDate();
+  when.value = moment(e).format('YYYY-MM-DD');
 };
 
 const setCategory = (e: { id: string }) => {
-  const category = categorySelectList.value.find((a) => a.id === e.id)?.id;
+  const category = categorySelectList.value.find((a) => a.name === e.id)?.name;
 
   if (category) state.value.category = category;
 };
 
-const setFrom = (e: { id: string }) => {
-  const account = accountSelectList.value.find((a) => a.id === e.id)?.id;
-
-  if (account) state.value.from = account;
+const setAccount = (e: { id: string }) => {
+  if (e && e.id) state.value.account = e.id;
 };
 
 const setTo = (e: { id: string }) => {
-  const account = accountSelectList.value.find((a) => a.id === e.id)?.id;
+  const a = accounts.value.get(e.id);
 
-  if (account) state.value.to = account;
+  if (a) accountTo.value = a.id;
 };
 
 const paidOptions = [
@@ -227,8 +227,7 @@ const prestine: ComputedRef<boolean> = computed(() => {
     state.value.desc === props.transaction.desc &&
     state.value.amount === props.transaction.amount &&
     state.value.category === props.transaction.category &&
-    state.value.from === props.transaction.from &&
-    state.value.to === props.transaction.to &&
+    state.value.account === props.transaction.account &&
     state.value.when === props.transaction.when &&
     state.value.status === props.transaction.status &&
     state.value.sId === props.transaction.sId
@@ -238,12 +237,13 @@ const prestine: ComputedRef<boolean> = computed(() => {
 const autoDescription = () => {
   let desc = '';
 
+  if (state.value.desc) return;
   if (state.value.category) {
-    const category: Z_Category | undefined = dataStore.getCategory(state.value.category);
+    const category: Z_Category | undefined = categories.value.get(state.value.category);
     let parentCategory: Z_Category | undefined = undefined;
 
     if (category?.parent) {
-      parentCategory = dataStore.getCategory(category.parent);
+      parentCategory = categories.value.get(category.parent);
     }
 
     desc = parentCategory?.description ? `${parentCategory.description}: ${category?.description}` : `${category?.description}`;
@@ -283,11 +283,11 @@ onMounted(() => {
       desc: props.transaction?.desc,
       amount: props.transaction?.amount,
       category: props.transaction?.category,
-      from: props.transaction?.from || nullUUID,
-      to: props.transaction?.to || nullUUID,
+      account: props.transaction?.account,
       when: moment(props.transaction?.when).toDate() || moment().toDate(),
       status: props.transaction?.status || z_transactionStatus.enum.Paid,
-      sId: props.transaction?.sId || null
+      sId: props.transaction?.sId || null,
+      created: new Date()
     } as unknown as Z_Transaction;
   }
 });
@@ -302,11 +302,11 @@ const addTransactions = () => {
       desc: state.value.desc,
       amount: state.value.amount,
       category: state.value.category,
-      from: state.value.from || null,
-      to: state.value.to || null,
+      account: state.value.account,
       when: moment().toDate(),
       status: state.value.status,
-      sId: scheduleId
+      sId: scheduleId,
+      created: new Date()
     };
 
     if (t > 0) {
@@ -385,8 +385,30 @@ const addTransactions = () => {
         response.success = false;
         response.errors.push(...res.errors);
       }
+
+      if (accountTo.value) {
+        const tNew = z_transaction.parse(state.value);
+
+        tNew.id = crypto.randomUUID();
+        tNew.account = accountTo.value;
+        tNew.amount = tNew.amount * -1;
+
+        console.log(tNew);
+
+        res = dataStore.addTransaction(tNew);
+
+        if (res && !res.success) {
+          response.success = false;
+          response.errors.push(...res.errors);
+        }
+
+        console.log(response.errors);
+      }
     }
   });
+
+  dataStore.sortTransactions();
+  dataStore.recalculateBalances();
 
   return response;
 };
@@ -408,8 +430,7 @@ const editTransactions = () => {
 
     if (tToEdit.status === z_transactionStatus.enum.Pending) {
       tToEdit.amount = state.value.amount;
-      tToEdit.from = state.value.from;
-      tToEdit.to = state.value.to;
+      tToEdit.account = state.value.account;
     }
 
     const res = dataStore.editTransaction(tToEdit);

@@ -15,6 +15,7 @@
     </div>
     <div class="mt-4 flex flex-grow justify-center font-mono text-4xl text-gray-800"></div>
     <edit-category-form
+      v-if="modalOpen"
       :modal-open="modalOpen"
       @close="modalOpen = false"
     />

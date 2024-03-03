@@ -37,11 +37,13 @@
             <tr
               v-for="(row, index) in rows"
               :key="index"
+              class="relative"
             >
               <td
                 v-for="(column, subIndex) in columns"
                 :key="subIndex"
-                class="relative whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400"
+                class="relative max-w-[300px] text-ellipsis whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400"
+                :class="[column.key === 'actions' ? 'overflow-visible' : 'overflow-clip']"
               >
                 <slot
                   :name="`${column.key}-data`"

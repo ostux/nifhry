@@ -1,8 +1,7 @@
+import { useCapitalize } from '@/composables/useCapitalize';
 import { usePagination } from '@/composables/usePagination';
 import {
-  nullUUID,
   z_account,
-  z_budget,
   z_category,
   z_day,
   z_month,
@@ -12,120 +11,103 @@ import {
   type Z_Account,
   type Z_Accounts,
   type Z_ApiResponse,
-  type Z_Budget,
-  type Z_Budgets,
   type Z_Categories,
   type Z_Category,
   type Z_Day,
   type Z_Month,
+  type Z_Sort,
   type Z_Transaction,
   type Z_Transactions,
-  type Z_Year
+  type Z_Year,
+  type Z_SelectItemObject,
+  nullUUID
 } from '@/types';
 import moment from 'moment';
-import { acceptHMRUpdate, defineStore } from 'pinia';
+import { acceptHMRUpdate, defineStore, type StateTree } from 'pinia';
 import { computed, ref, type Ref } from 'vue';
 import { z } from 'zod';
 
 const pagination = usePagination();
+const capit = useCapitalize();
+const { capitalize } = capit;
+
+const parse = (value: string) => {
+  const data = JSON.parse(value);
+
+  const accounts = new Map();
+  const categories = new Map();
+
+  data.accounts.forEach((a: Z_Account) => accounts.set(a.id, a));
+  data.categories.forEach((a: Z_Account) => categories.set(a.id, a));
+
+  return { accounts, categories, transactions: data.transactions };
+};
+
+const stringify = (value: StateTree) => {
+  const data = {
+    accounts: Array.from(value.accounts.values()),
+    categories: Array.from(value.categories.values()),
+    transactions: value.transactions
+  };
+
+  return JSON.stringify(data);
+};
+
 export const useDataStore = defineStore(
   'dataStore',
   () => {
     const loading: Ref<boolean> = ref(false);
 
-    const accounts: Ref<Z_Accounts> = ref([]);
-    const budgets: Ref<Z_Budgets> = ref([]);
-    const categories: Ref<Z_Categories> = ref([]);
+    const accounts: Ref<Z_Accounts> = ref(new Map());
+    const categories: Ref<Z_Categories> = ref(
+      new Map([
+        [
+          nullUUID,
+          {
+            id: nullUUID,
+            name: 'Transfer',
+            description: 'Transfer between accounts',
+            parent: null,
+            used: 0
+          }
+        ]
+      ])
+    );
     const transactions: Ref<Z_Transactions> = ref([]);
 
     const paginatedTransactions: Ref<Z_Transactions> = ref([]);
 
-    const accountSelectList = computed(() => {
-      const selectList = accounts.value.map((a) => {
-        return { id: a.id, name: a.name };
-      });
-
-      selectList.push({
-        id: nullUUID,
-        name: 'null'
-      });
-
-      return selectList;
+    const getAccounts = computed(() => {
+      return Array.from(accounts.value.values());
     });
 
-    const budgetSelectList = computed(() => {
-      const selectList = budgets.value.map((b) => {
-        return {
-          label: categories.value.find((c) => c.id === b.category) || b.id,
-          value: b.id
-        };
+    const accountSelectList = computed(() => {
+      const selectList: Z_SelectItemObject[] = [];
+
+      accounts.value.forEach((value, key) => {
+        selectList.push({
+          id: key,
+          name: value.name
+        });
       });
+
+      selectList.push({ id: 'null', name: 'null' });
 
       return selectList;
     });
 
     const categorySelectList = computed(() => {
-      const selectList = categories.value.map((c) => {
-        return { id: c.id, name: c.name };
+      const selectList: Z_SelectItemObject[] = [];
+
+      categories.value.forEach((value, key) => {
+        selectList.push({
+          id: key,
+          name: value.name
+        });
       });
 
       return selectList;
     });
-
-    const categoryTopLevelSelectList = computed(() => {
-      const selectList = categories.value
-        .filter((c) => c.parent === null)
-        .map((c) => {
-          return { label: c.name, value: c.id };
-        });
-
-      return selectList;
-    });
-
-    const getPaginatedBudgets = computed(
-      () =>
-        (
-          page: number,
-          pageCount: number,
-          sort: any = null,
-          range: any = null,
-          nameFilter: any = null
-        ): { items: Z_Budgets; total: number } => {
-          let data = budgets.value;
-
-          if (z.string().safeParse(nameFilter).success) {
-            const category = categories.value.find((c) => c.name.includes(nameFilter) && c.parent === null);
-            data = data.filter((b) => b.category === category?.id);
-          }
-
-          if (range) {
-            data = data.filter((b) => b.when === range);
-          }
-
-          if (sort) {
-            switch (sort.column) {
-              case 'category':
-                data = sortBy('category', data);
-                break;
-              case 'name':
-                data = sortBy('name', data);
-                break;
-
-              default:
-                break;
-            }
-
-            if (sort.direction === 'desc') {
-              data = data.reverse();
-            }
-          }
-
-          return {
-            items: data.slice((page - 1) * pageCount, (page - 1) * pageCount + pageCount),
-            total: data.length
-          };
-        }
-    );
 
     function fetchTransactions(): Z_Transactions {
       loading.value = true;
@@ -160,35 +142,40 @@ export const useDataStore = defineStore(
         data = transactions.value;
       }
 
-      // if (sort) {
-      //   switch (sort.column) {
-      //     case 'when':
-      //       data = sortByTime(data);
-      //       break;
-      //     case 'amount':
-      //       data = sortBy('amount', data);
-      //       break;
-      //     case 'category':
-      //       data = sortBy('category', data);
-      //       break;
-      //     case 'from':
-      //       data = sortBy('from', data);
-      //       break;
-      //     case 'to':
-      //       data = sortBy('to', data);
-      //       break;
-      //     case 'status':
-      //       data = sortBy('status', data);
-      //       break;
+      const sort: Z_Sort = {
+        column: 'when',
+        direction: 'desc'
+      };
 
-      //     default:
-      //       break;
-      //   }
+      if (sort) {
+        switch (sort.column) {
+          case 'when':
+            data = sortByTime(data);
+            break;
+          case 'amount':
+            data = sortBy('amount', data);
+            break;
+          case 'category':
+            data = sortBy('category', data);
+            break;
+          case 'from':
+            data = sortBy('from', data);
+            break;
+          case 'to':
+            data = sortBy('to', data);
+            break;
+          case 'status':
+            data = sortBy('status', data);
+            break;
 
-      //   if (sort.direction === 'desc') {
-      //     data = data.reverse();
-      //   }
-      // }
+          default:
+            break;
+        }
+
+        if (sort.direction === 'desc') {
+          data = data.reverse();
+        }
+      }
 
       pagination.setTotalCount(data.length);
 
@@ -235,31 +222,23 @@ export const useDataStore = defineStore(
       return sortedTransactions;
     }
 
-    function sortBudgets() {
-      budgets.value = budgets.value.sort((a: Z_Budget, b: Z_Budget) => {
-        if (moment(b.when).isBefore(moment(a.when), 'month')) {
-          return 1;
-        } else if (moment(a.when).isBefore(moment(b.when), 'month')) {
-          return -1;
-        }
-        return 0;
-      });
-    }
-
     function sortCategories() {
-      categories.value = categories.value.sort((a: Z_Category, b: Z_Category) => {
-        if (a.name > b.name) {
-          return 1;
-        } else if (a.name < b.name) {
-          return -1;
-        }
-        return 0;
-      });
+      categories.value = new Map(
+        [...categories.value.entries()].sort((a: [string, Z_Category], b: [string, Z_Category]) => {
+          if (a[1].name > b[1].name) {
+            return 1;
+          } else if (a[1].name < b[1].name) {
+            return -1;
+          }
+          return 0;
+        })
+      );
     }
 
     function sortTransactions() {
       transactions.value = transactions.value.sort((a: Z_Transaction, b: Z_Transaction) => {
-        if (moment(b.when).isBefore(moment(a.when))) {
+        // eturn a["one"] - b["one"] || a["two"] - b["two"];
+        if (moment(b.when).isBefore(moment(a.when)) || Math.abs(a.amount) - Math.abs(b.amount)) {
           return 1;
         } else if (moment(a.when).isBefore(moment(b.when))) {
           return -1;
@@ -268,97 +247,37 @@ export const useDataStore = defineStore(
       });
     }
 
-    function accountBalanceAt(accountId: string, date: Date): number {
-      const account = accounts.value.find((a) => a.id === accountId);
-      if (account) {
-        const transactionsTill = transactions.value.filter((t) => moment(t.when).isSameOrBefore(moment(date), 'day'));
-
-        let balance = account.startingBalance;
-
-        transactionsTill.forEach((t) => {
-          if (t.from === account.id) {
-            balance = balance - t.amount;
-          }
-
-          if (t.to === account.id) {
-            balance = balance + t.amount;
-          }
-        });
-
-        return balance;
-      }
-
-      console.error('Account ID not exist in accounts!');
-      return 0;
-    }
-
     function recalculateBalances() {
-      accounts.value = accounts.value.map((a) => {
-        a.balance = z.coerce.number().parse(a.startingBalance.toFixed(2));
-        return a;
-      });
+      const balanceToZero = (v: Z_Account, k: string, m: Map<string, Z_Account>) => {
+        v.balance = 0;
+        m.set(k, v);
+      };
+
+      accounts.value.forEach(balanceToZero);
 
       transactions.value
         .filter((t) => t.status === z_transactionStatus.enum.Paid)
         .forEach((t: Z_Transaction) => {
-          recalculateBalanceForTransaction(t);
+          const a = accounts.value.get(t.account);
+
+          if (a) {
+            a.balance = z.coerce.number().parse((a.balance + t.amount).toFixed(2));
+            accounts.value.set(t.account, a);
+          }
         });
 
       return true;
     }
 
-    function recalculateBalanceForTransaction(t: Z_Transaction) {
-      if (t.status === z_transactionStatus.enum.Pending) {
-        return;
-      }
-
-      const fromIndex = accounts.value.findIndex((a) => a.id === t.from);
-      const toIndex = accounts.value.findIndex((a) => a.id === t.to);
-
-      if (fromIndex !== -1) {
-        accounts.value[fromIndex].balance = z.coerce.number().parse((accounts.value[fromIndex].balance - t.amount).toFixed(2));
-      }
-
-      if (toIndex !== -1) {
-        accounts.value[toIndex].balance = z.coerce.number().parse((accounts.value[toIndex].balance + t.amount).toFixed(2));
-      }
-
-      // const category = getTopLevelCategory(t.category);
-
-      // const categoryId = category?.id;
-      // if (categoryId) {
-      //   const correspondingBudgetIndex = budgets.value.findIndex(
-      //     (b) =>
-      //       moment(t.when).isSame(moment(b.when), "month") &&
-      //       t.category === categoryId
-      //   );
-
-      //   if (correspondingBudgetIndex >= 0) {
-      //     budgets.value[correspondingBudgetIndex].used =
-      //       budgets.value[correspondingBudgetIndex].used + t.amount;
-      //   }
-      // }
+    function accountById(id: string): Z_Account | undefined {
+      return accounts.value.get(id);
     }
 
-    function getTopLevelCategory(id: string): Z_Category | undefined {
-      let category = categoryFromId(id);
-
-      if (category?.parent) {
-        category = categoryFromId(category.parent);
-      }
-
-      return category;
+    function categoryById(id: string): Z_Category | undefined {
+      return categories.value.get(id);
     }
 
-    function accountFromId(id: string): Z_Account | undefined {
-      return accounts.value.find((a) => a.id === id);
-    }
-
-    function categoryFromId(id: string): Z_Category | undefined {
-      return categories.value.find((c) => c.id === id);
-    }
-
-    function transactionFromId(id: string): Z_Transaction | undefined {
+    function transactionById(id: string): Z_Transaction | undefined {
       return transactions.value.find((t) => t.id === id);
     }
 
@@ -368,17 +287,25 @@ export const useDataStore = defineStore(
       if (z_account.safeParse(account).success) {
         const acc = z_account.parse(account);
 
-        const exist = accounts.value.find((a) => a.name === acc.name || a.id === acc.id);
+        acc.name = capitalize(acc.name);
+
+        const exist = accounts.value.get(acc.id) || Array.from(accounts.value.values()).find((a) => a.name === acc.name);
         if (exist) {
           response.success = false;
           response.errors.push('account.error.account_name_already_exist');
           return response;
         }
 
-        accounts.value = [...accounts.value, acc];
+        accounts.value.set(acc.id, acc);
+
         recalculateBalances();
+
         return response;
       }
+
+      response.success = false;
+      response.errors.push('account.error.not_valid');
+      return response;
     }
 
     function editAccount(account: Z_Account) {
@@ -387,74 +314,59 @@ export const useDataStore = defineStore(
       if (z_account.safeParse(account).success) {
         const newAccount = z_account.parse(account);
 
-        const accountIndex = accounts.value.findIndex((a) => a.id === account.id);
-        if (accountIndex < 0) {
+        const exist = accounts.value.get(newAccount.id);
+
+        if (!exist) {
           response.success = false;
           response.errors.push('account.error.not_found');
           return response;
         }
 
-        accounts.value[accountIndex] = newAccount;
-        // recalculateBalances();
+        newAccount.name = capitalize(newAccount.name);
+
+        accounts.value.set(newAccount.id, newAccount);
+
+        recalculateBalances();
+
         return response;
       }
+
+      response.success = false;
+      response.errors.push('account.error.not_valid');
+      return response;
     }
 
-    function removeAccount(i: string) {
-      const id = z.string().parse(i);
+    function recalculateCategoryUsage() {
+      const usageToZero = (v: Z_Category, k: string, m: Map<string, Z_Category>) => {
+        v.used = 0;
+        m.set(k, v);
+      };
 
-      accounts.value = accounts.value.filter((a) => a.id !== id);
-      transactions.value = transactions.value.filter((t) => t.from !== id && t.to !== id);
+      categories.value.forEach(usageToZero);
 
-      return true;
-    }
+      transactions.value.forEach((t: Z_Transaction) => {
+        if (t.category) {
+          const c = categories.value.get(t.category);
 
-    function addBudget(budget: Z_Budget) {
-      if (z_budget.safeParse(budget).success) {
-        const b = z_budget.parse(budget);
-
-        budgets.value = [...budgets.value, b];
-
-        sortBudgets();
-
-        return true;
-      }
-    }
-
-    function editBudget(budget: Z_Budget) {
-      if (z_budget.safeParse(budget).success) {
-        const newBudget = z_budget.parse(budget);
-
-        const budgetIndex = budgets.value.findIndex((c) => c.id === budget.id);
-        if (budgetIndex < 0) {
-          return false;
+          if (c) {
+            c.used = c.used + 1;
+            categories.value.set(c.id, c);
+          }
         }
-
-        budgets.value[budgetIndex] = newBudget;
-
-        sortBudgets();
-
-        return true;
-      } else {
-        z_budget.parse(budget);
-      }
-    }
-
-    function getBudget(i: string): Z_Budget | undefined {
-      const id = z.string().parse(i);
-
-      return budgets.value.find((b) => b.id === id);
-    }
-
-    function removeBudget(i: string) {
-      const id = z.string().parse(i);
-
-      budgets.value = budgets.value.filter((b) => b.id !== id);
-      transactions.value = transactions.value.filter((t) => t.desc !== id);
-
-      sortBudgets();
+      });
 
       return true;
+    }
+
+    function removeAccount(id: string) {
+      const res = accounts.value.delete(id);
+
+      if (res) {
+        recalculateCategoryUsage();
+        recalculateBalances();
+      }
+
+      return res;
     }
 
     function addCategory(category: Z_Category) {
@@ -463,19 +375,28 @@ export const useDataStore = defineStore(
       if (z_category.safeParse(category).success) {
         const cat = z_category.parse(category);
 
-        const exist = categories.value.find((c) => c.name === cat.name);
+        cat.name = capitalize(cat.name);
+
+        const exist = categories.value.get(cat.id) || Array.from(categories.value.values()).find((c) => c.name === cat.name);
         if (exist) {
           response.success = false;
           response.errors.push('category.error.already_exist');
           return response;
         }
 
-        categories.value = [...categories.value, cat];
+        categories.value.set(cat.id, cat);
 
         sortCategories();
 
         return response;
       }
+
+      const err = z_category.safeParse(category);
+      console.error('category error: ', err);
+
+      response.success = false;
+      response.errors.push('category.error.not_valid');
+      return response;
     }
 
     function editCategory(category: Z_Category) {
@@ -484,82 +405,168 @@ export const useDataStore = defineStore(
       if (z_category.safeParse(category).success) {
         const newCategory = z_category.parse(category);
 
-        const categoryIndex = categories.value.findIndex((c) => c.id === category.id);
-        if (categoryIndex < 0) {
+        const exist = categories.value.get(newCategory.id);
+
+        if (!exist) {
           response.success = false;
           response.errors.push('category.error.not_found');
           return response;
         }
 
-        categories.value[categoryIndex] = newCategory;
+        newCategory.name = capitalize(newCategory.name);
+
+        categories.value.set(newCategory.id, newCategory);
 
         sortCategories();
 
         return response;
       }
+
+      response.success = false;
+      response.errors.push('category.error.not_valid');
+      return response;
     }
 
-    function getCategory(i: string): Z_Category | undefined {
-      const id = z.string().parse(i);
-
-      return categories.value.find((c) => c.id === id);
-    }
-
-    function removeCategory(i: string) {
-      const id = z.string().parse(i);
-
-      const category = getCategory(id);
+    function removeCategory(id: string) {
+      const category = z_category.parse(categories.value.get(id));
 
       if (category) {
-        let childs: any[] = categories.value.filter((c) => c.parent === category.id);
+        const childs: string[] = [];
+        categories.value.forEach((v, k) => {
+          if (v.parent === category.id) childs.push(k);
+        });
 
-        childs = childs.map((c) => c.id);
-
-        childs.push(id);
-
-        categories.value = categories.value.filter((c) => !childs.includes(c.id));
-        transactions.value = transactions.value.filter((t) => !childs.includes(t.category));
-
-        sortCategories();
-
-        return true;
+        transactions.value = transactions.value.map((t) => {
+          if (t.category && childs.includes(t.category)) {
+            t.category = null;
+            return t;
+          }
+          return t;
+        });
       }
-      return false;
+
+      categories.value.delete(id);
+    }
+
+    function increaseCategoryUsage(id: string) {
+      const category = categories.value.get(id);
+
+      if (category) {
+        category.used = category.used + 1;
+
+        categories.value.set(id, category);
+      }
+    }
+
+    function decreaseCategoryUsage(id: string) {
+      const category = categories.value.get(id);
+
+      if (category) {
+        category.used = category.used - 1;
+        if (category.used < 0) category.used = 0;
+
+        categories.value.set(id, category);
+      }
     }
 
     function addTransaction(transaction: Z_Transaction, batch: boolean = false) {
       const response: Z_ApiResponse = { success: true, errors: [] };
 
       if (z_transaction.safeParse(transaction).success) {
-        const tr = z_transaction.parse(transaction);
+        const t = z_transaction.parse(transaction);
 
-        const exist = transactions.value.find((d) => d.id === tr.id);
+        const exist = transactions.value.find((d) => d.id === t.id);
+
         if (exist) {
           response.success = false;
           response.errors.push('transaction.error.already_exist');
           return response;
         }
 
-        tr.amount = z.coerce.number().parse(tr.amount.toFixed(2));
-        tr.when = moment(tr.when).format('YYYY-MM-DD') as unknown as Date;
+        t.amount = z.coerce.number().parse(t.amount.toFixed(2));
+        t.when = moment(t.when).format('YYYY-MM-DD') as unknown as Date;
 
-        transactions.value = [...transactions.value, tr];
+        const account = accounts.value.get(t.account);
 
-        if (!batch) {
-          sortTransactions();
-
-          recalculateBalanceForTransaction(tr);
+        if (!account) {
+          response.success = false;
+          response.errors.push('transaction.error.account_not_exist');
+          console.error('Account not exist');
+          return response;
         }
 
+        if (!batch) {
+          transactions.value = [...transactions.value, t];
+
+          if (t.category) increaseCategoryUsage(t.category);
+
+          sortTransactions();
+          recalculateBalances();
+
+          return response;
+        }
+
+        let tExist: Z_Transaction | undefined = undefined;
+
+        // if less than a minute we accepting duplications othervise not,
+        // as it may possible as the transaction csv has no id in it...
+        // hovewer we do not want accidentaly reload the same scv twice.
+        if (moment(t.created).isBefore(moment().subtract(1, 'minute'))) {
+          tExist = transactions.value.find((r) => {
+            return (
+              moment(r.when).isSame(moment(t.when), 'day') &&
+              r.account === account.name &&
+              r.amount === t.amount &&
+              r.desc === t.desc &&
+              (r.category === t.category || r.category === 'Transfer')
+            );
+          });
+
+          if (tExist) {
+            response.success = false;
+            response.errors.push('transaction.error.already_exist');
+            return response;
+          }
+        }
+
+        if (t.category) {
+          t.category = capitalize(t.category);
+
+          const aExist: Z_Account | undefined = Array.from(accounts.value.values()).find((a) => a.name === t.category);
+
+          if (aExist) {
+            t.category = nullUUID;
+          }
+
+          const cat = categories.value.get(t.category);
+          if (!cat) {
+            addCategory({
+              id: crypto.randomUUID(),
+              name: t.category,
+              description: t.category,
+              parent: null,
+              used: 1
+            });
+          }
+        }
+
+        transactions.value = [...transactions.value, t];
+
+        return response;
+      } else {
+        response.success = false;
+        response.errors.push('transaction.error.not_valid');
+
+        console.error(response, z_transaction.parse(transaction));
         return response;
       }
     }
 
-    function editTransaction(transaction: Z_Transaction) {
+    function editTransaction(transaction: Z_Transaction, batch: boolean = false) {
       const response: Z_ApiResponse = { success: true, errors: [] };
 
       if (z_transaction.safeParse(transaction).success) {
-        const newtransaction = z_transaction.parse(transaction);
+        const newTransaction = z_transaction.parse(transaction);
 
         const transactionIndex = transactions.value.findIndex((t) => t.id === transaction.id);
         if (transactionIndex < 0) {
@@ -568,11 +575,18 @@ export const useDataStore = defineStore(
           return response;
         }
 
-        transactions.value[transactionIndex] = newtransaction;
+        transactions.value[transactionIndex] = newTransaction;
 
-        sortTransactions();
+        if (!batch) {
+          const oldTransaction = transactions.value.find((t) => t.id === transaction.id);
 
-        recalculateBalances();
+          if (oldTransaction?.category) decreaseCategoryUsage(oldTransaction.category);
+          if (newTransaction?.category) increaseCategoryUsage(newTransaction.category);
+
+          sortTransactions();
+
+          recalculateBalances();
+        }
 
         return response;
       }
@@ -581,75 +595,30 @@ export const useDataStore = defineStore(
     function removeTransaction(i: string) {
       const id = z.string().parse(i);
 
+      const t = transactions.value.find((t) => t.id === id);
+
       transactions.value = transactions.value.filter((c) => c.id !== id);
+
+      if (t && t?.category) decreaseCategoryUsage(t.category);
 
       recalculateBalances();
 
       return true;
     }
 
-    function budgetSpendingForAccountInMonth(accountId: string, when: string) {
-      const account = accounts.value.find((a) => a.id === accountId);
-      if (account) {
-        const aplicableBudgets = budgets.value.filter((b) => b.when === when && b.account === account.id);
-
-        let accountBudgetSpending: number = 0;
-        let accountBudgetSum: number = 0;
-
-        aplicableBudgets.forEach((b) => {
-          accountBudgetSum = accountBudgetSum + b.amount;
-
-          const categoryIds = categories.value.filter((c) => c.id === b.category || c.parent === b.category).map((c) => c.id);
-
-          const transactionsInRange = transactions.value.filter(
-            (t) =>
-              moment(t.when).isSame(moment(when), 'month') &&
-              t.status === z_transactionStatus.enum.Paid &&
-              t.category &&
-              categoryIds.includes(t.category)
-          );
-
-          accountBudgetSpending =
-            accountBudgetSpending +
-            transactionsInRange.reduce((accumulator, currentValue) => accumulator + currentValue.amount, 0);
-        });
-
-        return accountBudgetSum - accountBudgetSpending;
-      }
-
-      console.error('Account ID not exist in accounts!');
-      return 0;
-    }
-
-    function calculatePaidTopLevelCategoryInMonth(id: string, month: string) {
-      const categoryIds = categories.value.filter((c) => c.id === id || c.parent === id).map((c) => c.id);
-
-      const transactionsInRange = transactions.value.filter(
-        (t) =>
-          moment(t.when).isSame(moment(month), 'month') &&
-          t.status === z_transactionStatus.enum.Paid &&
-          t.category &&
-          categoryIds.includes(t.category)
-      );
-
-      return transactionsInRange.reduce((accumulator, currentValue) => accumulator + currentValue.amount, 0);
-    }
-
     return {
       loading,
 
       accounts,
-      budgets,
       categories,
       transactions,
 
       paginatedTransactions,
 
+      getAccounts,
+
       accountSelectList,
-      budgetSelectList,
       categorySelectList,
-      categoryTopLevelSelectList,
-      getPaginatedBudgets,
 
       fetchTransactions,
 
@@ -657,37 +626,32 @@ export const useDataStore = defineStore(
       editAccount,
       removeAccount,
 
-      addBudget,
-      editBudget,
-      getBudget,
-      removeBudget,
-
       addCategory,
       editCategory,
-      getCategory,
       removeCategory,
+      recalculateCategoryUsage,
 
       addTransaction,
       editTransaction,
       removeTransaction,
-
-      accountFromId,
-      categoryFromId,
-      transactionFromId,
-
-      sortBudgets,
-      sortCategories,
       sortTransactions,
-      recalculateBalances,
-      recalculateBalanceForTransaction,
-      accountBalanceAt,
-      calculatePaidTopLevelCategoryInMonth,
-      budgetSpendingForAccountInMonth
+
+      accountById,
+      categoryById,
+      transactionById,
+
+      recalculateBalances
     };
   },
   {
     persist: {
-      key: '__debt_controller-'
+      key: '__debt_controller-',
+      serializer: {
+        deserialize: parse,
+        serialize: stringify
+      },
+      paths: ['accounts', 'categories', 'transactions'],
+      debug: true
     }
   }
 );

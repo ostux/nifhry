@@ -154,7 +154,7 @@ const appSettingStore = useAppSettingStore();
 const { theme } = storeToRefs(appSettingStore);
 
 const dataStore = useDataStore();
-const { accounts, budgets, categories, transactions } = storeToRefs(dataStore);
+const { accounts, categories, transactions } = storeToRefs(dataStore);
 
 const isImportModalOpen: Ref<boolean> = ref(false);
 const showConfirmResetModal: Ref<boolean> = ref(false);
@@ -181,9 +181,8 @@ const navigation = computed(() => {
 const downloadExportedAccounts = () => {
   const exportData = JSON.stringify(
     {
-      accounts: accounts.value,
-      budgets: budgets.value,
-      categories: categories.value,
+      accounts: Array.from(accounts.value.values()),
+      categories: Array.from(categories.value.values()),
       transactions: transactions.value
     },
     undefined,
@@ -200,11 +199,20 @@ const downloadExportedAccounts = () => {
 };
 
 const resetData = () => {
-  accounts.value = [];
-  budgets.value = [];
-  categories.value = [];
+  accounts.value = new Map();
+  categories.value = new Map([
+    [
+      'Transfer',
+      {
+        id: 'Transfer',
+        name: 'Transfer',
+        description: 'Transfer between accounts',
+        parent: null,
+        used: 0
+      }
+    ]
+  ]);
   transactions.value = [];
-  dataStore.recalculateBalances();
 
   addNotification('success', t('notification.reset.success'));
   showConfirmResetModal.value = false;

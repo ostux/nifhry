@@ -2,7 +2,7 @@
   <div class="flex flex-wrap justify-center gap-4 py-4">
     <new-account-card />
     <account-card
-      v-for="account in accounts"
+      v-for="account in Array.from(accounts.values())"
       :account="account"
       :key="account.id"
     />
@@ -16,6 +16,5 @@ import { useDataStore } from '@/stores/dataStore';
 import { storeToRefs } from 'pinia';
 
 const dataStore = useDataStore();
-
 const { accounts } = storeToRefs(dataStore);
 </script>

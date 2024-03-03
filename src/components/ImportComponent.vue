@@ -44,28 +44,18 @@
 </template>
 
 <script setup lang="ts">
-import { useI18n } from 'vue-i18n';
-import {
-  z_accounts,
-  z_categories,
-  type Z_Accounts,
-  type Z_Budgets,
-  type Z_Categories,
-  type Z_Transactions,
-  z_transactions,
-  z_budgets
-} from '@/types';
 import BaseModal from '@/components/ui/BaseModal.vue';
-import { storeToRefs } from 'pinia';
-import { useDataStore } from '@/stores/dataStore';
-import { ref, type Ref } from 'vue';
 import { useNotification } from '@/composables/useNotification';
+import { useDataStore } from '@/stores/dataStore';
+import { z_accounts, z_categories, z_transactions, type Z_Accounts, type Z_Categories, type Z_Transactions } from '@/types';
 import { PaperClipIcon } from '@heroicons/vue/24/solid';
+import { storeToRefs } from 'pinia';
+import { ref, type Ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { z } from 'zod';
 
 interface ImportData {
   accounts?: Z_Accounts;
-  budgets?: Z_Budgets;
   categories?: Z_Categories;
   transactions?: Z_Transactions;
 }
@@ -83,7 +73,7 @@ const dataStore = useDataStore();
 const notifications = useNotification();
 
 const { addNotification } = notifications;
-const { accounts, budgets, categories, transactions } = storeToRefs(dataStore);
+const { accounts, categories, transactions } = storeToRefs(dataStore);
 
 const okDisabled: Ref<boolean> = ref(true);
 const data: Ref<ImportData> = ref({});
@@ -125,8 +115,7 @@ const validateImport = (d: any): boolean => {
   if (
     z_accounts.safeParse(d.accounts).success &&
     z_categories.safeParse(d.categories).success &&
-    z_transactions.safeParse(d.transactions).success &&
-    z_budgets.safeParse(d.budgets).success
+    z_transactions.safeParse(d.transactions).success
   ) {
     data.value = d;
     return true;
@@ -142,7 +131,6 @@ const doImport = () => {
     transactions.value = [];
     accounts.value = data.value.accounts.map((a) => {
       a.balance = Number.parseFloat(a.balance.toFixed(2));
-      a.startingBalance = Number.parseFloat(a.startingBalance.toFixed(2));
       return a;
     });
   } else {
@@ -161,12 +149,6 @@ const doImport = () => {
       t.amount = z.coerce.number().parse(t.amount.toFixed(2));
       return t;
     });
-  } else {
-    success = false;
-  }
-
-  if (data.value.budgets && z_budgets.safeParse(data.value.budgets).success) {
-    budgets.value = data.value.budgets;
   } else {
     success = false;
   }

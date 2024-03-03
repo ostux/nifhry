@@ -15,7 +15,8 @@ export const messages = {
         delete: {
           info: 'Account "{name}" deleted!',
           title: 'Delete account',
-          warning: 'Account will be deleted permanently with every associated data. (example: transactions)'
+          warning:
+            'Account will be deleted permanently with every child category. Transactions will be deassociated from the category.'
         },
         edit: {
           accountType: 'Account type',
@@ -136,7 +137,8 @@ export const messages = {
     transaction: {
       error: {
         already_exist: 'Transaction already exist.',
-        not_found: 'Transaction not found.'
+        not_found: 'Transaction not found.',
+        account_not_exist: 'Account not exist'
       },
       form: {
         add: {
@@ -170,10 +172,10 @@ export const messages = {
           description: 'Description',
           frequency: 'Frequency',
           repeat: 'How many times will be repeaded?',
-          from: 'From',
+          account: 'Account',
           start: 'Start',
           status: 'Status',
-          to: 'To',
+          to: 'Account to (optional)',
           when: 'When'
         },
         saved: 'Transaction saved.',
