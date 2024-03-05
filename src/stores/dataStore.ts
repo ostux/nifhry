@@ -91,8 +91,6 @@ export const useDataStore = defineStore(
         });
       });
 
-      selectList.push({ id: 'null', name: 'null' });
-
       return selectList;
     });
 
@@ -105,6 +103,8 @@ export const useDataStore = defineStore(
           name: value.name
         });
       });
+
+      selectList.push({ id: nullUUID, name: '----' });
 
       return selectList;
     });
@@ -500,22 +500,23 @@ export const useDataStore = defineStore(
         // if less than a minute we accepting duplications othervise not,
         // as it may possible as the transaction csv has no id in it...
         // hovewer we do not want accidentaly reload the same scv twice.
-        if (moment(t.created).isBefore(moment().subtract(1, 'minute'))) {
-          tExist = transactions.value.find((r) => {
-            return (
-              moment(r.when).isSame(moment(t.when), 'day') &&
-              r.account === account.name &&
-              r.amount === t.amount &&
-              r.desc === t.desc &&
-              (r.category === t.category || r.category === 'Transfer')
-            );
-          });
 
-          if (tExist) {
-            response.success = false;
-            response.errors.push('transaction.error.already_exist');
-            return response;
-          }
+        tExist = transactions.value.find((r) => {
+          return (
+            moment(r.when).isSame(moment(t.when), 'day') &&
+            r.account === t.account &&
+            r.amount === t.amount &&
+            r.desc === t.desc &&
+            (r.category === t.category || r.category === nullUUID) &&
+            moment(r.created).isBefore(moment().subtract(1, 'minute'))
+          );
+        });
+
+        if (tExist) {
+          response.success = false;
+          console.error('Account already exist...');
+          response.errors.push('transaction.error.already_exist');
+          return response;
         }
 
         transactions.value = [...transactions.value, t];
@@ -613,7 +614,7 @@ export const useDataStore = defineStore(
   },
   {
     persist: {
-      key: '__debt_controller-',
+      key: import.meta.env.VITE_LOCALSTORAGE_DATA_KEY,
       serializer: {
         deserialize: parse,
         serialize: stringify

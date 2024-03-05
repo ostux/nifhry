@@ -2,9 +2,9 @@
   <div class="flex flex-wrap justify-center gap-4 py-4">
     <new-category-card />
     <category-card
-      v-for="category in Array.from(categories.values())"
+      v-for="category in Array.from(categories.values()).filter((c) => c.parent === null)"
       :category="category"
-      :key="category.name"
+      :key="category.id"
     />
   </div>
 </template>

@@ -1,5 +1,8 @@
 <template>
-  <div class="relative h-[175px] w-[350px] rounded-lg border border-pine-green-500 bg-transparent p-4 hover:bg-pine-green-500/10">
+  <div
+    class="relative flex-col rounded-lg border border-pine-green-500 bg-transparent p-4 hover:bg-pine-green-500/10"
+    :class="[isChild ? 'flex min-h-[156px] min-w-[316px]' : 'flex min-h-[175px] min-w-[350px]']"
+  >
     <dropdown-menu
       v-if="!(props.category && props.category.name === 'Transfer')"
       :items="items"
@@ -15,11 +18,19 @@
         />
       </div>
     </div>
-    <div
-      v-if="categoryParent"
-      class="mt-4 flex flex-grow font-mono text-gray-700 dark:text-white"
-    >
-      belongs to: &nbsp;<strong>{{ categoryParent.name }}</strong>
+
+    <div class="mt-4 flex flex-grow flex-col justify-end font-mono text-gray-700 dark:text-white">
+      <span>
+        used: &nbsp;<strong>{{ category.used }}</strong> times
+      </span>
+    </div>
+    <div class="flex flex-row flex-wrap justify-evenly gap-4">
+      <category-card
+        v-for="child in Array.from(categories.values()).filter((c) => c.parent === category.id)"
+        :category="child"
+        :key="child.id"
+        :is-child="true"
+      />
     </div>
     <edit-category-form
       v-if="openEditModal"
@@ -65,6 +76,10 @@ const props = defineProps({
   category: {
     type: Object as PropType<Z_Category>,
     required: true
+  },
+  isChild: {
+    type: Boolean,
+    default: false
   }
 });
 

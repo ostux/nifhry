@@ -52,7 +52,7 @@
                 :class="[
                   active ? 'bg-pine-green-100 text-pine-green-900' : 'text-gray-900 dark:text-white',
                   'relative cursor-default select-none py-2 pl-10 pr-4',
-                  item.disabled ? 'cursor-not-allowed bg-gray-200 line-through opacity-50' : ''
+                  item.disabled ? 'cursor-not-allowed bg-gray-200 text-black opacity-50 dark:bg-gray-900 dark:text-white' : ''
                 ]"
               >
                 <span

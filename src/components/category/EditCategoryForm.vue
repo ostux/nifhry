@@ -35,8 +35,13 @@
 
       <select-box
         name="status"
-        :options="categorySelectList"
-        :pre-selected="selectedParentCategory?.name"
+        :options="
+          categorySelectList.map((c) => {
+            if (c.id === category?.id) c.disabled = true;
+            return c;
+          })
+        "
+        :pre-selected="selectedParentCategory?.id"
         @select="setCategoryParent"
         :label="$t('category.form.edit.parent')"
       />
@@ -63,7 +68,7 @@ import BaseModal from '@/components/ui/BaseModal.vue';
 import SelectBox from '@/components/ui/SelectBox.vue';
 import { useNotification } from '@/composables/useNotification';
 import { useDataStore } from '@/stores/dataStore';
-import { z_category, type Z_ApiResponse, type Z_Category, type Z_FormError } from '@/types';
+import { z_category, type Z_ApiResponse, type Z_Category, type Z_FormError, nullUUID } from '@/types';
 import { storeToRefs } from 'pinia';
 import { ref, watch, type PropType, type Ref } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -93,12 +98,12 @@ const state: Ref<Z_Category> = ref({
   name: props.category?.name || '',
   description: props.category?.description || '',
   parent: props.category?.parent || null,
-  used: 0
+  used: props.category?.used || 0
 } as Z_Category);
 
 const resError: Ref<string[]> = ref([]);
 
-const selectedParentCategory = ref(categorySelectList.value.find((c) => c.name === state.value.parent));
+const selectedParentCategory = ref(categorySelectList.value.find((c) => c.id === state.value.parent));
 
 const okDisabled: Ref<boolean> = ref(true);
 const errors: Ref<Z_FormError> = ref({});
@@ -116,6 +121,7 @@ watch(
 
     if (!valid.success) {
       valid.error.issues.forEach((err) => {
+        console.error(valid.error.issues);
         err.path.forEach((p) => {
           if (!errors.value[p]) {
             errors.value[p] = [];
@@ -135,7 +141,8 @@ const save = () => {
   let res: Z_ApiResponse | undefined = undefined;
 
   if (props.category) {
-    console.log(state.value);
+    if (state.value.parent === nullUUID) state.value.parent = null;
+
     res = dataStore.editCategory(state.value);
   } else {
     res = dataStore.addCategory(state.value);

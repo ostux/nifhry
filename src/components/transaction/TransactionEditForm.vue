@@ -56,7 +56,7 @@
 
       <select-box
         name="to"
-        :options="accountSelectList"
+        :options="accountToSelectList"
         @select="setTo"
         :label="$t('transaction.form.edit.to')"
         :disabled="!!transaction"
@@ -90,6 +90,7 @@ import SelectBox from '@/components/ui/SelectBox.vue';
 import { useNotification } from '@/composables/useNotification';
 import { useDataStore } from '@/stores/dataStore';
 import {
+  nullUUID,
   z_transaction,
   z_transactionStatus,
   type Z_ApiResponse,
@@ -139,6 +140,8 @@ const accountTo: Ref<string | undefined> = ref(undefined);
 
 const okDisabled: Ref<boolean> = ref(true);
 const errors: Ref<Z_FormError> = ref({});
+
+const accountToSelectList = computed(() => [...accountSelectList.value, { id: nullUUID, name: '----' }]);
 
 const setWhen = (e: string) => {
   state.value.when = moment(e).toDate();
@@ -250,7 +253,7 @@ const save = () => {
   } else {
     res = dataStore.addTransaction(state.value);
     if (res && res.success) {
-      if (accountTo.value) {
+      if (accountTo.value && accountTo.value !== nullUUID) {
         const tNew = z_transaction.parse(state.value);
 
         tNew.id = crypto.randomUUID();

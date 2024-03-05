@@ -1,8 +1,8 @@
 <template>
   <div class="w-full">
     <table class="min-w-full table-fixed divide-y divide-gray-300 dark:divide-gray-700">
-      <thead>
-        <tr class="border-b border-gray-200">
+      <thead class="bg-background/75 sticky top-[65px] z-50 -mb-px backdrop-blur">
+        <tr>
           <th
             v-for="(column, index) in columns"
             :key="index"

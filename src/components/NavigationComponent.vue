@@ -142,6 +142,7 @@ import { computed, ref, type Ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { RouterLink, useRouter } from 'vue-router';
 import ImportComponent from './ImportComponent.vue';
+import { nullUUID } from '@/types';
 
 const { t } = useI18n();
 
@@ -168,7 +169,14 @@ const navigation = computed(() => {
     { name: 'nav.about', href: '/about', current: false },
     { name: 'nav.export', icon: CloudArrowDownIcon, click: () => downloadExportedAccounts(), id: 'downloadAnchorElem' },
     { name: 'nav.import', icon: CloudArrowUpIcon, click: () => (isImportModalOpen.value = true) },
-    { name: 'nav.recalculate', icon: ArrowPathIcon, click: () => dataStore.recalculateBalances() },
+    {
+      name: 'nav.recalculate',
+      icon: ArrowPathIcon,
+      click: () => {
+        dataStore.recalculateBalances();
+        dataStore.recalculateCategoryUsage();
+      }
+    },
     { name: 'nav.trash', icon: TrashIcon, click: () => (showConfirmResetModal.value = true) },
     {
       name: 'nav.theme',
@@ -199,12 +207,17 @@ const downloadExportedAccounts = () => {
 };
 
 const resetData = () => {
+  console.log(import.meta.env.VITE_LOCALSTORAGE_DATA_KEY);
+
+  if (import.meta.env.VITE_LOCALSTORAGE_DATA_KEY) {
+    localStorage.removeItem(import.meta.env.VITE_LOCALSTORAGE_DATA_KEY);
+  }
   accounts.value = new Map();
   categories.value = new Map([
     [
-      'Transfer',
+      nullUUID,
       {
-        id: 'Transfer',
+        id: nullUUID,
         name: 'Transfer',
         description: 'Transfer between accounts',
         parent: null,

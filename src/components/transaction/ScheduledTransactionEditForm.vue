@@ -87,7 +87,7 @@
 
       <select-box
         name="to"
-        :options="accountSelectList"
+        :options="accountToSelectList"
         @select="setTo"
         :label="$t('transaction.form.edit.to')"
         :disabled="!!transaction"
@@ -126,7 +126,8 @@ import {
   z_transactionStatus,
   type Z_ApiResponse,
   type Z_Category,
-  type Z_Transaction
+  type Z_Transaction,
+  nullUUID
 } from '@/types';
 import moment from 'moment';
 import { storeToRefs } from 'pinia';
@@ -176,6 +177,8 @@ const accountTo: Ref<string | undefined> = ref(undefined);
 const okDisabled: Ref<boolean> = ref(true);
 const errors: Ref<Z_FormError> = ref({});
 const start: Ref<string> = ref(moment().format('YYYY-MM-DD'));
+
+const accountToSelectList = computed(() => [...accountSelectList.value, { id: nullUUID, name: '----' }]);
 
 const setStart = (e: string) => {
   console.log(e);
@@ -386,7 +389,7 @@ const addTransactions = () => {
         response.errors.push(...res.errors);
       }
 
-      if (accountTo.value) {
+      if (accountTo.value && accountTo.value !== nullUUID) {
         const tNew = z_transaction.parse(state.value);
 
         tNew.id = crypto.randomUUID();
