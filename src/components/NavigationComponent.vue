@@ -142,7 +142,6 @@ import { computed, ref, type Ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { RouterLink, useRouter } from 'vue-router';
 import ImportComponent from './ImportComponent.vue';
-import { nullUUID } from '@/types';
 
 const { t } = useI18n();
 
@@ -163,7 +162,7 @@ const showConfirmResetModal: Ref<boolean> = ref(false);
 const navigation = computed(() => {
   return [
     { name: 'nav.account', href: '/accounts', current: true },
-    { name: 'nav.category', href: '/category', current: false },
+    { name: 'nav.category', href: '/categories', current: false },
     { name: 'nav.transaction', href: '/transaction', current: false },
     { name: 'nav.todo', href: '/todo', current: false },
     { name: 'nav.about', href: '/about', current: false },
@@ -175,6 +174,7 @@ const navigation = computed(() => {
       click: () => {
         dataStore.recalculateBalances();
         dataStore.recalculateCategoryUsage();
+        addNotification('success', t('notification.recalculation.finished'));
       }
     },
     { name: 'nav.trash', icon: TrashIcon, click: () => (showConfirmResetModal.value = true) },
@@ -207,24 +207,11 @@ const downloadExportedAccounts = () => {
 };
 
 const resetData = () => {
-  console.log(import.meta.env.VITE_LOCALSTORAGE_DATA_KEY);
-
   if (import.meta.env.VITE_LOCALSTORAGE_DATA_KEY) {
     localStorage.removeItem(import.meta.env.VITE_LOCALSTORAGE_DATA_KEY);
   }
   accounts.value = new Map();
-  categories.value = new Map([
-    [
-      nullUUID,
-      {
-        id: nullUUID,
-        name: 'Transfer',
-        description: 'Transfer between accounts',
-        parent: null,
-        used: 0
-      }
-    ]
-  ]);
+  categories.value = new Map();
   transactions.value = [];
 
   addNotification('success', t('notification.reset.success'));

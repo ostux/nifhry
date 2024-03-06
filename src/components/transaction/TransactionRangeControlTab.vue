@@ -10,6 +10,7 @@
           as="component"
           :key="tab.id"
           v-slot="{ selected }"
+          class="flex-grow"
         >
           <simple-button
             class="w-full"

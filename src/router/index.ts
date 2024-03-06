@@ -20,7 +20,7 @@ const router = createRouter({
     {
       path: '/account/:slug',
       name: 'account',
-      component: () => import('../views/account/MainView.vue'),
+      component: () => import('../views/account/AccountView.vue'),
       children: [
         {
           // UserPosts will be rendered inside User's <router-view>
@@ -38,9 +38,14 @@ const router = createRouter({
       component: () => import('../views/account/ImportTransactions.vue')
     },
     {
-      path: '/category',
-      name: 'category',
+      path: '/categories',
+      name: 'categories',
       component: () => import('../views/CategoriesView.vue')
+    },
+    {
+      path: '/category/:slug',
+      name: 'category',
+      component: () => import('../views/category/CategoryView.vue')
     },
     {
       path: '/transaction',

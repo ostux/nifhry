@@ -31,12 +31,12 @@
       :rows="rows"
       :loading="loading"
     >
-      <template #account-data="{ row }">
-        {{ accountById(row.account)?.name }}
+      <template #from-data="{ row }">
+        {{ accountById(row.from)?.name }}
       </template>
 
       <template #amount-data="{ row }">
-        <span :class="[row.amount < 0 ? 'text-rose-500' : 'text-pine-green-500']">
+        <span :class="getAmountColor(row as unknown as Z_Transaction)">
           {{
             new Intl.NumberFormat('en-GB', {
               style: 'currency',
@@ -44,6 +44,10 @@
             }).format(parseFloat(row.amount))
           }}
         </span>
+      </template>
+
+      <template #to-data="{ row }">
+        {{ accountById(row.to)?.name }}
       </template>
 
       <template #category-data="{ row }">
@@ -55,83 +59,37 @@
       </template>
 
       <template #actions-data="{ row }">
-        <dropdown-menu
-          :items="items(row as unknown as Z_Transaction)"
-          :data="row"
-          class="-mt-4"
-        >
-        </dropdown-menu>
+        <transaction-action-menu
+          :row="row"
+          @refetch="refetch"
+        />
       </template>
     </table-component>
   </div>
-  <transaction-edit-form
-    v-if="openTransactionEditForm"
-    :modal-open="openTransactionEditForm"
-    @close="openTransactionEditForm = false"
-    :transaction="selectedTransaction"
-    @saved="refetch"
-  />
-  <scheduled-transaction-edit-form
-    v-if="openScheduledTransactionEditForm"
-    :modal-open="openScheduledTransactionEditForm"
-    @close="openScheduledTransactionEditForm = false"
-    :transaction="selectedTransaction"
-    @saved="refetch"
-  />
-  <delete-confirmation-form
-    v-if="openRemoveTransactionForm"
-    :modal-open="openRemoveTransactionForm"
-    :ok-disabled="false"
-    ok-translation-slug="button.confirm"
-    :info-text="transactions.length > 1 ? 'transaction.form.delete.all.warning' : 'transaction.form.delete.warning'"
-    @modal-close="openRemoveTransactionForm = false"
-    @modal-ok-clicked="removeTransactions"
-  >
-    <template v-slot:header> {{ $t('account.form.delete.title') }} </template>
-  </delete-confirmation-form>
 </template>
 
 <script setup lang="ts">
-import ScheduledTransactionEditForm from '@/components/transaction/ScheduledTransactionEditForm.vue';
-import TransactionEditForm from '@/components/transaction/TransactionEditForm.vue';
 import TransactionRangeControlTab from '@/components/transaction/TransactionRangeControlTab.vue';
-import DeleteConfirmationForm from '@/components/ui/BaseModal.vue';
-import DropdownMenu from '@/components/ui/DropdownMenu.vue';
 import PaginationComponnt from '@/components/ui/PaginationComponnt.vue';
 import SimpleButton from '@/components/ui/SimpleButton.vue';
 import TableComponent from '@/components/ui/TableComponent.vue';
-import { useNotification } from '@/composables/useNotification';
 import { useDataStore } from '@/stores/dataStore';
-import { z_transaction, z_transactionStatus, type Z_Transaction, type Z_Transactions } from '@/types';
-import {
-  BanknotesIcon,
-  DocumentDuplicateIcon,
-  PencilSquareIcon,
-  Squares2X2Icon,
-  SquaresPlusIcon,
-  TrashIcon
-} from '@heroicons/vue/24/outline';
+import { nullUUID, type Z_Transaction, type Z_Transactions } from '@/types';
+import { Squares2X2Icon, SquaresPlusIcon } from '@heroicons/vue/24/outline';
 import moment from 'moment';
 import { storeToRefs } from 'pinia';
 import { onUnmounted, ref, type Ref } from 'vue';
-import { useI18n } from 'vue-i18n';
-
-const { t } = useI18n();
+import TransactionActionMenu from '@/components/transaction/TransactionActionMenu.vue';
 
 const dataStore = useDataStore();
 const { accountById, categoryById } = dataStore;
-const { accounts, transactions } = storeToRefs(dataStore);
-
-const notifications = useNotification();
-const { addNotification } = notifications;
+const { accounts } = storeToRefs(dataStore);
 
 const loading: Ref<boolean> = ref(true);
 const selectedTransaction: Ref<Z_Transaction | undefined> = ref(undefined);
-const transactionsToRemove: Ref<Z_Transactions> = ref([]);
 
 const openTransactionEditForm: Ref<boolean> = ref(false);
 const openScheduledTransactionEditForm: Ref<boolean> = ref(false);
-const openRemoveTransactionForm: Ref<boolean> = ref(false);
 
 const columns = [
   // { key: "sId", label: "sId" },
@@ -140,13 +98,18 @@ const columns = [
     label: 'Description'
   },
   {
-    key: 'account',
-    label: 'Account',
+    key: 'from',
+    label: 'From',
     sortable: true
   },
   {
     key: 'amount',
     label: 'Amount',
+    sortable: true
+  },
+  {
+    key: 'to',
+    label: 'To',
     sortable: true
   },
   {
@@ -172,119 +135,10 @@ const columns = [
 
 const rows: Ref<Z_Transactions> = ref([]);
 
-const items = (row: Z_Transaction) => {
-  const menuItems: any = [
-    [
-      {
-        label: 'menu.edit',
-        icon: PencilSquareIcon,
-        click: () => {
-          selectedTransaction.value = row;
-          openTransactionEditForm.value = true;
-        }
-      }
-    ],
-    [
-      {
-        label: 'menu.duplicate',
-        icon: DocumentDuplicateIcon,
-        click: () => {
-          const tCopy = z_transaction.parse(row);
-          tCopy.id = crypto.randomUUID();
-          const res = dataStore.addTransaction(tCopy);
-          if (res && res.success) {
-            addNotification('success', t('transaction.form.saved'));
-            refetch();
-          } else {
-            addNotification('danger', t('transaction.form.saveFailed'));
-          }
-        }
-      }
-    ],
-    [
-      {
-        label: 'menu.delete',
-        icon: TrashIcon,
-        click: () => {
-          transactionsToRemove.value = [row];
-          openRemoveTransactionForm.value = true;
-        }
-      }
-    ]
-  ];
+const getAmountColor = (row: Z_Transaction) => {
+  if (row.from !== nullUUID && row.to !== nullUUID) return 'text-sky-500';
 
-  if (row.sId !== null) {
-    menuItems[0].push({
-      label: 'menu.all.edit',
-      icon: PencilSquareIcon,
-      click: () => {
-        selectedTransaction.value = row;
-        openScheduledTransactionEditForm.value = true;
-      }
-    });
-    menuItems[2].push({
-      label: 'menu.all.delete',
-      icon: TrashIcon,
-      disabled: false,
-      click: () => {
-        if (!row.sId) {
-          return;
-        }
-
-        const items = dataStore.transactions.filter((t) => {
-          return t.sId === row.sId && t.status === z_transactionStatus.enum.Pending;
-        });
-
-        transactionsToRemove.value = items;
-        openRemoveTransactionForm.value = true;
-      }
-    });
-  }
-
-  if (row.status === z_transactionStatus.enum.Paid) {
-    menuItems[1].push({
-      label: 'menu.pending',
-      icon: BanknotesIcon,
-      click: () => {
-        const transaction = z_transaction.parse(row);
-        transaction.status = z_transactionStatus.enum.Pending;
-        const res = dataStore.editTransaction(transaction);
-        if (res && res.success) {
-          addNotification('success', t('transaction.form.saved'));
-          refetch();
-        } else {
-          addNotification('danger', t('transaction.form.saveFailed'));
-        }
-      }
-    });
-  } else {
-    menuItems[1].push({
-      label: 'menu.paid',
-      icon: BanknotesIcon,
-      click: () => {
-        const transaction = z_transaction.parse(row);
-        transaction.status = z_transactionStatus.enum.Paid;
-        const res = dataStore.editTransaction(transaction);
-        if (res && res.success) {
-          addNotification('success', t('transaction.form.saved'));
-          refetch();
-        } else {
-          addNotification('danger', t('transaction.form.saveFailed'));
-        }
-      }
-    });
-  }
-
-  return menuItems;
-};
-
-const removeTransactions = () => {
-  transactionsToRemove.value.forEach((t) => {
-    dataStore.removeTransaction(t.id);
-  });
-  refetch();
-
-  openRemoveTransactionForm.value = false;
+  return row.amount < 0 ? 'text-rose-500' : 'text-pine-green-500';
 };
 
 const refetch = () => {

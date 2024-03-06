@@ -59,20 +59,7 @@ export const useDataStore = defineStore(
     const loading: Ref<boolean> = ref(false);
 
     const accounts: Ref<Z_Accounts> = ref(new Map());
-    const categories: Ref<Z_Categories> = ref(
-      new Map([
-        [
-          nullUUID,
-          {
-            id: nullUUID,
-            name: 'Transfer',
-            description: 'Transfer between accounts',
-            parent: null,
-            used: 0
-          }
-        ]
-      ])
-    );
+    const categories: Ref<Z_Categories> = ref(new Map());
     const transactions: Ref<Z_Transactions> = ref([]);
 
     const paginatedTransactions: Ref<Z_Transactions> = ref([]);
@@ -91,6 +78,8 @@ export const useDataStore = defineStore(
         });
       });
 
+      selectList.push({ id: nullUUID, name: '-' });
+
       return selectList;
     });
 
@@ -104,7 +93,7 @@ export const useDataStore = defineStore(
         });
       });
 
-      selectList.push({ id: nullUUID, name: '----' });
+      selectList.push({ id: nullUUID, name: '-' });
 
       return selectList;
     });
@@ -258,11 +247,18 @@ export const useDataStore = defineStore(
       transactions.value
         .filter((t) => t.status === z_transactionStatus.enum.Paid)
         .forEach((t: Z_Transaction) => {
-          const a = accounts.value.get(t.account);
+          const aFrom = accounts.value.get(t.from);
 
-          if (a) {
-            a.balance = z.coerce.number().parse((a.balance + t.amount).toFixed(2));
-            accounts.value.set(t.account, a);
+          if (aFrom) {
+            aFrom.balance = z.coerce.number().parse((aFrom.balance + t.amount).toFixed(2));
+            accounts.value.set(t.from, aFrom);
+          }
+
+          const aTo = accounts.value.get(t.to);
+
+          if (aTo) {
+            aTo.balance = z.coerce.number().parse((aTo.balance + Math.abs(t.amount)).toFixed(2));
+            accounts.value.set(t.to, aTo);
           }
         });
 
@@ -464,7 +460,10 @@ export const useDataStore = defineStore(
       if (z_transaction.safeParse(transaction).success) {
         const t = z_transaction.parse(transaction);
 
-        const exist = transactions.value.find((d) => d.id === t.id);
+        const exist = transactions.value.find(
+          (d) =>
+            d.id === t.id || (d.iId.from === t.iId.from && t.iId.from !== null) || (d.iId.to === t.iId.to && t.iId.to !== null)
+        );
 
         if (exist) {
           response.success = false;
@@ -475,9 +474,10 @@ export const useDataStore = defineStore(
         t.amount = z.coerce.number().parse(t.amount.toFixed(2));
         t.when = moment(t.when).format('YYYY-MM-DD') as unknown as Date;
 
-        const account = accounts.value.get(t.account);
+        const from = accounts.value.get(t.from);
+        const to = accounts.value.get(t.to);
 
-        if (!account) {
+        if (!from && !to) {
           response.success = false;
           response.errors.push('transaction.error.account_not_exist');
           console.error('Account not exist');
@@ -495,30 +495,63 @@ export const useDataStore = defineStore(
           return response;
         }
 
-        let tExist: Z_Transaction | undefined = undefined;
+        let opositeTransaction: Z_Transaction[] = [];
 
-        // if less than a minute we accepting duplications othervise not,
-        // as it may possible as the transaction csv has no id in it...
-        // hovewer we do not want accidentaly reload the same scv twice.
+        if (t.category) {
+          const category = Array.from(categories.value.values()).find((c) => c.id == t.category);
 
-        tExist = transactions.value.find((r) => {
-          return (
-            moment(r.when).isSame(moment(t.when), 'day') &&
-            r.account === t.account &&
-            r.amount === t.amount &&
-            r.desc === t.desc &&
-            (r.category === t.category || r.category === nullUUID) &&
-            moment(r.created).isBefore(moment().subtract(1, 'minute'))
-          );
-        });
+          let aExist: Z_Account | undefined;
 
-        if (tExist) {
-          response.success = false;
-          console.error('Account already exist...');
-          response.errors.push('transaction.error.already_exist');
-          return response;
+          if (category) aExist = Array.from(accounts.value.values()).find((a) => a.name == category.name);
+
+          if (aExist) {
+            console.log('account exist...');
+
+            if (t.from && t.from !== nullUUID) {
+              opositeTransaction = transactions.value.filter(
+                (f) =>
+                  moment(f.when).isSame(moment(t.when), 'day') &&
+                  f.amount * -1 === t.amount &&
+                  f.to === aExist?.id &&
+                  f.from === nullUUID &&
+                  f.iId.from === null
+              );
+            } else if (t.to && t.to !== nullUUID) {
+              opositeTransaction = transactions.value.filter(
+                (f) =>
+                  moment(f.when).isSame(moment(t.when), 'day') &&
+                  f.amount * -1 === t.amount &&
+                  f.from === aExist?.id &&
+                  f.to === nullUUID &&
+                  f.iId.to === null
+              );
+            }
+
+            if (opositeTransaction.length === 1) {
+              console.log('editing batch transaction as opposite transaction found...');
+              const ot = opositeTransaction[0];
+
+              if (ot.from === aExist.id) {
+                ot.to = t.to;
+                ot.desc = `${ot.desc}|${t.desc}`;
+                ot.iId.to = t.iId.to;
+              } else if (ot.to === aExist.id) {
+                ot.amount = t.amount;
+                ot.from = t.from;
+                ot.desc = `${t.desc}|${ot.desc}`;
+                ot.iId.from = t.iId.from;
+              }
+
+              editTransaction(ot, true);
+
+              return response;
+            } else {
+              console.log('multiple transaction found', opositeTransaction);
+            }
+          }
         }
 
+        console.log('adding batch transaction...');
         transactions.value = [...transactions.value, t];
 
         return response;

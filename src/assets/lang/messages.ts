@@ -89,7 +89,7 @@ export const messages = {
         description: 'Description',
         category: 'Category',
         in: 'Credit / In',
-        out: 'Debit / out'
+        out: 'Debit / Out'
       }
     },
     menu: {
@@ -129,7 +129,10 @@ export const messages = {
         success: 'Import finished with success.',
         warningText: 'All existing data will be replaced with the new one if the import are valid!'
       },
-      reset: { success: 'All data succesfuly erased.' }
+      reset: { success: 'All data succesfuly erased.' },
+      recalculation: {
+        finished: 'Balance  recalculation finished.'
+      }
     },
     table: {
       empty: 'No items found.'
@@ -172,10 +175,10 @@ export const messages = {
           description: 'Description',
           frequency: 'Frequency',
           repeat: 'How many times will be repeaded?',
-          account: 'Account',
+          from: 'From',
+          to: 'To',
           start: 'Start',
           status: 'Status',
-          to: 'Account to (optional)',
           when: 'When'
         },
         saved: 'Transaction saved.',

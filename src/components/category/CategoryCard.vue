@@ -4,7 +4,6 @@
     :class="[isChild ? 'flex min-h-[156px] min-w-[316px]' : 'flex min-h-[175px] min-w-[350px]']"
   >
     <dropdown-menu
-      v-if="!(props.category && props.category.name === 'Transfer')"
       :items="items"
       class="-mt-2"
     />
@@ -21,7 +20,9 @@
 
     <div class="mt-4 flex flex-grow flex-col justify-end font-mono text-gray-700 dark:text-white">
       <span>
-        used: &nbsp;<strong>{{ category.used }}</strong> times
+        <RouterLink :to="`category/${category.id}`">
+          used: &nbsp;<strong>{{ category.used }}</strong> times
+        </RouterLink>
       </span>
     </div>
     <div class="flex flex-row flex-wrap justify-evenly gap-4">

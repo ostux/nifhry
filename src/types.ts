@@ -108,16 +108,23 @@ export const z_transactionStatus = z.nativeEnum({
 });
 export type Z_TransactionStatus = z.infer<typeof z_transactionStatus>;
 
+export const z_identityId = z.object({
+  from: z.string().nullable(),
+  to: z.string().nullable()
+});
+export type Z_IdentityId = z.infer<typeof z_identityId>;
+
 export const z_transaction = z.object({
   id: z.string().uuid(),
-  desc: z.string().min(1),
+  desc: z.string(),
   category: z.string().nullable(),
-  account: z.string().min(1),
+  from: z.string().uuid(),
   amount: z.coerce.number(),
+  to: z.string().uuid(),
   when: z.coerce.date(),
   status: z_transactionStatus,
   sId: z.string().uuid().nullable(),
-  created: z.coerce.date()
+  iId: z_identityId
 });
 export type Z_Transaction = z.infer<typeof z_transaction>;
 

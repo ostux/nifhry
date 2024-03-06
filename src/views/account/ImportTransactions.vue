@@ -227,6 +227,14 @@ function importTransactions() {
   }
 }
 
+async function digestMessage(message: string) {
+  const msgUint8 = new TextEncoder().encode(message); // encode as (utf-8) Uint8Array
+  const hashBuffer = await crypto.subtle.digest('SHA-1', msgUint8); // hash the message
+  const hashArray = Array.from(new Uint8Array(hashBuffer)); // convert buffer to byte array
+  const hashHex = hashArray.map((b) => b.toString(36).padStart(2, '0')).join(''); // convert bytes to hex string
+  return hashHex;
+}
+
 const createTransactions = () => {
   const account = accounts.value.get(route.params.slug as unknown as string);
   if (!account) {
@@ -236,77 +244,91 @@ const createTransactions = () => {
 
   res.value?.data.forEach((row) => {
     if (row[state.value.desc] || row[state.value.date] || row[state.value.in] || row[state.value.out]) {
-      let categoryName: string | null = null;
+      digestMessage(JSON.stringify(row)).then((digestHex) => {
+        const iId = digestHex;
+        let categoryName: string | null = null;
 
-      if (state.value.category?.trim().length) {
-        categoryName = capitalize(row[state.value.category!]);
-      }
-
-      let date = row[state.value.date].split('/');
-      date = `${date[2]}-${date[1]}-${date[0]}`;
-
-      const transaction: Z_Transaction = {
-        id: crypto.randomUUID(),
-        desc: capitalize(row[state.value.desc]),
-        amount: 0,
-        category: null,
-        account: account.id,
-        when: moment(date).toDate(),
-        status: z_transactionStatus.enum.Paid,
-        sId: null,
-        created: new Date()
-      };
-
-      if (categoryName) {
-        const aExist: Z_Account | undefined = Array.from(accounts.value.values()).find((a) => a.name === categoryName);
-
-        if (aExist) {
-          transaction.category = nullUUID;
+        if (state.value.category?.trim().length) {
+          categoryName = capitalize(row[state.value.category!]);
         }
 
-        const cat = Array.from(categories.value.values()).find((a) => a.name === categoryName);
-        const catID = crypto.randomUUID();
+        let date = row[state.value.date].split('/');
+        date = `${date[2]}-${date[1]}-${date[0]}`;
 
-        if (!cat) {
-          dataStore.addCategory({
-            id: catID,
-            name: categoryName,
-            description: categoryName,
-            parent: null,
-            used: 1
-          });
+        const transaction: Z_Transaction = {
+          id: crypto.randomUUID(),
+          desc: capitalize(row[state.value.desc]),
+          category: null,
+          from: '',
+          amount: 0,
+          to: '',
+          when: moment(date).toDate(),
+          status: z_transactionStatus.enum.Paid,
+          sId: null,
+          iId: {
+            from: null,
+            to: null
+          }
+        };
 
-          transaction.category = catID;
+        if (categoryName) {
+          //   const aExist: Z_Account | undefined = Array.from(accounts.value.values()).find((a) => a.name === categoryName);
+
+          //   if (aExist) {
+          //     transaction.category = nullUUID;
+          //   } else {
+          const cat = Array.from(categories.value.values()).find((a) => a.name === categoryName);
+          const catID = crypto.randomUUID();
+
+          if (!cat) {
+            dataStore.addCategory({
+              id: catID,
+              name: categoryName,
+              description: categoryName,
+              parent: null,
+              used: 1
+            });
+
+            transaction.category = catID;
+          } else {
+            transaction.category = cat.id;
+          }
+          //   }
+        }
+
+        const inValue = parseFloat(row[state.value.in]);
+        const outValue = parseFloat(row[state.value.out]);
+
+        if (!isNaN(inValue)) {
+          transaction.amount = inValue;
+          transaction.to = account.id;
+          transaction.from = nullUUID;
+          transaction.iId.to = iId;
+        }
+
+        if (!isNaN(outValue)) {
+          transaction.amount = Math.abs(outValue) * -1;
+          transaction.to = nullUUID;
+          transaction.from = account.id;
+          transaction.iId.from = iId;
+        }
+
+        if (z_transaction.safeParse(transaction).success) {
+          dataStore.addTransaction(transaction, true);
         } else {
-          transaction.category = cat.id;
+          console.error(transaction, z_transaction.safeParse(transaction));
         }
-      }
-
-      if (transaction.desc === '') transaction.desc = 'n/a';
-
-      if (parseFloat(row[state.value.in])) {
-        const a = parseFloat(row[state.value.in]);
-        transaction.amount = a;
-      }
-
-      if (parseFloat(row[state.value.out])) {
-        const a = parseFloat(row[state.value.out]);
-        transaction.amount = Math.abs(a) * -1;
-      }
-
-      if (z_transaction.safeParse(transaction).success) {
-        dataStore.addTransaction(transaction, true);
-      } else {
-        console.error(transaction, z_transaction.safeParse(transaction));
-      }
+      });
     }
   });
 
-  dataStore.sortTransactions();
-  dataStore.recalculateBalances();
-  dataStore.recalculateCategoryUsage();
+  setTimeout(() => {
+    dataStore.sortTransactions();
+    dataStore.recalculateBalances();
+    dataStore.recalculateCategoryUsage();
 
-  router.push('/accounts');
+    router.push('/accounts');
+  }, 2000);
 };
 
 const doImport = () => {
