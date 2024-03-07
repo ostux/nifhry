@@ -47,7 +47,14 @@
 import BaseModal from '@/components/ui/BaseModal.vue';
 import { useNotification } from '@/composables/useNotification';
 import { useDataStore } from '@/stores/dataStore';
-import { z_accounts, z_categories, z_transactions, type Z_Accounts, type Z_Categories, type Z_Transactions } from '@/types';
+import {
+  z_accountsArray,
+  z_categoriesArray,
+  z_transactions,
+  type Z_Accounts,
+  type Z_Categories,
+  type Z_Transactions
+} from '@/types';
 import { PaperClipIcon } from '@heroicons/vue/24/solid';
 import { storeToRefs } from 'pinia';
 import { ref, type Ref } from 'vue';
@@ -113,8 +120,8 @@ function loadFileAsText() {
 
 const validateImport = (d: any): boolean => {
   if (
-    z_accounts.safeParse(d.accounts).success &&
-    z_categories.safeParse(d.categories).success &&
+    z_accountsArray.safeParse(d.accounts).success &&
+    z_categoriesArray.safeParse(d.categories).success &&
     z_transactions.safeParse(d.transactions).success
   ) {
     data.value = d;
@@ -127,19 +134,20 @@ const validateImport = (d: any): boolean => {
 const doImport = () => {
   let success: boolean = true;
 
-  if (data.value.accounts && z_accounts.safeParse(data.value.accounts).success) {
+  if (data.value.accounts && z_accountsArray.safeParse(data.value.accounts).success) {
     transactions.value = [];
-    accounts.value = data.value.accounts.map((a) => {
-      a.balance = Number.parseFloat(a.balance.toFixed(2));
-      return a;
+    data.value.accounts.forEach((a) => {
+      accounts.value.set(a.id, a);
     });
   } else {
     success = false;
   }
 
-  if (data.value.categories && z_categories.safeParse(data.value.categories).success) {
+  if (data.value.categories && z_categoriesArray.safeParse(data.value.categories).success) {
     transactions.value = [];
-    categories.value = data.value.categories;
+    data.value.categories.forEach((c) => {
+      categories.value.set(c.id, c);
+    });
   } else {
     success = false;
   }

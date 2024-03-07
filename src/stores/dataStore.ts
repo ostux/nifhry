@@ -20,7 +20,10 @@ import {
   type Z_Transactions,
   type Z_Year,
   type Z_SelectItemObject,
-  nullUUID
+  nullUUID,
+  type Z_Filter,
+  z_filterType,
+  z_filterBy
 } from '@/types';
 import moment from 'moment';
 import { acceptHMRUpdate, defineStore, type StateTree } from 'pinia';
@@ -101,7 +104,21 @@ export const useDataStore = defineStore(
     function fetchTransactions(): Z_Transactions {
       loading.value = true;
 
-      let data: Z_Transactions = [];
+      let data: Z_Transactions = transactions.value;
+
+      const filterableColumns = ['id', 'desc', 'category', 'from', 'amount', 'to', 'when', 'status', 'sId'];
+      const filterableBy = ['eq', 'neq', 'lt', 'lg', 'in', 'nin'];
+
+      pagination.filters.value.forEach((filter: Z_Filter) => {
+        if (!filterableColumns.includes(filter.column)) return;
+        if (!filterableBy.includes(filter.by)) return;
+
+        if (filter.column === 'category') {
+          if (filter.by === z_filterBy.enum.eq) {
+            data = data.filter((d: any) => categories.value.get(d.category)?.name === filter.value);
+          }
+        }
+      });
 
       if (pagination.dayFilter.value) {
         let y: Z_Year | null = null;
@@ -121,14 +138,12 @@ export const useDataStore = defineStore(
         }
 
         if (y && m && d) {
-          data = transactions.value.filter((t) => moment(t.when).isSame(moment().year(y!).month(m!).day(d!), 'day'));
+          data = data.filter((t) => moment(t.when).isSame(moment().year(y!).month(m!).day(d!), 'day'));
         } else if (y && (m || m === 0)) {
-          data = transactions.value.filter((t) => moment(t.when).isSame(moment().year(y!).month(m!), 'month'));
+          data = data.filter((t) => moment(t.when).isSame(moment().year(y!).month(m!), 'month'));
         } else if (y) {
-          data = transactions.value.filter((t) => moment(t.when).isSame(moment().year(y!), 'year'));
+          data = data.filter((t) => moment(t.when).isSame(moment().year(y!), 'year'));
         }
-      } else {
-        data = transactions.value;
       }
 
       const sort: Z_Sort = {
@@ -505,8 +520,6 @@ export const useDataStore = defineStore(
           if (category) aExist = Array.from(accounts.value.values()).find((a) => a.name == category.name);
 
           if (aExist) {
-            console.log('account exist...');
-
             if (t.from && t.from !== nullUUID) {
               opositeTransaction = transactions.value.filter(
                 (f) =>
@@ -528,7 +541,6 @@ export const useDataStore = defineStore(
             }
 
             if (opositeTransaction.length === 1) {
-              console.log('editing batch transaction as opposite transaction found...');
               const ot = opositeTransaction[0];
 
               if (ot.from === aExist.id) {
@@ -545,13 +557,10 @@ export const useDataStore = defineStore(
               editTransaction(ot, true);
 
               return response;
-            } else {
-              console.log('multiple transaction found', opositeTransaction);
             }
           }
         }
 
-        console.log('adding batch transaction...');
         transactions.value = [...transactions.value, t];
 
         return response;

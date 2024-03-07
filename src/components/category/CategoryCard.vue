@@ -7,22 +7,22 @@
       :items="items"
       class="-mt-2"
     />
-    <div class="flex flex-row">
-      <QueueListIcon class="mr-4 size-6" />
-      <div class="flex flex-col">
-        <span>{{ category.name }}</span>
-        <rovas-component
-          class="text-3xl"
-          :msg="category.name"
-        />
+    <RouterLink :to="`category/${category.id}`">
+      <div class="flex flex-row">
+        <QueueListIcon class="mr-4 size-6" />
+        <div class="flex flex-col">
+          <span>{{ category.name }}</span>
+          <rovas-component
+            class="text-3xl"
+            :msg="category.name"
+          />
+        </div>
       </div>
-    </div>
+    </RouterLink>
 
     <div class="mt-4 flex flex-grow flex-col justify-end font-mono text-gray-700 dark:text-white">
       <span>
-        <RouterLink :to="`category/${category.id}`">
-          used: &nbsp;<strong>{{ category.used }}</strong> times
-        </RouterLink>
+        used: &nbsp;<strong>{{ category.used }}</strong> times
       </span>
     </div>
     <div class="flex flex-row flex-wrap justify-evenly gap-4">

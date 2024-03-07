@@ -50,6 +50,13 @@ export const z_filterBy = z.nativeEnum({
 });
 export type Z_FilterBy = z.infer<typeof z_filterBy>;
 
+export const z_filterType = z.nativeEnum({
+  string: 'string',
+  number: 'number',
+  date: 'date'
+});
+export type Z_FilterType = z.infer<typeof z_filterType>;
+
 export const z_filter = z.object({
   column: z.string().min(1),
   by: z_filterBy,
@@ -89,6 +96,8 @@ export type Z_Account = z.infer<typeof z_account>;
 
 export const z_accounts = z.map(z.string(), z_account);
 export type Z_Accounts = z.infer<typeof z_accounts>;
+export const z_accountsArray = z.array(z_account);
+export type Z_AccountsArray = z.infer<typeof z_accountsArray>;
 
 export const z_category = z.object({
   id: z.string().uuid(),
@@ -101,6 +110,8 @@ export type Z_Category = z.infer<typeof z_category>;
 
 export const z_categories = z.map(z.string(), z_category);
 export type Z_Categories = z.infer<typeof z_categories>;
+export const z_categoriesArray = z.array(z_category);
+export type Z_CategoriesArray = z.infer<typeof z_categoriesArray>;
 
 export const z_transactionStatus = z.nativeEnum({
   Paid: 'paid',

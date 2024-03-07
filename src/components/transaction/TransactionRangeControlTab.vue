@@ -102,6 +102,7 @@ const changeMonth = (direction: 'previous' | 'next' | 'reset') => {
 
   pagination.pagination.value.page = 1;
   pagination.pagination.value.totalCount = 0;
+  pagination.filters.value = [];
   pagination.dayFilter.value = {
     year: t.year(),
     month: t.month()
@@ -118,7 +119,7 @@ const changeTab = (i: number) => {
       emit('change', true);
       break;
     default:
-      pagination.setPagination(1, 10);
+      pagination.setPagination(1, 1_000);
       pagination.setDayFilter({
         year: moment().year(),
         month: moment().month()

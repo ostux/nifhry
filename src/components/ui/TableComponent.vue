@@ -3,6 +3,13 @@
     <table class="min-w-full table-fixed divide-y divide-gray-300 dark:divide-gray-700">
       <thead class="bg-background/75 sticky top-[65px] z-50 -mb-px backdrop-blur">
         <tr>
+          <th class="w-6 p-2">
+            <input
+              type="checkbox"
+              class="h-4 w-4 rounded border-gray-300 bg-gray-100 text-pine-green-600 accent-pine-green-400 focus:ring-2 focus:ring-pine-green-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-pine-green-600"
+              @change="selectAll(($event?.target as HTMLInputElement)?.checked)"
+            />
+          </th>
           <th
             v-for="(column, index) in columns"
             :key="index"
@@ -23,6 +30,7 @@
       <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
         <template v-if="loading">
           <tr>
+            <td class="w-6 p-2"></td>
             <td
               v-for="(column, subIndex) in columns"
               :key="subIndex"
@@ -37,8 +45,16 @@
             <tr
               v-for="(row, index) in rows"
               :key="index"
-              class="relative"
+              class="relative hover:bg-gray-100 dark:hover:bg-gray-800"
             >
+              <td class="w-6 p-2">
+                <input
+                  type="checkbox"
+                  class="h-4 w-4 rounded border-gray-300 bg-gray-100 text-pine-green-600 accent-pine-green-400 focus:ring-2 focus:ring-pine-green-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-pine-green-600"
+                  :checked="selected.has(row.id)"
+                  @change="select(($event?.target as HTMLInputElement)?.checked, row.id)"
+                />
+              </td>
               <td
                 v-for="(column, subIndex) in columns"
                 :key="subIndex"
@@ -71,9 +87,10 @@
 
 <script setup lang="ts">
 import { DocumentMagnifyingGlassIcon } from '@heroicons/vue/24/outline';
-import type { PropType } from 'vue';
+import { ref, type PropType, type Ref } from 'vue';
 
-defineProps({
+const emit = defineEmits(['select']);
+const props = defineProps({
   columns: {
     type: Array as PropType<
       {
@@ -95,4 +112,32 @@ defineProps({
     default: false
   }
 });
+
+const selected: Ref<Set<string>> = ref(new Set());
+
+const selectAll = (s: boolean) => {
+  if (s) {
+    props.rows.forEach((row) => {
+      selected.value.add(row.id);
+    });
+
+    emit('select', selected.value || new Set());
+  } else {
+    props.rows.forEach((row) => {
+      selected.value.delete(row.id);
+    });
+
+    emit('select', selected.value || new Set());
+  }
+};
+
+const select = (s: boolean, id: string) => {
+  if (s) {
+    selected.value.add(id);
+  } else {
+    selected.value.delete(id);
+  }
+
+  emit('select', selected.value || new Set());
+};
 </script>

@@ -66,6 +66,20 @@
       </template>
     </table-component>
   </div>
+  <transaction-edit-form
+    v-if="openTransactionEditForm"
+    :modal-open="openTransactionEditForm"
+    @close="openTransactionEditForm = false"
+    :transaction="selectedTransaction"
+    @saved="$emit('refetch')"
+  />
+  <scheduled-transaction-edit-form
+    v-if="openScheduledTransactionEditForm"
+    :modal-open="openScheduledTransactionEditForm"
+    @close="openScheduledTransactionEditForm = false"
+    :transaction="selectedTransaction"
+    @saved="$emit('refetch')"
+  />
 </template>
 
 <script setup lang="ts">
@@ -80,10 +94,15 @@ import moment from 'moment';
 import { storeToRefs } from 'pinia';
 import { onUnmounted, ref, type Ref } from 'vue';
 import TransactionActionMenu from '@/components/transaction/TransactionActionMenu.vue';
+import ScheduledTransactionEditForm from '@/components/transaction/ScheduledTransactionEditForm.vue';
+import TransactionEditForm from '@/components/transaction/TransactionEditForm.vue';
+import { usePagination } from '@/composables/usePagination';
 
 const dataStore = useDataStore();
 const { accountById, categoryById } = dataStore;
 const { accounts } = storeToRefs(dataStore);
+
+const pagination = usePagination();
 
 const loading: Ref<boolean> = ref(true);
 const selectedTransaction: Ref<Z_Transaction | undefined> = ref(undefined);
@@ -117,7 +136,6 @@ const columns = [
     label: 'Category',
     sortable: true
   },
-
   {
     key: 'when',
     label: 'When',
@@ -150,36 +168,20 @@ const refetch = () => {
 const unsubscribe = dataStore.$onAction(
   ({
     name, // name of the action
-    store, // store instance, same as `someStore`
-    args, // array of parameters passed to the action
-    after, // hook after the action returns or resolves
-    onError // hook if the action throws or rejects
+    after // hook after the action returns or resolves
   }) => {
     if (name === 'fetchTransactions') {
-      // a shared variable for this specific action call
-      const startTime = Date.now();
-      // this will trigger before an action on `store` is executed
-      console.log(`Start "${name}" with params [${args.join(', ')}] in ${store}.`);
-
-      // this will trigger if the action succeeds and after it has fully run.
-      // it waits for any returned promised
       after(() => {
-        console.log(`Finished "${name}" after ${Date.now() - startTime}ms.\n`);
         setTimeout(() => {
           loading.value = false;
         }, 300);
-      });
-
-      // this will trigger if the action throws or returns a promise that rejects
-      onError((error) => {
-        console.warn(`Failed "${name}" after ${Date.now() - startTime}ms.\nError: ${error}.`);
       });
     }
   }
 );
 
 onUnmounted(() => {
-  // manually remove the listener
+  pagination.setFilter([]);
   unsubscribe();
 });
 </script>

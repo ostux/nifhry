@@ -46,7 +46,7 @@
       />
 
       <input-field
-        name="description"
+        name="amount"
         type="number"
         step="any"
         v-model="state.amount"
@@ -147,7 +147,6 @@ const errors: Ref<Z_FormError> = ref({});
 
 const setWhen = (e: string) => {
   state.value.when = moment(e).toDate();
-  console.log(state.value.when);
 };
 
 const setCategory = (e: { id: string }) => {
@@ -175,8 +174,6 @@ const setPaid = (p: { id: string }) => {
 
 const prestine: ComputedRef<boolean> = computed(() => {
   if (!props.transaction) return false;
-
-  console.log(state.value, props.transaction);
 
   return (
     state.value.id === props.transaction.id &&
@@ -212,7 +209,6 @@ watch(
     const valid = z_transaction.safeParse(state.value);
 
     if (!valid.success) {
-      console.log(valid?.error?.issues);
       valid.error.issues.forEach((err) => {
         err.path.forEach((p) => {
           if (!errors.value[p]) {
