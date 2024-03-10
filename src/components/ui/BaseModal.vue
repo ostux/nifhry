@@ -38,7 +38,7 @@
         >
           <DialogPanel
             class="z-30 h-fit max-h-screen w-full max-w-xl transform self-center rounded-lg bg-slate-100 text-left text-gray-800 shadow-xl transition-all dark:border dark:border-gray-400/20 dark:bg-slate-800 dark:text-gray-200"
-            style="overflow: unset"
+            style="overflow: auto"
           >
             <DialogTitle class="border-b border-slate-200 p-4 text-lg font-medium leading-6 dark:border-slate-700">
               <slot name="header"></slot>

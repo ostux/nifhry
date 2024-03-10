@@ -49,7 +49,8 @@ export const messages = {
     },
     category: {
       card: {
-        new: 'Create new category'
+        new: 'Create new category',
+        used: 'Transactions: {count}'
       },
       error: {
         already_exist: 'Category already exist.',
@@ -105,7 +106,8 @@ export const messages = {
       all: {
         delete: 'Delete all occurrence',
         edit: 'Edit all occurrence'
-      }
+      },
+      schedule: 'Schedule from this'
     },
     nav: {
       about: 'About',
@@ -186,6 +188,7 @@ export const messages = {
         updated: 'Transaction updated'
       },
       tab: {
+        includePending: 'Show pending transactions.',
         all: {
           title: 'All'
         },

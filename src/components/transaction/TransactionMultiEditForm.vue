@@ -1,5 +1,5 @@
 <template>
-  <div class="flex items-center gap-4 p-4">
+  <div class="flex flex-wrap items-center gap-4 p-4 md:flex-nowrap">
     <input-field
       name="description"
       type="text"
@@ -45,23 +45,21 @@
 import InputField from '@/components/ui/InputField.vue';
 import SelectBox from '@/components/ui/SelectBox.vue';
 import { useNotification } from '@/composables/useNotification';
+import { usePagination } from '@/composables/usePagination';
 import { useDataStore } from '@/stores/dataStore';
-import { nullUUID, z_transaction, type Z_ApiResponse, type Z_Transaction, type Z_Account, type Z_Category } from '@/types';
+import { nullUUID, z_transaction, type Z_Account, type Z_ApiResponse, type Z_Category, type Z_Transaction } from '@/types';
 import { storeToRefs } from 'pinia';
-import { computed, ref, type ComputedRef, type Ref, type PropType } from 'vue';
+import { computed, ref, type ComputedRef, type Ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 const emit = defineEmits(['saved']);
-const props = defineProps({
-  selected: {
-    type: Set as PropType<Set<string>>,
-    required: true
-  }
-});
+
 const { t } = useI18n();
 const dataStore = useDataStore();
 const notifications = useNotification();
 const { addNotification } = notifications;
+
+const pagination = usePagination();
 
 const { accounts, categories, transactions, accountSelectList, categorySelectList } = storeToRefs(dataStore);
 
@@ -97,11 +95,13 @@ const prestine: ComputedRef<boolean> = computed(() => {
 });
 
 const save = () => {
-  if (props.selected.size < 1) return;
+  if (pagination.selected.value.size < 1) return;
 
   let res: Z_ApiResponse | undefined = { success: true, errors: [] };
 
-  props.selected.forEach((id) => {
+  const selected = Array.from(pagination.selected.value.values());
+
+  selected.forEach((id: string) => {
     let transaction: Z_Transaction | undefined = transactions.value.find((f) => f.id === id);
 
     if (!transaction) return;
@@ -126,6 +126,7 @@ const save = () => {
     }
 
     res = dataStore.editTransaction(transaction);
+    pagination.removeFromSelected(id);
   });
 
   if (res && res?.success) {

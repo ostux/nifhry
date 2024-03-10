@@ -37,7 +37,7 @@ import DropdownMenu from '@/components/ui/DropdownMenu.vue';
 import { useNotification } from '@/composables/useNotification';
 import { useDataStore } from '@/stores/dataStore';
 import { z_transaction, z_transactionStatus, type Z_Transaction, type Z_Transactions } from '@/types';
-import { BanknotesIcon, DocumentDuplicateIcon, PencilSquareIcon, TrashIcon } from '@heroicons/vue/24/outline';
+import { BanknotesIcon, DocumentDuplicateIcon, PencilSquareIcon, TrashIcon, SquaresPlusIcon } from '@heroicons/vue/24/outline';
 import { storeToRefs } from 'pinia';
 import { ref, type Ref } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -99,6 +99,20 @@ const items = (row: Z_Transaction) => {
           } else {
             addNotification('danger', t('transaction.form.saveFailed'));
           }
+        }
+      },
+      {
+        label: 'menu.schedule',
+        icon: SquaresPlusIcon,
+        click: () => {
+          const tCopy = z_transaction.parse(row);
+          tCopy.id = crypto.randomUUID();
+          tCopy.desc = `${tCopy.desc}`;
+          tCopy.iId.from = null;
+          tCopy.iId.to = null;
+
+          selectedTransaction.value = row;
+          openScheduledTransactionEditForm.value = true;
         }
       }
     ],

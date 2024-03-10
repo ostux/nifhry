@@ -1,9 +1,11 @@
 import { useCapitalize } from '@/composables/useCapitalize';
 import { usePagination } from '@/composables/usePagination';
 import {
+  nullUUID,
   z_account,
   z_category,
   z_day,
+  z_filterBy,
   z_month,
   z_transaction,
   z_transactionStatus,
@@ -14,16 +16,13 @@ import {
   type Z_Categories,
   type Z_Category,
   type Z_Day,
+  type Z_Filter,
   type Z_Month,
+  type Z_SelectItemObject,
   type Z_Sort,
   type Z_Transaction,
   type Z_Transactions,
-  type Z_Year,
-  type Z_SelectItemObject,
-  nullUUID,
-  type Z_Filter,
-  z_filterType,
-  z_filterBy
+  type Z_Year
 } from '@/types';
 import moment from 'moment';
 import { acceptHMRUpdate, defineStore, type StateTree } from 'pinia';
@@ -109,13 +108,23 @@ export const useDataStore = defineStore(
       const filterableColumns = ['id', 'desc', 'category', 'from', 'amount', 'to', 'when', 'status', 'sId'];
       const filterableBy = ['eq', 'neq', 'lt', 'lg', 'in', 'nin'];
 
+      console.log('fetch filters:', console.log(pagination.filters.value));
+
       pagination.filters.value.forEach((filter: Z_Filter) => {
         if (!filterableColumns.includes(filter.column)) return;
         if (!filterableBy.includes(filter.by)) return;
 
         if (filter.column === 'category') {
           if (filter.by === z_filterBy.enum.eq) {
-            data = data.filter((d: any) => categories.value.get(d.category)?.name === filter.value);
+            data = data.filter((d: Z_Transaction) =>
+              d.category ? categories.value.get(d.category)?.name === filter.value : false
+            );
+          }
+        }
+
+        if (filter.column === 'status') {
+          if (filter.by === z_filterBy.enum.eq) {
+            data = data.filter((d: Z_Transaction) => d.status === filter.value);
           }
         }
       });
@@ -595,8 +604,8 @@ export const useDataStore = defineStore(
           if (newTransaction?.category) increaseCategoryUsage(newTransaction.category);
 
           sortTransactions();
-
           recalculateBalances();
+          recalculateCategoryUsage();
         }
 
         return response;

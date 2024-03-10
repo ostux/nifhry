@@ -3,7 +3,7 @@
     :modal-open="modalOpen"
     :ok-disabled="okDisabled || prestine"
     ok-translation-slug="button.save"
-    :info-text="transaction ? 'transaction.form.add.multi.alert' : ''"
+    :info-text="transaction?.sId ? 'transaction.form.add.multi.alert' : ''"
     @modal-ok-clicked="save"
     @modal-close="$emit('close', true)"
   >
@@ -23,7 +23,7 @@
         v-model="start"
         :label="$t('transaction.form.edit.start')"
         :errors="errors?.when"
-        :disabled="!!transaction"
+        :disabled="!!transaction?.sId"
         @change="setStart"
       />
 
@@ -33,7 +33,7 @@
         :pre-selected="z_frequency.enum.Monthly"
         @select="setFrequency"
         :label="$t('transaction.form.edit.frequency')"
-        :disabled="!!transaction"
+        :disabled="!!transaction?.sId"
       />
 
       <input-field
@@ -43,7 +43,7 @@
         v-model="repeat"
         :label="$t('transaction.form.edit.repeat')"
         :errors="errors?.repeat"
-        :disabled="!!transaction"
+        :disabled="!!transaction?.sId"
         required
       />
 
@@ -121,13 +121,13 @@ import SelectBox from '@/components/ui/SelectBox.vue';
 import { useNotification } from '@/composables/useNotification';
 import { useDataStore } from '@/stores/dataStore';
 import {
+  nullUUID,
   z_frequency,
   z_transaction,
   z_transactionStatus,
   type Z_ApiResponse,
   type Z_Category,
-  type Z_Transaction,
-  nullUUID
+  type Z_Transaction
 } from '@/types';
 import moment from 'moment';
 import { storeToRefs } from 'pinia';
@@ -156,7 +156,7 @@ const dataStore = useDataStore();
 const notifications = useNotification();
 const { addNotification } = notifications;
 
-const { accounts, transactions, categories, accountSelectList, categorySelectList } = storeToRefs(dataStore);
+const { transactions, categories, accountSelectList, categorySelectList } = storeToRefs(dataStore);
 
 const repeat: Ref<number> = ref(12);
 const state: Ref<Z_Transaction> = ref({
@@ -314,6 +314,11 @@ const addTransactions = () => {
       }
     };
 
+    if (props.transaction && props.transaction.sId === null) {
+      transaction.iId.from = null;
+      transaction.iId.to = null;
+    }
+
     if (t > 0) {
       switch (selectedFrequency.value) {
         case z_frequency.enum.Yearly:
@@ -386,6 +391,9 @@ const addTransactions = () => {
 
       res = dataStore.addTransaction(transaction);
 
+      console.log(transaction);
+      console.log(res);
+
       if (res && !res.success) {
         response.success = false;
         response.errors.push(...res.errors);
@@ -424,6 +432,8 @@ const editTransactions = () => {
     if (res && !res.success) {
       response.success = false;
       response.errors.push(...res.errors);
+    } else {
+      console.log(res);
     }
   });
 
@@ -433,7 +443,7 @@ const editTransactions = () => {
 const save = () => {
   let res: Z_ApiResponse | undefined = undefined;
 
-  if (props.transaction) {
+  if (props.transaction?.sId) {
     res = editTransactions();
   } else {
     res = addTransactions();

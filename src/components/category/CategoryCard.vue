@@ -20,9 +20,12 @@
       </div>
     </RouterLink>
 
-    <div class="mt-4 flex flex-grow flex-col justify-end font-mono text-gray-700 dark:text-white">
-      <span>
-        used: &nbsp;<strong>{{ category.used }}</strong> times
+    <div class="flex flex-grow flex-col justify-end p-2 font-mono text-gray-700 dark:text-white">
+      <span
+        v-if="category.used > 0"
+        class="text-sm"
+      >
+        {{ $t('category.card.used', { count: category.used }) }}
       </span>
     </div>
     <div class="flex flex-row flex-wrap justify-evenly gap-4">

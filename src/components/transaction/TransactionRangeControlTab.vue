@@ -21,7 +21,7 @@
       </TabList>
       <TabPanels class="p-4">
         <TabPanel>
-          <div class="m-auto flex w-full gap-4">
+          <div class="m-auto flex w-full gap-4 pb-4">
             <ArrowLeftCircleIcon
               class="size-8 text-pine-green-700 hover:cursor-pointer hover:text-pine-green-500"
               @click="changeMonth('previous')"
@@ -44,8 +44,31 @@
               @click="changeMonth('reset')"
             />
           </div>
+          <label
+            class="flex w-full flex-row-reverse items-center justify-end gap-4 text-sm font-medium leading-6 text-gray-900 dark:text-white"
+          >
+            <span>{{ $t('transaction.tab.includePending') }}</span>
+            <input
+              type="checkbox"
+              :checked="showPending"
+              class="h-4 w-4 rounded border-gray-300 bg-gray-100 text-pine-green-600 accent-pine-green-400 focus:ring-2 focus:ring-pine-green-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-pine-green-600"
+              @change="includePending(($event?.target as HTMLInputElement)?.checked)"
+            />
+          </label>
         </TabPanel>
-        <TabPanel>Content 2</TabPanel>
+        <TabPanel>
+          <label
+            class="flex w-full flex-row-reverse items-center justify-end gap-4 text-sm font-medium leading-6 text-gray-900 dark:text-white"
+          >
+            <span>{{ $t('transaction.tab.includePending') }}</span>
+            <input
+              type="checkbox"
+              :checked="showPending"
+              class="h-4 w-4 rounded border-gray-300 bg-gray-100 text-pine-green-600 accent-pine-green-400 focus:ring-2 focus:ring-pine-green-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-pine-green-600"
+              @change="includePending(($event?.target as HTMLInputElement)?.checked)"
+            />
+          </label>
+        </TabPanel>
       </TabPanels>
     </TabGroup>
   </div>
@@ -53,11 +76,11 @@
 
 <script setup lang="ts">
 import { usePagination } from '@/composables/usePagination';
-import { z_month, z_year } from '@/types';
+import { z_month, z_transactionStatus, z_year } from '@/types';
 import { Tab, TabGroup, TabList, TabPanels, TabPanel } from '@headlessui/vue';
 import { ArrowLeftCircleIcon, ArrowRightCircleIcon, ArrowUturnLeftIcon } from '@heroicons/vue/24/solid';
 import moment, { type Moment } from 'moment';
-import { onMounted } from 'vue';
+import { onMounted, ref, type Ref } from 'vue';
 import SimpleButton from '../ui/SimpleButton.vue';
 
 interface TransactionTab {
@@ -68,6 +91,8 @@ interface TransactionTab {
 const emit = defineEmits(['change']);
 
 const pagination = usePagination();
+
+const showPending: Ref<boolean> = ref(false);
 
 const tabs: TransactionTab[] = [
   { id: 'by-month', label: 'transaction.tab.byMonth.title' },
@@ -111,10 +136,38 @@ const changeMonth = (direction: 'previous' | 'next' | 'reset') => {
   emit('change', true);
 };
 
+const includePending = (e: boolean) => {
+  showPending.value = e;
+  if (!showPending.value) {
+    pagination.setFilter([
+      {
+        column: 'status',
+        by: 'eq',
+        value: z_transactionStatus.enum.Paid
+      }
+    ]);
+  } else {
+    pagination.setFilter([]);
+  }
+  emit('change', true);
+};
+
 const changeTab = (i: number) => {
+  if (!showPending.value) {
+    pagination.setFilter([
+      {
+        column: 'status',
+        by: 'eq',
+        value: z_transactionStatus.enum.Paid
+      }
+    ]);
+  } else {
+    pagination.setFilter([]);
+  }
+  pagination.setDayFilter(null);
+
   switch (tabs[i].id) {
     case 'all':
-      pagination.setDayFilter(null);
       pagination.setPagination(1, 1_000);
       emit('change', true);
       break;

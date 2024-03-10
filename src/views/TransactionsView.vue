@@ -71,32 +71,32 @@
     :modal-open="openTransactionEditForm"
     @close="openTransactionEditForm = false"
     :transaction="selectedTransaction"
-    @saved="$emit('refetch')"
+    @saved="refetch"
   />
   <scheduled-transaction-edit-form
     v-if="openScheduledTransactionEditForm"
     :modal-open="openScheduledTransactionEditForm"
     @close="openScheduledTransactionEditForm = false"
     :transaction="selectedTransaction"
-    @saved="$emit('refetch')"
+    @saved="refetch"
   />
 </template>
 
 <script setup lang="ts">
+import ScheduledTransactionEditForm from '@/components/transaction/ScheduledTransactionEditForm.vue';
+import TransactionActionMenu from '@/components/transaction/TransactionActionMenu.vue';
+import TransactionEditForm from '@/components/transaction/TransactionEditForm.vue';
 import TransactionRangeControlTab from '@/components/transaction/TransactionRangeControlTab.vue';
 import PaginationComponnt from '@/components/ui/PaginationComponnt.vue';
 import SimpleButton from '@/components/ui/SimpleButton.vue';
 import TableComponent from '@/components/ui/TableComponent.vue';
+import { usePagination } from '@/composables/usePagination';
 import { useDataStore } from '@/stores/dataStore';
 import { nullUUID, type Z_Transaction, type Z_Transactions } from '@/types';
 import { Squares2X2Icon, SquaresPlusIcon } from '@heroicons/vue/24/outline';
 import moment from 'moment';
 import { storeToRefs } from 'pinia';
 import { onUnmounted, ref, type Ref } from 'vue';
-import TransactionActionMenu from '@/components/transaction/TransactionActionMenu.vue';
-import ScheduledTransactionEditForm from '@/components/transaction/ScheduledTransactionEditForm.vue';
-import TransactionEditForm from '@/components/transaction/TransactionEditForm.vue';
-import { usePagination } from '@/composables/usePagination';
 
 const dataStore = useDataStore();
 const { accountById, categoryById } = dataStore;

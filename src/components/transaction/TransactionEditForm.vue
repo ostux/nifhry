@@ -128,9 +128,9 @@ const state: Ref<Z_Transaction> = ref({
   id: props.transaction?.id || crypto.randomUUID(),
   desc: props.transaction?.desc || undefined,
   category: props.transaction?.category || null,
-  from: props.transaction?.from || undefined,
+  from: props.transaction?.from || nullUUID,
   amount: props.transaction?.amount || undefined,
-  to: props.transaction?.to || undefined,
+  to: props.transaction?.to || nullUUID,
   when: moment(props.transaction?.when).toDate() || moment().toDate(),
   status: props.transaction?.status || z_transactionStatus.enum.Paid,
   sId: props.transaction?.sId || null,
@@ -175,7 +175,7 @@ const setPaid = (p: { id: string }) => {
 const prestine: ComputedRef<boolean> = computed(() => {
   if (!props.transaction) return false;
 
-  return (
+  const p =
     state.value.id === props.transaction.id &&
     state.value.desc === props.transaction.desc &&
     state.value.category === props.transaction.category &&
@@ -184,8 +184,10 @@ const prestine: ComputedRef<boolean> = computed(() => {
     state.value.to === props.transaction.to &&
     moment(state.value.when).isSame(moment(props.transaction.when), 'day') &&
     state.value.status === props.transaction.status &&
-    state.value.sId === props.transaction.sId
-  );
+    state.value.sId === props.transaction.sId;
+
+  console.log('prestine: ', p);
+  return p;
 });
 
 const autoDescription = () => {
@@ -220,6 +222,7 @@ watch(
       });
     }
 
+    console.log(valid);
     okDisabled.value = !valid.success;
   },
   { deep: true }
@@ -231,9 +234,9 @@ onMounted(() => {
       id: props.transaction?.id || crypto.randomUUID(),
       desc: props.transaction?.desc,
       category: props.transaction?.category,
-      from: props.transaction?.from,
+      from: props.transaction?.from || nullUUID,
       amount: props.transaction?.amount,
-      to: props.transaction?.to,
+      to: props.transaction?.to || nullUUID,
       when: moment(props.transaction?.when).toDate() || moment().toDate(),
       status: props.transaction?.status || z_transactionStatus.enum.Paid,
       sId: props.transaction?.sId || null,

@@ -140,9 +140,9 @@ watch(
 const save = () => {
   let res: Z_ApiResponse | undefined = undefined;
 
-  if (props.category) {
-    if (state.value.parent === nullUUID) state.value.parent = null;
+  if (state.value.parent === nullUUID) state.value.parent = null;
 
+  if (props.category) {
     res = dataStore.editCategory(state.value);
   } else {
     res = dataStore.addCategory(state.value);

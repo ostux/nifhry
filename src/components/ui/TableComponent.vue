@@ -3,7 +3,10 @@
     <table class="min-w-full table-fixed divide-y divide-gray-300 dark:divide-gray-700">
       <thead class="bg-background/75 sticky top-[65px] z-50 -mb-px backdrop-blur">
         <tr>
-          <th class="w-6 p-2">
+          <th
+            class="w-6 p-2"
+            v-if="checkbox"
+          >
             <input
               type="checkbox"
               class="h-4 w-4 rounded border-gray-300 bg-gray-100 text-pine-green-600 accent-pine-green-400 focus:ring-2 focus:ring-pine-green-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-pine-green-600"
@@ -47,7 +50,10 @@
               :key="index"
               class="relative hover:bg-gray-100 dark:hover:bg-gray-800"
             >
-              <td class="w-6 p-2">
+              <td
+                class="w-6 p-2"
+                v-if="checkbox"
+              >
                 <input
                   type="checkbox"
                   class="h-4 w-4 rounded border-gray-300 bg-gray-100 text-pine-green-600 accent-pine-green-400 focus:ring-2 focus:ring-pine-green-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-pine-green-600"
@@ -86,10 +92,14 @@
 </template>
 
 <script setup lang="ts">
+import { usePagination } from '@/composables/usePagination';
 import { DocumentMagnifyingGlassIcon } from '@heroicons/vue/24/outline';
-import { ref, type PropType, type Ref } from 'vue';
+import { computed, type ComputedRef, type PropType } from 'vue';
 
-const emit = defineEmits(['select']);
+const pagination = usePagination();
+
+const selected: ComputedRef<Set<string>> = computed(() => pagination.selected.value);
+
 const props = defineProps({
   columns: {
     type: Array as PropType<
@@ -110,34 +120,30 @@ const props = defineProps({
   loading: {
     type: Boolean,
     default: false
+  },
+  checkbox: {
+    type: Boolean,
+    default: false
   }
 });
-
-const selected: Ref<Set<string>> = ref(new Set());
 
 const selectAll = (s: boolean) => {
   if (s) {
     props.rows.forEach((row) => {
-      selected.value.add(row.id);
+      pagination.addToSelected(row.id);
     });
-
-    emit('select', selected.value || new Set());
   } else {
     props.rows.forEach((row) => {
-      selected.value.delete(row.id);
+      pagination.removeFromSelected(row.id);
     });
-
-    emit('select', selected.value || new Set());
   }
 };
 
 const select = (s: boolean, id: string) => {
   if (s) {
-    selected.value.add(id);
+    pagination.addToSelected(id);
   } else {
-    selected.value.delete(id);
+    pagination.removeFromSelected(id);
   }
-
-  emit('select', selected.value || new Set());
 };
 </script>

@@ -31,7 +31,7 @@
         </div>
       </div>
     </div>
-    <div class="flex flex-row justify-end pb-4">
+    <div class="flex flex-row flex-wrap justify-end gap-2 pb-4">
       <div
         class="flex"
         v-for="cat in childCategories"
@@ -80,8 +80,7 @@
     <pagination-componnt @change="refetch" />
     <transaction-multi-edit-form
       v-if="selectedRows.size"
-      :selected="selectedRows"
-      @saved="refetch"
+      @saved="transactionChangesSaved"
     />
 
     <table-component
@@ -89,6 +88,7 @@
       :rows="rows"
       :loading="loading"
       @select="selectedRows = $event"
+      :checkbox="true"
     >
       <template #from-data="{ row }">
         {{ accountById(row.from)?.name }}
@@ -129,14 +129,14 @@
 </template>
 
 <script setup lang="ts">
-import TransactionMultiEditForm from '@/components/transaction/TransactionMultiEditForm.vue';
 import TransactionActionMenu from '@/components/transaction/TransactionActionMenu.vue';
+import TransactionMultiEditForm from '@/components/transaction/TransactionMultiEditForm.vue';
 import PaginationComponnt from '@/components/ui/PaginationComponnt.vue';
 import RovasComponent from '@/components/ui/RovasComponent.vue';
 import TableComponent from '@/components/ui/TableComponent.vue';
 import { usePagination } from '@/composables/usePagination';
 import { useDataStore } from '@/stores/dataStore';
-import { nullUUID, z_filterBy, type Z_Category, type Z_Transaction, type Z_Transactions, type Z_Categories } from '@/types';
+import { nullUUID, z_filterBy, type Z_Category, type Z_Transaction, type Z_Transactions } from '@/types';
 import { ArrowUpTrayIcon, QueueListIcon } from '@heroicons/vue/24/outline';
 import moment from 'moment';
 import { storeToRefs } from 'pinia';
@@ -203,7 +203,7 @@ const category: ComputedRef<Z_Category | undefined> = computed(() =>
   categories.value.get(route.params.slug as unknown as string)
 );
 
-const selectedRows: Ref<Set<string>> = ref(new Set());
+const selectedRows: ComputedRef<Set<string>> = computed(() => pagination.selected.value);
 
 const childCategories: ComputedRef<Z_Category[]> = computed(() => {
   return Array.from(categories.value.values()).filter((c) => c.parent === category.value?.id);
@@ -236,11 +236,18 @@ const unsubscribe = dataStore.$onAction(
   }
 );
 
+const transactionChangesSaved = () => {
+  pagination.clearSelected();
+  refetch();
+};
+
 watch([category], () => {
+  pagination.clearSelected();
   refetch();
 });
 
 onMounted(() => {
+  pagination.clearSelected();
   pagination.setDayFilter(null);
   pagination.setPagination(1, 1_000);
 
@@ -248,6 +255,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+  pagination.clearSelected();
   unsubscribe();
 });
 </script>
