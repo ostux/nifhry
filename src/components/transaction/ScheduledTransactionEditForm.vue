@@ -391,9 +391,6 @@ const addTransactions = () => {
 
       res = dataStore.addTransaction(transaction);
 
-      console.log(transaction);
-      console.log(res);
-
       if (res && !res.success) {
         response.success = false;
         response.errors.push(...res.errors);

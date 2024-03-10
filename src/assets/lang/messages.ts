@@ -1,5 +1,8 @@
 export const messages = {
   en: {
+    pagination: {
+      search: 'search'
+    },
     account: {
       card: {
         new: 'Create new account'

@@ -108,7 +108,14 @@ export const useDataStore = defineStore(
       const filterableColumns = ['id', 'desc', 'category', 'from', 'amount', 'to', 'when', 'status', 'sId'];
       const filterableBy = ['eq', 'neq', 'lt', 'lg', 'in', 'nin'];
 
-      console.log('fetch filters:', console.log(pagination.filters.value));
+      console.log('filters:', pagination.filters.value);
+
+      const statusFilterSet = pagination.filters.value.find((f) => f.column === 'status');
+      console.log(statusFilterSet);
+      if (!statusFilterSet && !pagination.showPending.value) {
+        console.log('status not set, ');
+        data = data.filter((d: Z_Transaction) => d.status === z_transactionStatus.enum.Paid);
+      }
 
       pagination.filters.value.forEach((filter: Z_Filter) => {
         if (!filterableColumns.includes(filter.column)) return;
@@ -125,6 +132,14 @@ export const useDataStore = defineStore(
         if (filter.column === 'status') {
           if (filter.by === z_filterBy.enum.eq) {
             data = data.filter((d: Z_Transaction) => d.status === filter.value);
+            console.log(data.length);
+          }
+        }
+
+        if (filter.column === 'desc') {
+          if (filter.by === z_filterBy.enum.in) {
+            data = data.filter((d: Z_Transaction) => d.desc.toLowerCase().includes(filter.value.toLowerCase()));
+            console.log(data.length);
           }
         }
       });

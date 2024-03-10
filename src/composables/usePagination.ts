@@ -11,6 +11,8 @@ const sorts: Ref<Z_Sort[]> = ref([]);
 
 const filters: Ref<Z_Filter[]> = ref([]);
 
+const showPending: Ref<boolean> = ref(true);
+
 const selected: Ref<Set<string>> = ref(new Set());
 
 const dayFilter: Ref<Z_DayFilter | null> = ref(null);
@@ -41,12 +43,36 @@ export function usePagination() {
     sorts.value = s;
   };
 
-  const setFilter = (f: Z_Filter[]) => {
-    filters.value = f;
+  const setFilter = (fs: Z_Filter[]) => {
+    const newFilters: Z_Filter[] = [];
+    fs.forEach((newFilter) => {
+      const existIndex = filters.value.findIndex((oldFilter) => oldFilter.column === newFilter.column);
+      if (existIndex >= 0) {
+        console.log(existIndex, filters.value[existIndex], newFilter);
+
+        filters.value[existIndex].value = newFilter.value;
+      } else {
+        newFilters.push(newFilter);
+      }
+    });
+
+    filters.value = [...filters.value, ...newFilters];
+  };
+
+  const removeFilter = (id: string) => {
+    filters.value = filters.value.filter((f) => f.column !== id);
+  };
+
+  const clearFilter = () => {
+    filters.value = [];
   };
 
   const setDayFilter = (df: Z_DayFilter | null) => {
     dayFilter.value = df;
+  };
+
+  const setShowPending = (p: boolean) => {
+    showPending.value = p;
   };
 
   const setSelected = (s: Set<string>) => {
@@ -71,13 +97,17 @@ export function usePagination() {
     filters,
     selected,
     dayFilter,
+    showPending,
     setPagination,
     setPage,
     setPerPage,
     setTotalCount,
     setSort,
     setFilter,
+    removeFilter,
+    clearFilter,
     setDayFilter,
+    setShowPending,
     setSelected,
     addToSelected,
     removeFromSelected,

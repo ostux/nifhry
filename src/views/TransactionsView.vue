@@ -51,7 +51,9 @@
       </template>
 
       <template #category-data="{ row }">
-        {{ categoryById(row.category)?.name }}
+        <RouterLink :to="`/category/${row.category}`">
+          {{ categoryById(row.category)?.name }}
+        </RouterLink>
       </template>
 
       <template #when-data="{ row }">
@@ -96,7 +98,8 @@ import { nullUUID, type Z_Transaction, type Z_Transactions } from '@/types';
 import { Squares2X2Icon, SquaresPlusIcon } from '@heroicons/vue/24/outline';
 import moment from 'moment';
 import { storeToRefs } from 'pinia';
-import { onUnmounted, ref, type Ref } from 'vue';
+import { onMounted, onUnmounted, ref, type Ref } from 'vue';
+import { RouterLink } from 'vue-router';
 
 const dataStore = useDataStore();
 const { accountById, categoryById } = dataStore;
@@ -180,8 +183,12 @@ const unsubscribe = dataStore.$onAction(
   }
 );
 
+onMounted(() => {
+  console.log('transactions mounted');
+});
+
 onUnmounted(() => {
-  pagination.setFilter([]);
+  pagination.clearFilter();
   unsubscribe();
 });
 </script>

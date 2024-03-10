@@ -186,7 +186,6 @@ const prestine: ComputedRef<boolean> = computed(() => {
     state.value.status === props.transaction.status &&
     state.value.sId === props.transaction.sId;
 
-  console.log('prestine: ', p);
   return p;
 });
 

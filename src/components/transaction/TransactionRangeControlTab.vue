@@ -77,10 +77,10 @@
 <script setup lang="ts">
 import { usePagination } from '@/composables/usePagination';
 import { z_month, z_transactionStatus, z_year } from '@/types';
-import { Tab, TabGroup, TabList, TabPanels, TabPanel } from '@headlessui/vue';
+import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/vue';
 import { ArrowLeftCircleIcon, ArrowRightCircleIcon, ArrowUturnLeftIcon } from '@heroicons/vue/24/solid';
 import moment, { type Moment } from 'moment';
-import { onMounted, ref, type Ref } from 'vue';
+import { computed, onMounted } from 'vue';
 import SimpleButton from '../ui/SimpleButton.vue';
 
 interface TransactionTab {
@@ -91,8 +91,7 @@ interface TransactionTab {
 const emit = defineEmits(['change']);
 
 const pagination = usePagination();
-
-const showPending: Ref<boolean> = ref(false);
+const showPending = computed(() => pagination.showPending.value);
 
 const tabs: TransactionTab[] = [
   { id: 'by-month', label: 'transaction.tab.byMonth.title' },
@@ -137,33 +136,12 @@ const changeMonth = (direction: 'previous' | 'next' | 'reset') => {
 };
 
 const includePending = (e: boolean) => {
-  showPending.value = e;
-  if (!showPending.value) {
-    pagination.setFilter([
-      {
-        column: 'status',
-        by: 'eq',
-        value: z_transactionStatus.enum.Paid
-      }
-    ]);
-  } else {
-    pagination.setFilter([]);
-  }
+  pagination.setShowPending(e);
+
   emit('change', true);
 };
 
 const changeTab = (i: number) => {
-  if (!showPending.value) {
-    pagination.setFilter([
-      {
-        column: 'status',
-        by: 'eq',
-        value: z_transactionStatus.enum.Paid
-      }
-    ]);
-  } else {
-    pagination.setFilter([]);
-  }
   pagination.setDayFilter(null);
 
   switch (tabs[i].id) {
