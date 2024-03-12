@@ -191,7 +191,7 @@ export const messages = {
         updated: 'Transaction updated'
       },
       tab: {
-        includePending: 'Show pending transactions.',
+        includePending: 'Show pending.',
         all: {
           title: 'All'
         },

@@ -58,7 +58,7 @@ const stringify = (value: StateTree) => {
 export const useDataStore = defineStore(
   'dataStore',
   () => {
-    const loading: Ref<boolean> = ref(false);
+    // const loading: Ref<boolean> = ref(false);
 
     const accounts: Ref<Z_Accounts> = ref(new Map());
     const categories: Ref<Z_Categories> = ref(new Map());
@@ -100,48 +100,84 @@ export const useDataStore = defineStore(
       return selectList;
     });
 
+    function fetchRangeTransactions(): Z_Transactions {
+      let data: Z_Transactions = transactions.value;
+
+      if (!pagination.rangeFilter.value) return data;
+
+      data = data.filter((t: Z_Transaction) => {
+        if (
+          moment(t.when).isBetween(moment(pagination.rangeFilter.value?.from), moment(pagination.rangeFilter.value?.to), 'month')
+        )
+          return true;
+      });
+
+      return data;
+    }
+
     function fetchTransactions(): Z_Transactions {
-      loading.value = true;
+      // loading.value = true;
 
       let data: Z_Transactions = transactions.value;
 
-      const filterableColumns = ['id', 'desc', 'category', 'from', 'amount', 'to', 'when', 'status', 'sId'];
+      const filterableColumns = ['id', 'desc', 'category', 'account', 'from', 'amount', 'to', 'when', 'status', 'sId'];
       const filterableBy = ['eq', 'neq', 'lt', 'lg', 'in', 'nin'];
 
-      console.log('filters:', pagination.filters.value);
-
       const statusFilterSet = pagination.filters.value.find((f) => f.column === 'status');
-      console.log(statusFilterSet);
+
       if (!statusFilterSet && !pagination.showPending.value) {
-        console.log('status not set, ');
         data = data.filter((d: Z_Transaction) => d.status === z_transactionStatus.enum.Paid);
       }
 
-      pagination.filters.value.forEach((filter: Z_Filter) => {
-        if (!filterableColumns.includes(filter.column)) return;
-        if (!filterableBy.includes(filter.by)) return;
+      data = data.filter((d: Z_Transaction) => {
+        const m: boolean[] = [true];
 
-        if (filter.column === 'category') {
-          if (filter.by === z_filterBy.enum.eq) {
-            data = data.filter((d: Z_Transaction) =>
-              d.category ? categories.value.get(d.category)?.name === filter.value : false
-            );
-          }
-        }
+        pagination.filters.value.forEach((filter: Z_Filter) => {
+          if (!filterableColumns.includes(filter.column)) return;
+          if (!filterableBy.includes(filter.by)) return;
 
-        if (filter.column === 'status') {
-          if (filter.by === z_filterBy.enum.eq) {
-            data = data.filter((d: Z_Transaction) => d.status === filter.value);
-            console.log(data.length);
-          }
-        }
+          switch (filter.column) {
+            case 'category':
+              if (filter.by === z_filterBy.enum.eq) {
+                if (d.category && categories.value.get(d.category)?.name !== filter.value) m.push(false);
+              }
+              break;
+            case 'status':
+              if (filter.by === z_filterBy.enum.eq) {
+                if (d.status !== filter.value) m.push(false);
+              }
+              break;
 
-        if (filter.column === 'desc') {
-          if (filter.by === z_filterBy.enum.in) {
-            data = data.filter((d: Z_Transaction) => d.desc.toLowerCase().includes(filter.value.toLowerCase()));
-            console.log(data.length);
+            case 'account':
+              if (filter.by === z_filterBy.enum.eq) {
+                if (!(d.from === filter.value || d.to === filter.value)) m.push(false);
+              }
+              break;
+
+            case 'from':
+              if (filter.by === z_filterBy.enum.in) {
+                if (d.from !== filter.value) m.push(false);
+              }
+              break;
+
+            case 'to':
+              if (filter.by === z_filterBy.enum.in) {
+                if (d.to !== filter.value) m.push(false);
+              }
+              break;
+
+            case 'desc':
+              if (filter.by === z_filterBy.enum.in) {
+                if (!d.desc.toLowerCase().includes(filter.value.toLowerCase())) m.push(false);
+              }
+              break;
+
+            default:
+              break;
           }
-        }
+        });
+
+        return !m.includes(false);
       });
 
       if (pagination.dayFilter.value) {
@@ -212,7 +248,7 @@ export const useDataStore = defineStore(
         (pagination.pagination.value.page - 1) * pagination.pagination.value.perPage + pagination.pagination.value.perPage
       );
 
-      loading.value = false;
+      // loading.value = false;
 
       return data;
     }
@@ -641,8 +677,105 @@ export const useDataStore = defineStore(
       return true;
     }
 
+    function accountBalanceAt(accountId: string, date: Date, withPending: boolean = false, pendingOnly: boolean = false): number {
+      const account = accounts.value.get(accountId);
+      if (account) {
+        let balance = 0;
+
+        let allTransactions = transactions.value.filter(
+          (t) => moment(t.when).isSameOrBefore(moment(date), 'day') && (withPending || t.status === z_transactionStatus.enum.Paid)
+        );
+
+        if (pendingOnly) {
+          allTransactions = allTransactions.filter((t) => t.status === z_transactionStatus.enum.Pending);
+        }
+
+        allTransactions.forEach((t: Z_Transaction) => {
+          if (t.from === account.id) {
+            balance = z.coerce.number().parse((balance + t.amount).toFixed(2));
+          }
+
+          if (t.to === account.id) {
+            balance = z.coerce.number().parse((balance + Math.abs(t.amount)).toFixed(2));
+          }
+        });
+
+        return balance;
+      }
+
+      console.error('Account ID not exist in accounts!');
+      return 0;
+    }
+
+    function accountMonthOutAt(
+      accountId: string,
+      date: Date,
+      withPending: boolean = false,
+      pendingOnly: boolean = false
+    ): number {
+      const account = accounts.value.get(accountId);
+      if (account) {
+        let balance = 0;
+
+        let ts = transactions.value.filter(
+          (t) =>
+            (withPending || t.to === nullUUID) &&
+            moment(t.when).isSame(moment(date), 'month') &&
+            (withPending || t.status === z_transactionStatus.enum.Paid)
+        );
+
+        if (pendingOnly) {
+          ts = ts.filter((t) => t.status === z_transactionStatus.enum.Pending);
+        }
+
+        ts.forEach((t: Z_Transaction) => {
+          if (t.from === account.id) {
+            balance = z.coerce.number().parse((balance + t.amount).toFixed(2));
+          }
+          // if (t.to === account.id) {
+          //   balance = z.coerce.number().parse((balance + Math.abs(t.amount)).toFixed(2));
+          // }
+        });
+        return balance;
+      }
+
+      console.error('Account ID not exist in accounts!');
+      return 0;
+    }
+
+    function accountMonthInAt(accountId: string, date: Date, withPending: boolean = false, pendingOnly: boolean = false): number {
+      const account = accounts.value.get(accountId);
+      if (account) {
+        let balance = 0;
+
+        let ts = transactions.value.filter(
+          (t) =>
+            (withPending || t.from === nullUUID) &&
+            moment(t.when).isSame(moment(date), 'month') &&
+            (withPending || t.status === z_transactionStatus.enum.Paid)
+        );
+
+        if (pendingOnly) {
+          ts = ts.filter((t) => t.status === z_transactionStatus.enum.Pending);
+        }
+
+        ts.forEach((t: Z_Transaction) => {
+          // if (t.from === account.id) {
+          //   balance = z.coerce.number().parse((balance + t.amount).toFixed(2));
+          // }
+          if (t.to === account.id) {
+            balance = z.coerce.number().parse((balance + Math.abs(t.amount)).toFixed(2));
+          }
+        });
+        return balance;
+      }
+
+      console.error('Account ID not exist in accounts!');
+      return 0;
+    }
+
     return {
-      loading,
+      // loading,
 
       accounts,
       categories,
@@ -655,6 +788,7 @@ export const useDataStore = defineStore(
       accountSelectList,
       categorySelectList,
 
+      fetchRangeTransactions,
       fetchTransactions,
 
       addAccount,
@@ -675,7 +809,10 @@ export const useDataStore = defineStore(
       categoryById,
       transactionById,
 
-      recalculateBalances
+      recalculateBalances,
+      accountBalanceAt,
+      accountMonthOutAt,
+      accountMonthInAt
     };
   },
   {

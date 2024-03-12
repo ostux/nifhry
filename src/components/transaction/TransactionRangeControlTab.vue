@@ -1,27 +1,12 @@
 <template>
-  <div class="block min-w-96">
+  <div class="flex flex-col-reverse justify-between gap-4 p-2 md:flex-row">
     <TabGroup
       @change="changeTab"
       :defaultIndex="0"
     >
-      <TabList class="flex justify-between gap-4 rounded-md p-2 shadow-md">
-        <Tab
-          v-for="tab in tabs"
-          as="component"
-          :key="tab.id"
-          v-slot="{ selected }"
-          class="flex-grow"
-        >
-          <simple-button
-            class="w-full"
-            :label="tab.label"
-            :active="selected"
-          />
-        </Tab>
-      </TabList>
-      <TabPanels class="p-4">
+      <TabPanels class="flex items-center justify-center">
         <TabPanel>
-          <div class="m-auto flex w-full gap-4 pb-4">
+          <div class="m-auto flex w-full gap-4">
             <ArrowLeftCircleIcon
               class="size-8 text-pine-green-700 hover:cursor-pointer hover:text-pine-green-500"
               @click="changeMonth('previous')"
@@ -44,43 +29,35 @@
               @click="changeMonth('reset')"
             />
           </div>
-          <label
-            class="flex w-full flex-row-reverse items-center justify-end gap-4 text-sm font-medium leading-6 text-gray-900 dark:text-white"
-          >
-            <span>{{ $t('transaction.tab.includePending') }}</span>
-            <input
-              type="checkbox"
-              :checked="showPending"
-              class="h-4 w-4 rounded border-gray-300 bg-gray-100 text-pine-green-600 accent-pine-green-400 focus:ring-2 focus:ring-pine-green-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-pine-green-600"
-              @change="includePending(($event?.target as HTMLInputElement)?.checked)"
-            />
-          </label>
         </TabPanel>
-        <TabPanel>
-          <label
-            class="flex w-full flex-row-reverse items-center justify-end gap-4 text-sm font-medium leading-6 text-gray-900 dark:text-white"
-          >
-            <span>{{ $t('transaction.tab.includePending') }}</span>
-            <input
-              type="checkbox"
-              :checked="showPending"
-              class="h-4 w-4 rounded border-gray-300 bg-gray-100 text-pine-green-600 accent-pine-green-400 focus:ring-2 focus:ring-pine-green-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-pine-green-600"
-              @change="includePending(($event?.target as HTMLInputElement)?.checked)"
-            />
-          </label>
-        </TabPanel>
+        <TabPanel> </TabPanel>
       </TabPanels>
+      <TabList class="flex justify-between gap-4 rounded-md p-2 shadow-md">
+        <Tab
+          v-for="tab in tabs"
+          as="component"
+          :key="tab.id"
+          v-slot="{ selected }"
+          class="flex-grow"
+        >
+          <simple-button
+            class="w-full"
+            :label="tab.label"
+            :active="selected"
+          />
+        </Tab>
+      </TabList>
     </TabGroup>
   </div>
 </template>
 
 <script setup lang="ts">
 import { usePagination } from '@/composables/usePagination';
-import { z_month, z_transactionStatus, z_year } from '@/types';
+import { z_month, z_year } from '@/types';
 import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/vue';
 import { ArrowLeftCircleIcon, ArrowRightCircleIcon, ArrowUturnLeftIcon } from '@heroicons/vue/24/solid';
 import moment, { type Moment } from 'moment';
-import { computed, onMounted } from 'vue';
+import { onMounted } from 'vue';
 import SimpleButton from '../ui/SimpleButton.vue';
 
 interface TransactionTab {
@@ -91,7 +68,6 @@ interface TransactionTab {
 const emit = defineEmits(['change']);
 
 const pagination = usePagination();
-const showPending = computed(() => pagination.showPending.value);
 
 const tabs: TransactionTab[] = [
   { id: 'by-month', label: 'transaction.tab.byMonth.title' },
@@ -132,13 +108,7 @@ const changeMonth = (direction: 'previous' | 'next' | 'reset') => {
     month: t.month()
   };
 
-  emit('change', true);
-};
-
-const includePending = (e: boolean) => {
-  pagination.setShowPending(e);
-
-  emit('change', true);
+  pagination.startLoading();
 };
 
 const changeTab = (i: number) => {
@@ -146,16 +116,19 @@ const changeTab = (i: number) => {
 
   switch (tabs[i].id) {
     case 'all':
-      pagination.setPagination(1, 1_000);
-      emit('change', true);
+      pagination.clearFilter();
+      pagination.setShowPending(false);
+      pagination.setPagination(1, 10);
+      pagination.startLoading();
       break;
     default:
-      pagination.setPagination(1, 1_000);
+      pagination.clearFilter();
+      pagination.setPagination(1, 1_00);
       pagination.setDayFilter({
         year: moment().year(),
         month: moment().month()
       });
-      emit('change', true);
+      pagination.startLoading();
       break;
   }
 };

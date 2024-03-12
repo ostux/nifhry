@@ -31,7 +31,7 @@
         </tr>
       </thead>
       <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
-        <template v-if="loading">
+        <template v-if="pagination.isLoading.value">
           <tr>
             <td class="w-6 p-2"></td>
             <td
@@ -82,7 +82,7 @@
       </tbody>
     </table>
     <div
-      v-if="!loading && rows.length === 0"
+      v-if="!pagination.isLoading.value && rows.length === 0"
       class="flex w-full flex-col items-center justify-center gap-4 p-4"
     >
       <DocumentMagnifyingGlassIcon class="size-12" />
@@ -116,10 +116,6 @@ const props = defineProps({
   rows: {
     type: Array as PropType<{ [key: string]: any }[]>,
     default: () => []
-  },
-  loading: {
-    type: Boolean,
-    default: false
   },
   checkbox: {
     type: Boolean,

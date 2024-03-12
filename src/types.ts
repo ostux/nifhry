@@ -71,6 +71,12 @@ export const z_dayFilter = z.object({
 });
 export type Z_DayFilter = z.infer<typeof z_dayFilter>;
 
+export const z_rangeFilter = z.object({
+  from: z.coerce.date(),
+  to: z.coerce.date()
+});
+export type Z_RangeFilter = z.infer<typeof z_rangeFilter>;
+
 export const z_apiResponse = z.object({
   data: z.any(),
   success: z.boolean(),

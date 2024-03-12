@@ -89,6 +89,7 @@ import BaseModal from '@/components/ui/BaseModal.vue';
 import InputField from '@/components/ui/InputField.vue';
 import SelectBox from '@/components/ui/SelectBox.vue';
 import { useNotification } from '@/composables/useNotification';
+import { usePagination } from '@/composables/usePagination';
 import { useDataStore } from '@/stores/dataStore';
 import {
   nullUUID,
@@ -105,7 +106,7 @@ import type { ComputedRef } from 'vue';
 import { computed, onMounted, ref, watch, type PropType, type Ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
-const emit = defineEmits(['close', 'saved']);
+const emit = defineEmits(['close']);
 const props = defineProps({
   modalOpen: {
     type: Boolean,
@@ -121,6 +122,7 @@ const { t } = useI18n();
 const dataStore = useDataStore();
 const notifications = useNotification();
 const { addNotification } = notifications;
+const pagination = usePagination();
 
 const { categories, accountSelectList, categorySelectList } = storeToRefs(dataStore);
 
@@ -258,7 +260,7 @@ const save = () => {
 
   if (res && res.success) {
     addNotification('success', t('transaction.form.saved'));
-    emit('saved');
+    pagination.startLoading();
     emit('close');
   } else {
     res?.errors.forEach((e) => {

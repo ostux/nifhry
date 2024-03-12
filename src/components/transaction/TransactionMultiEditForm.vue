@@ -52,8 +52,6 @@ import { storeToRefs } from 'pinia';
 import { computed, ref, type ComputedRef, type Ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
-const emit = defineEmits(['saved']);
-
 const { t } = useI18n();
 const dataStore = useDataStore();
 const notifications = useNotification();
@@ -131,7 +129,8 @@ const save = () => {
 
   if (res && res?.success) {
     addNotification('success', t('transaction.form.saved'));
-    emit('saved');
+    pagination.clearSelected();
+    pagination.startLoading();
   } else {
     addNotification('danger', t('transaction.form.saveFailed'));
   }

@@ -16,24 +16,27 @@
       :items="items"
       class="-mt-2"
     />
-    <div
-      class="flex flex-row"
-      :class="{
-        'text-fuchsia-500': account.aType === 'credit',
-        'text-sky-500': account.aType === 'saving',
-        'text-pine-green-500': account.aType === 'debit',
-        'text-orange-500': account.aType === 'loan'
-      }"
-    >
-      <CreditCardIcon class="mr-4 size-6" />
-      <div class="flex flex-col">
-        <span>{{ account.name }}</span>
-        <rovas-component
-          class="text-3xl"
-          :msg="account.name"
-        />
+    <RouterLink :to="`account/${account.id}`">
+      <div
+        class="flex flex-row"
+        :class="{
+          'text-fuchsia-500': account.aType === 'credit',
+          'text-sky-500': account.aType === 'saving',
+          'text-pine-green-500': account.aType === 'debit',
+          'text-orange-500': account.aType === 'loan'
+        }"
+      >
+        <CreditCardIcon class="mr-4 size-6" />
+        <div class="flex flex-col">
+          <span>{{ account.name }}</span>
+          <rovas-component
+            class="text-3xl"
+            :msg="account.name"
+          />
+        </div>
       </div>
-    </div>
+    </RouterLink>
+
     <div class="mt-4 flex flex-grow justify-center font-mono text-4xl text-gray-700 dark:text-white">
       {{
         new Intl.NumberFormat('en-GB', {

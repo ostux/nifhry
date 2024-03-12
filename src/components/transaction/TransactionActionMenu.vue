@@ -10,14 +10,12 @@
     :modal-open="openTransactionEditForm"
     @close="openTransactionEditForm = false"
     :transaction="selectedTransaction"
-    @saved="$emit('refetch')"
   />
   <scheduled-transaction-edit-form
     v-if="openScheduledTransactionEditForm"
     :modal-open="openScheduledTransactionEditForm"
     @close="openScheduledTransactionEditForm = false"
     :transaction="selectedTransaction"
-    @saved="$emit('refetch')"
   />
   <delete-confirmation-form
     v-if="openRemoveTransactionForm"
@@ -44,6 +42,7 @@ import { useI18n } from 'vue-i18n';
 import DeleteConfirmationForm from '@/components/ui/BaseModal.vue';
 import ScheduledTransactionEditForm from '@/components/transaction/ScheduledTransactionEditForm.vue';
 import TransactionEditForm from '@/components/transaction/TransactionEditForm.vue';
+import { usePagination } from '@/composables/usePagination';
 
 const { t } = useI18n();
 
@@ -53,7 +52,8 @@ const { transactions } = storeToRefs(dataStore);
 const notifications = useNotification();
 const { addNotification } = notifications;
 
-const emit = defineEmits(['refetch']);
+const pagination = usePagination();
+
 defineProps({
   row: {
     type: [String, Number, Object, Array],
@@ -95,7 +95,7 @@ const items = (row: Z_Transaction) => {
           const res = dataStore.addTransaction(tCopy);
           if (res && res.success) {
             addNotification('success', t('transaction.form.saved'));
-            emit('refetch', true);
+            pagination.startLoading();
           } else {
             addNotification('danger', t('transaction.form.saveFailed'));
           }
@@ -166,7 +166,7 @@ const items = (row: Z_Transaction) => {
         const res = dataStore.editTransaction(transaction);
         if (res && res.success) {
           addNotification('success', t('transaction.form.saved'));
-          emit('refetch', true);
+          pagination.startLoading();
         } else {
           addNotification('danger', t('transaction.form.saveFailed'));
         }
@@ -182,7 +182,7 @@ const items = (row: Z_Transaction) => {
         const res = dataStore.editTransaction(transaction);
         if (res && res.success) {
           addNotification('success', t('transaction.form.saved'));
-          emit('refetch', true);
+          pagination.startLoading();
         } else {
           addNotification('danger', t('transaction.form.saveFailed'));
         }
@@ -197,7 +197,7 @@ const removeTransactions = () => {
   transactionsToRemove.value.forEach((t) => {
     dataStore.removeTransaction(t.id);
   });
-  emit('refetch', true);
+  pagination.startLoading();
 
   openRemoveTransactionForm.value = false;
 };

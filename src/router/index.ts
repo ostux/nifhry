@@ -20,15 +20,7 @@ const router = createRouter({
     {
       path: '/account/:slug',
       name: 'account',
-      component: () => import('../views/account/AccountView.vue'),
-      children: [
-        {
-          // UserPosts will be rendered inside User's <router-view>
-          // when /account/:slug/posts is matched
-          path: 'posts',
-          component: () => import('../views/AboutView.vue')
-        }
-      ]
+      component: () => import('../views/account/AccountView.vue')
     },
     {
       // UserProfile will be rendered inside User's <router-view>

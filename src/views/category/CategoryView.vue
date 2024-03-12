@@ -77,16 +77,12 @@
       </p>
     </div>
 
-    <pagination-componnt @change="refetch" />
-    <transaction-multi-edit-form
-      v-if="selectedRows.size"
-      @saved="transactionChangesSaved"
-    />
+    <pagination-componnt />
+    <transaction-multi-edit-form v-if="selectedRows.size" />
 
     <table-component
       :columns="columns"
       :rows="rows"
-      :loading="loading"
       @select="selectedRows = $event"
       :checkbox="true"
     >
@@ -118,10 +114,7 @@
       </template>
 
       <template #actions-data="{ row }">
-        <transaction-action-menu
-          :row="row"
-          @refetch="refetch"
-        />
+        <transaction-action-menu :row="row" />
       </template>
     </table-component>
   </div>
@@ -150,7 +143,6 @@ const { accountById, categoryById } = dataStore;
 const { categories } = storeToRefs(dataStore);
 
 const pagination = usePagination();
-const loading: Ref<boolean> = ref(true);
 
 const columns = [
   {
@@ -208,8 +200,8 @@ const selectedRows: ComputedRef<Set<string>> = computed(() => pagination.selecte
 const childCategories: ComputedRef<Z_Category[]> = computed(() => {
   return Array.from(categories.value.values()).filter((c) => c.parent === category.value?.id);
 });
+
 const refetch = () => {
-  loading.value = true;
   pagination.setFilter([{ column: 'category', by: z_filterBy.enum.eq, value: category.value?.name }]);
 
   rows.value = dataStore.fetchTransactions();
@@ -229,27 +221,29 @@ const unsubscribe = dataStore.$onAction(
     if (name === 'fetchTransactions') {
       after(() => {
         setTimeout(() => {
-          loading.value = false;
+          pagination.finishLoading();
         }, 300);
       });
     }
   }
 );
 
-const transactionChangesSaved = () => {
-  pagination.clearSelected();
-  refetch();
-};
-
 watch([category], () => {
   pagination.clearSelected();
-  refetch();
 });
+
+watch(
+  [pagination.isLoading],
+  (loading) => {
+    if (loading) refetch();
+  },
+  { deep: true }
+);
 
 onMounted(() => {
   pagination.clearSelected();
   pagination.setDayFilter(null);
-  pagination.setPagination(1, 1_000);
+  pagination.setPagination(1, 1_00);
 
   refetch();
 });

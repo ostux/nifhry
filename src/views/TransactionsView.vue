@@ -1,7 +1,7 @@
 <template>
   <div class="mx-auto w-full max-w-6xl px-4 sm:px-0">
-    <div class="mb-4 flex justify-between">
-      <div class="flex gap-4 p-2">
+    <div class="mb-4 flex flex-col justify-between md:flex-row">
+      <div class="flex justify-between gap-4 p-2">
         <simple-button
           label="transaction.form.add.single.title"
           :icon="Squares2X2Icon"
@@ -21,15 +21,14 @@
           "
         />
       </div>
-      <transaction-range-control-tab @change="refetch" />
+      <transaction-range-control-tab />
     </div>
 
-    <pagination-componnt @change="refetch" />
+    <pagination-componnt />
 
     <table-component
       :columns="columns"
       :rows="rows"
-      :loading="loading"
     >
       <template #from-data="{ row }">
         {{ accountById(row.from)?.name }}
@@ -61,10 +60,7 @@
       </template>
 
       <template #actions-data="{ row }">
-        <transaction-action-menu
-          :row="row"
-          @refetch="refetch"
-        />
+        <transaction-action-menu :row="row" />
       </template>
     </table-component>
   </div>
@@ -73,14 +69,12 @@
     :modal-open="openTransactionEditForm"
     @close="openTransactionEditForm = false"
     :transaction="selectedTransaction"
-    @saved="refetch"
   />
   <scheduled-transaction-edit-form
     v-if="openScheduledTransactionEditForm"
     :modal-open="openScheduledTransactionEditForm"
     @close="openScheduledTransactionEditForm = false"
     :transaction="selectedTransaction"
-    @saved="refetch"
   />
 </template>
 
@@ -98,7 +92,7 @@ import { nullUUID, type Z_Transaction, type Z_Transactions } from '@/types';
 import { Squares2X2Icon, SquaresPlusIcon } from '@heroicons/vue/24/outline';
 import moment from 'moment';
 import { storeToRefs } from 'pinia';
-import { onMounted, onUnmounted, ref, type Ref } from 'vue';
+import { onUnmounted, ref, watch, type Ref } from 'vue';
 import { RouterLink } from 'vue-router';
 
 const dataStore = useDataStore();
@@ -107,7 +101,6 @@ const { accounts } = storeToRefs(dataStore);
 
 const pagination = usePagination();
 
-const loading: Ref<boolean> = ref(true);
 const selectedTransaction: Ref<Z_Transaction | undefined> = ref(undefined);
 
 const openTransactionEditForm: Ref<boolean> = ref(false);
@@ -163,8 +156,6 @@ const getAmountColor = (row: Z_Transaction) => {
 };
 
 const refetch = () => {
-  loading.value = true;
-
   rows.value = dataStore.fetchTransactions();
 };
 
@@ -176,16 +167,20 @@ const unsubscribe = dataStore.$onAction(
     if (name === 'fetchTransactions') {
       after(() => {
         setTimeout(() => {
-          loading.value = false;
+          pagination.finishLoading();
         }, 300);
       });
     }
   }
 );
 
-onMounted(() => {
-  console.log('transactions mounted');
-});
+watch(
+  [pagination.isLoading],
+  (loading) => {
+    if (loading) refetch();
+  },
+  { deep: true }
+);
 
 onUnmounted(() => {
   pagination.clearFilter();
