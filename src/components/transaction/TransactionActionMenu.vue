@@ -9,13 +9,13 @@
     v-if="openTransactionEditForm"
     :modal-open="openTransactionEditForm"
     @close="openTransactionEditForm = false"
-    :transaction="selectedTransaction"
+    :selectedTransaction="selectedTransaction"
   />
   <scheduled-transaction-edit-form
     v-if="openScheduledTransactionEditForm"
     :modal-open="openScheduledTransactionEditForm"
     @close="openScheduledTransactionEditForm = false"
-    :transaction="selectedTransaction"
+    :selectedTransaction="selectedTransaction"
   />
   <delete-confirmation-form
     v-if="openRemoveTransactionForm"
@@ -43,6 +43,7 @@ import DeleteConfirmationForm from '@/components/ui/BaseModal.vue';
 import ScheduledTransactionEditForm from '@/components/transaction/ScheduledTransactionEditForm.vue';
 import TransactionEditForm from '@/components/transaction/TransactionEditForm.vue';
 import { usePagination } from '@/composables/usePagination';
+import { useTransactions } from '@/composables/useTransactions';
 
 const { t } = useI18n();
 
@@ -62,7 +63,9 @@ defineProps({
   }
 });
 
-const selectedTransaction: Ref<Z_Transaction | undefined> = ref(undefined);
+const tr = useTransactions();
+const { selectedTransaction } = tr;
+
 const transactionsToRemove: Ref<Z_Transactions> = ref([]);
 
 const openTransactionEditForm: Ref<boolean> = ref(false);
@@ -76,6 +79,7 @@ const items = (row: Z_Transaction) => {
         label: 'menu.edit',
         icon: PencilSquareIcon,
         click: () => {
+          console.log(row);
           selectedTransaction.value = row;
           openTransactionEditForm.value = true;
         }

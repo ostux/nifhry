@@ -65,8 +65,6 @@ interface TransactionTab {
   label: string;
 }
 
-const emit = defineEmits(['change']);
-
 const pagination = usePagination();
 
 const tabs: TransactionTab[] = [
@@ -116,13 +114,11 @@ const changeTab = (i: number) => {
 
   switch (tabs[i].id) {
     case 'all':
-      pagination.clearFilter();
-      pagination.setShowPending(false);
-      pagination.setPagination(1, 10);
+      pagination.reset();
       pagination.startLoading();
       break;
     default:
-      pagination.clearFilter();
+      pagination.reset();
       pagination.setPagination(1, 1_00);
       pagination.setDayFilter({
         year: moment().year(),

@@ -1,30 +1,6 @@
 <template>
   <div class="mx-auto w-full max-w-6xl px-4 sm:px-0">
-    <div class="mb-4 flex flex-col justify-between md:flex-row">
-      <div class="flex justify-between gap-4 p-2">
-        <simple-button
-          label="transaction.form.add.single.title"
-          :icon="Squares2X2Icon"
-          :disabled="accounts.size === 0"
-          @click="
-            selectedTransaction = undefined;
-            openTransactionEditForm = true;
-          "
-        />
-        <simple-button
-          label="transaction.form.add.single.title"
-          :icon="SquaresPlusIcon"
-          :disabled="accounts.size === 0"
-          @click="
-            selectedTransaction = undefined;
-            openScheduledTransactionEditForm = true;
-          "
-        />
-      </div>
-      <transaction-range-control-tab />
-    </div>
-
-    <pagination-componnt />
+    <ControlForm />
 
     <table-component
       :columns="columns"
@@ -64,47 +40,23 @@
       </template>
     </table-component>
   </div>
-  <transaction-edit-form
-    v-if="openTransactionEditForm"
-    :modal-open="openTransactionEditForm"
-    @close="openTransactionEditForm = false"
-    :transaction="selectedTransaction"
-  />
-  <scheduled-transaction-edit-form
-    v-if="openScheduledTransactionEditForm"
-    :modal-open="openScheduledTransactionEditForm"
-    @close="openScheduledTransactionEditForm = false"
-    :transaction="selectedTransaction"
-  />
 </template>
 
 <script setup lang="ts">
-import ScheduledTransactionEditForm from '@/components/transaction/ScheduledTransactionEditForm.vue';
 import TransactionActionMenu from '@/components/transaction/TransactionActionMenu.vue';
-import TransactionEditForm from '@/components/transaction/TransactionEditForm.vue';
-import TransactionRangeControlTab from '@/components/transaction/TransactionRangeControlTab.vue';
-import PaginationComponnt from '@/components/ui/PaginationComponnt.vue';
-import SimpleButton from '@/components/ui/SimpleButton.vue';
+import ControlForm from '@/components/ui/ControlForm.vue';
 import TableComponent from '@/components/ui/TableComponent.vue';
 import { usePagination } from '@/composables/usePagination';
 import { useDataStore } from '@/stores/dataStore';
 import { nullUUID, type Z_Transaction, type Z_Transactions } from '@/types';
-import { Squares2X2Icon, SquaresPlusIcon } from '@heroicons/vue/24/outline';
 import moment from 'moment';
-import { storeToRefs } from 'pinia';
 import { onUnmounted, ref, watch, type Ref } from 'vue';
 import { RouterLink } from 'vue-router';
 
 const dataStore = useDataStore();
 const { accountById, categoryById } = dataStore;
-const { accounts } = storeToRefs(dataStore);
 
 const pagination = usePagination();
-
-const selectedTransaction: Ref<Z_Transaction | undefined> = ref(undefined);
-
-const openTransactionEditForm: Ref<boolean> = ref(false);
-const openScheduledTransactionEditForm: Ref<boolean> = ref(false);
 
 const columns = [
   // { key: "sId", label: "sId" },
@@ -183,7 +135,7 @@ watch(
 );
 
 onUnmounted(() => {
-  pagination.clearFilter();
+  pagination.reset();
   unsubscribe();
 });
 </script>

@@ -7,8 +7,7 @@
     @modal-close="$emit('close', true)"
   >
     <template v-slot:header>
-      {{ prestine }}
-      <template v-if="transaction">
+      <template v-if="selectedTransaction">
         {{ $t('transaction.form.edit.single.title') }}
       </template>
       <template v-else>
@@ -90,6 +89,7 @@ import InputField from '@/components/ui/InputField.vue';
 import SelectBox from '@/components/ui/SelectBox.vue';
 import { useNotification } from '@/composables/useNotification';
 import { usePagination } from '@/composables/usePagination';
+import { useTransactions } from '@/composables/useTransactions';
 import { useDataStore } from '@/stores/dataStore';
 import {
   nullUUID,
@@ -103,20 +103,19 @@ import {
 import moment from 'moment';
 import { storeToRefs } from 'pinia';
 import type { ComputedRef } from 'vue';
-import { computed, onMounted, ref, watch, type PropType, type Ref } from 'vue';
+import { computed, onMounted, ref, watch, type Ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 const emit = defineEmits(['close']);
-const props = defineProps({
+defineProps({
   modalOpen: {
     type: Boolean,
     required: true
-  },
-  transaction: {
-    type: Object as PropType<Z_Transaction>,
-    required: false
   }
 });
+
+const tr = useTransactions();
+const { selectedTransaction } = tr;
 
 const { t } = useI18n();
 const dataStore = useDataStore();
@@ -127,22 +126,22 @@ const pagination = usePagination();
 const { categories, accountSelectList, categorySelectList } = storeToRefs(dataStore);
 
 const state: Ref<Z_Transaction> = ref({
-  id: props.transaction?.id || crypto.randomUUID(),
-  desc: props.transaction?.desc || undefined,
-  category: props.transaction?.category || null,
-  from: props.transaction?.from || nullUUID,
-  amount: props.transaction?.amount || undefined,
-  to: props.transaction?.to || nullUUID,
-  when: moment(props.transaction?.when).toDate() || moment().toDate(),
-  status: props.transaction?.status || z_transactionStatus.enum.Paid,
-  sId: props.transaction?.sId || null,
+  id: selectedTransaction.value?.id || crypto.randomUUID(),
+  desc: selectedTransaction.value?.desc || undefined,
+  category: selectedTransaction.value?.category || null,
+  from: selectedTransaction.value?.from || nullUUID,
+  amount: selectedTransaction.value?.amount || undefined,
+  to: selectedTransaction.value?.to || nullUUID,
+  when: moment(selectedTransaction.value?.when).toDate() || moment().toDate(),
+  status: selectedTransaction.value?.status || z_transactionStatus.enum.Paid,
+  sId: selectedTransaction.value?.sId || null,
   iId: {
-    from: props.transaction?.iId.from || null,
-    to: props.transaction?.iId.to || null
+    from: selectedTransaction.value?.iId.from || null,
+    to: selectedTransaction.value?.iId.to || null
   }
 } as unknown as Z_Transaction);
 
-const when: Ref<string> = ref(moment(props.transaction?.when).format('YYYY-MM-DD') || moment().format('YYYY-MM-DD'));
+const when: Ref<string> = ref(moment(selectedTransaction.value?.when).format('YYYY-MM-DD') || moment().format('YYYY-MM-DD'));
 
 const okDisabled: Ref<boolean> = ref(true);
 const errors: Ref<Z_FormError> = ref({});
@@ -175,18 +174,16 @@ const setPaid = (p: { id: string }) => {
 };
 
 const prestine: ComputedRef<boolean> = computed(() => {
-  if (!props.transaction) return false;
-
   const p =
-    state.value.id === props.transaction.id &&
-    state.value.desc === props.transaction.desc &&
-    state.value.category === props.transaction.category &&
-    state.value.from === props.transaction.from &&
-    state.value.amount === props.transaction.amount &&
-    state.value.to === props.transaction.to &&
-    moment(state.value.when).isSame(moment(props.transaction.when), 'day') &&
-    state.value.status === props.transaction.status &&
-    state.value.sId === props.transaction.sId;
+    state.value.id === selectedTransaction.value?.id &&
+    state.value.desc === selectedTransaction.value?.desc &&
+    state.value.category === selectedTransaction.value?.category &&
+    state.value.from === selectedTransaction.value?.from &&
+    state.value.amount === selectedTransaction.value?.amount &&
+    state.value.to === selectedTransaction.value?.to &&
+    moment(state.value.when).isSame(moment(selectedTransaction.value.when), 'day') &&
+    state.value.status === selectedTransaction.value.status &&
+    state.value.sId === selectedTransaction.value.sId;
 
   return p;
 });
@@ -207,43 +204,46 @@ const autoDescription = () => {
 watch(
   [state],
   () => {
-    errors.value = {};
+    console.log('prestine', prestine.value);
+    if (!prestine.value) {
+      errors.value = {};
 
-    const valid = z_transaction.safeParse(state.value);
+      const valid = z_transaction.safeParse(state.value);
 
-    if (!valid.success) {
-      valid.error.issues.forEach((err) => {
-        err.path.forEach((p) => {
-          if (!errors.value[p]) {
-            errors.value[p] = [];
-          }
+      if (!valid.success) {
+        valid.error.issues.forEach((err) => {
+          err.path.forEach((p) => {
+            if (!errors.value[p]) {
+              errors.value[p] = [];
+            }
 
-          errors.value[p].push(err.message);
+            errors.value[p].push(err.message);
+          });
         });
-      });
-    }
+      }
 
-    console.log(valid);
-    okDisabled.value = !valid.success;
+      console.log(valid);
+      okDisabled.value = !valid.success;
+    }
   },
   { deep: true }
 );
 
 onMounted(() => {
-  if (props.transaction) {
+  if (selectedTransaction.value) {
     state.value = {
-      id: props.transaction?.id || crypto.randomUUID(),
-      desc: props.transaction?.desc,
-      category: props.transaction?.category,
-      from: props.transaction?.from || nullUUID,
-      amount: props.transaction?.amount,
-      to: props.transaction?.to || nullUUID,
-      when: moment(props.transaction?.when).toDate() || moment().toDate(),
-      status: props.transaction?.status || z_transactionStatus.enum.Paid,
-      sId: props.transaction?.sId || null,
+      id: selectedTransaction.value?.id || crypto.randomUUID(),
+      desc: selectedTransaction.value?.desc,
+      category: selectedTransaction.value?.category,
+      from: selectedTransaction.value?.from || nullUUID,
+      amount: selectedTransaction.value?.amount,
+      to: selectedTransaction.value?.to || nullUUID,
+      when: moment(selectedTransaction.value?.when).toDate() || moment().toDate(),
+      status: selectedTransaction.value?.status || z_transactionStatus.enum.Paid,
+      sId: selectedTransaction.value?.sId || null,
       iId: {
-        from: props.transaction?.iId?.from || null,
-        to: props.transaction?.iId?.to || null
+        from: selectedTransaction.value?.iId?.from || null,
+        to: selectedTransaction.value?.iId?.to || null
       }
     } as unknown as Z_Transaction;
   }
@@ -252,7 +252,7 @@ onMounted(() => {
 const save = () => {
   let res: Z_ApiResponse | undefined = undefined;
 
-  if (props.transaction) {
+  if (selectedTransaction.value) {
     res = dataStore.editTransaction(state.value);
   } else {
     res = dataStore.addTransaction(state.value);
@@ -268,5 +268,7 @@ const save = () => {
     });
     addNotification('danger', t('transaction.form.saveFailed'));
   }
+
+  selectedTransaction.value = undefined;
 };
 </script>

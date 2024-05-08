@@ -77,7 +77,7 @@
       </p>
     </div>
 
-    <pagination-componnt />
+    <pagination-component />
     <transaction-multi-edit-form v-if="selectedRows.size" />
 
     <table-component
@@ -124,7 +124,7 @@
 <script setup lang="ts">
 import TransactionActionMenu from '@/components/transaction/TransactionActionMenu.vue';
 import TransactionMultiEditForm from '@/components/transaction/TransactionMultiEditForm.vue';
-import PaginationComponnt from '@/components/ui/PaginationComponnt.vue';
+import PaginationComponent from '@/components/ui/PaginationComponent.vue';
 import RovasComponent from '@/components/ui/RovasComponent.vue';
 import TableComponent from '@/components/ui/TableComponent.vue';
 import { usePagination } from '@/composables/usePagination';
@@ -230,6 +230,7 @@ const unsubscribe = dataStore.$onAction(
 
 watch([category], () => {
   pagination.clearSelected();
+  pagination.startLoading();
 });
 
 watch(

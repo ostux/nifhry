@@ -58,8 +58,6 @@ const stringify = (value: StateTree) => {
 export const useDataStore = defineStore(
   'dataStore',
   () => {
-    // const loading: Ref<boolean> = ref(false);
-
     const accounts: Ref<Z_Accounts> = ref(new Map());
     const categories: Ref<Z_Categories> = ref(new Map());
     const transactions: Ref<Z_Transactions> = ref([]);
@@ -116,8 +114,6 @@ export const useDataStore = defineStore(
     }
 
     function fetchTransactions(): Z_Transactions {
-      // loading.value = true;
-
       let data: Z_Transactions = transactions.value;
 
       const filterableColumns = ['id', 'desc', 'category', 'account', 'from', 'amount', 'to', 'when', 'status', 'sId'];
@@ -247,8 +243,6 @@ export const useDataStore = defineStore(
         (pagination.pagination.value.page - 1) * pagination.pagination.value.perPage,
         (pagination.pagination.value.page - 1) * pagination.pagination.value.perPage + pagination.pagination.value.perPage
       );
-
-      // loading.value = false;
 
       return data;
     }

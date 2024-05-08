@@ -8,7 +8,7 @@ const pagination: Ref<Z_Pagination> = ref({
 });
 const sorts: Ref<Z_Sort[]> = ref([]);
 const filters: Ref<Z_Filter[]> = ref([]);
-const showPending: Ref<boolean> = ref(true);
+const showPending: Ref<boolean> = ref(false);
 const selected: Ref<Set<string>> = ref(new Set());
 const dayFilter: Ref<Z_DayFilter | null> = ref(null);
 const rangeFilter: Ref<Z_RangeFilter | null> = ref(null);
@@ -91,15 +91,30 @@ export function usePagination() {
   };
 
   const startLoading = () => {
-    console.log('startLoading');
+    console.log('%cPagination: loading...', 'color:#17A589');
     if (isLoading.value) return;
 
     isLoading.value = true;
   };
 
   const finishLoading = () => {
-    console.log('finishLoading');
+    console.log('%cPagination: loading done...', 'color:#17A589');
+
     isLoading.value = false;
+  };
+
+  const reset = () => {
+    pagination.value = {
+      page: 1,
+      perPage: 1_00_000,
+      totalCount: 0
+    };
+    sorts.value = [];
+    filters.value = [];
+    showPending.value = false;
+    selected.value = new Set();
+    dayFilter.value = null;
+    rangeFilter.value = null;
   };
 
   return {
@@ -127,6 +142,7 @@ export function usePagination() {
     removeFromSelected,
     clearSelected,
     startLoading,
-    finishLoading
+    finishLoading,
+    reset
   };
 }

@@ -33,7 +33,8 @@
 
     <canvas ref="canvas"></canvas>
 
-    <pagination-componnt @change="refetch" />
+    <ControlForm />
+
     <transaction-multi-edit-form v-if="selectedRows.size" />
 
     <table-component
@@ -92,8 +93,7 @@ import moment from 'moment';
 import TableComponent from '@/components/ui/TableComponent.vue';
 import TransactionActionMenu from '@/components/transaction/TransactionActionMenu.vue';
 import TransactionMultiEditForm from '@/components/transaction/TransactionMultiEditForm.vue';
-import PaginationComponnt from '@/components/ui/PaginationComponnt.vue';
-
+import ControlForm from '@/components/ui/ControlForm.vue';
 import Chart from 'chart.js/auto';
 
 const route = useRoute();
@@ -185,7 +185,7 @@ const unsubscribe = dataStore.$onAction(
 );
 
 watch([account], () => {
-  pagination.clearSelected();
+  pagination.reset();
   refetch();
 });
 
@@ -237,23 +237,23 @@ const populateLineChart = () => {
     return 0;
   });
 
-  const dataSet: DataSet = {
+  const dataSetNoPending: DataSet = {
     type: 'line',
-    label: a.name,
+    label: `${a.name}`,
     data: [],
     fill: false
   };
 
   chartLabels.value.forEach((l: any) => {
-    const balance = dataStore.accountBalanceAt(a.id, moment(l).endOf('month').toDate());
+    const balance = dataStore.accountBalanceAt(a.id, moment(l).endOf('month').toDate(), false);
 
-    dataSet.data.push({
+    dataSetNoPending.data.push({
       x: l === todayLabel ? 'Today' : l,
       y: balance
     });
   });
 
-  chartData.value.push(dataSet);
+  chartData.value.push(dataSetNoPending);
 
   const dataSetPending: DataSet = {
     type: 'line',
@@ -272,126 +272,80 @@ const populateLineChart = () => {
   });
 
   chartData.value.push(dataSetPending);
-
-  const possibleEndPalance: DataSet = {
-    type: 'line',
-    label: `${a.name} - with last year spending`,
-    data: [],
-    fill: false
-  };
-
-  chartLabels.value.forEach((l: any) => {
-    let balance = dataStore.accountBalanceAt(a.id, moment(l).endOf('month').toDate(), true);
-    // const previousMonthBalance = dataStore.accountBalanceAt(a.id, moment(l).subtract(1, 'month').endOf('month').toDate(), true);
-    // const beforePreviousMonthBalance = dataStore.accountBalanceAt(
-    //   a.id,
-    //   moment(l).subtract(2, 'month').endOf('month').toDate(),
-    //   true
-    // );
-
-    // let diff = Math.abs(previousMonthBalance - beforePreviousMonthBalance);
-
-    if (moment(l).isSameOrAfter(moment(), 'month')) {
-      const accountMonthOutAt = dataStore.accountMonthOutAt(a.id, moment(l).subtract(1, 'year').toDate());
-      const accountMonthInAt = dataStore.accountMonthInAt(a.id, moment(l).toDate(), true);
-      const targetMonthPendingBalance = dataStore.accountMonthOutAt(a.id, moment(l).toDate(), true, true);
-
-      let diff = accountMonthInAt - Math.abs(accountMonthOutAt - targetMonthPendingBalance);
-
-      console.log(
-        diff,
-        accountMonthInAt,
-        accountMonthOutAt,
-        targetMonthPendingBalance,
-        Math.abs(accountMonthOutAt - targetMonthPendingBalance)
-      );
-      if (moment().isSame(moment(l), 'month')) {
-        balance = balance - Math.abs(diff);
-      } else balance = balance - Math.abs(diff * 1.2);
-    }
-
-    possibleEndPalance.data.push({
-      x: l === todayLabel ? 'Today' : l,
-      y: balance
-    });
-  });
-
-  chartData.value.push(possibleEndPalance);
 };
 
 onMounted(() => {
-  pagination.clearSelected();
-  pagination.setShowPending(false);
-  pagination.setDayFilter(null);
-  pagination.setPagination(1, 1_00);
+  console.log('%cAccount view mouunted...', 'color:#17A589');
 
-  refetch();
+  setTimeout(() => {
+    refetch();
 
-  populateLineChart();
-  chartLabels.value = chartLabels.value.map((l) => (l === todayLabel ? 'Today' : l));
+    populateLineChart();
+    chartLabels.value = chartLabels.value.map((l) => (l === todayLabel ? 'Today' : l));
 
-  if (canvas.value) {
-    new Chart(canvas.value, {
-      data: {
-        datasets: [...chartData.value],
-        labels: [...chartLabels.value]
-      },
-      plugins: [
-        {
-          id: 'today',
-          afterDraw: (chart) => {
-            const ctx = chart.ctx;
-            const xAxis = chart.scales.x;
-            const todayTick = xAxis.getTicks().findIndex((t) => t.label === 'Today');
-            const yAxis = chart.scales.y;
-            var x = xAxis.getPixelForTick(todayTick);
-            ctx.save();
-            ctx.strokeStyle = '#17A589';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(x, yAxis.bottom);
-            ctx.lineTo(x, 50);
-            ctx.stroke();
-            ctx.restore();
-          }
+    if (canvas.value) {
+      new Chart(canvas.value, {
+        data: {
+          datasets: [...chartData.value],
+          labels: [...chartLabels.value]
         },
-        {
-          id: 'zero',
-          afterDraw: (chart) => {
-            const ctx = chart.ctx;
-            const xAxis = chart.scales.x;
-            const yAxis = chart.scales.y;
-            var x = xAxis.getPixelForTick(0);
-            var xEnd = xAxis.getPixelForTick(xAxis.getTicks().length - 1);
-            var y = yAxis.getPixelForTick(yAxis.getTicks().findIndex((f) => f.value === 0));
-            ctx.save();
-            ctx.strokeStyle = '#17A589';
-            ctx.setLineDash([15, 5]);
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            ctx.moveTo(x, y);
-            ctx.lineTo(xEnd, y);
-            ctx.stroke();
-            ctx.restore();
-          }
-        }
-      ],
-      options: {
-        scales: {
-          x: {
-            stacked: true
+        plugins: [
+          {
+            id: 'today',
+            afterDraw: (chart) => {
+              const ctx = chart.ctx;
+              const xAxis = chart.scales.x;
+              const todayTick = xAxis.getTicks().findIndex((t) => t.label === 'Today');
+              const yAxis = chart.scales.y;
+              var x = xAxis.getPixelForTick(todayTick);
+              ctx.save();
+              ctx.strokeStyle = '#17A589';
+              ctx.lineWidth = 2;
+              ctx.beginPath();
+              ctx.moveTo(x, yAxis.bottom);
+              ctx.lineTo(x, 50);
+              ctx.stroke();
+              ctx.restore();
+            }
           },
-          y: {
-            beginAtZero: true
+          {
+            id: 'zero',
+            afterDraw: (chart) => {
+              const ctx = chart.ctx;
+              const xAxis = chart.scales.x;
+              const yAxis = chart.scales.y;
+              var x = xAxis.getPixelForTick(0);
+              var xEnd = xAxis.getPixelForTick(xAxis.getTicks().length - 1);
+              var y = yAxis.getPixelForTick(yAxis.getTicks().findIndex((f) => f.value === 0));
+              ctx.save();
+              ctx.strokeStyle = '#17A589';
+              ctx.setLineDash([15, 5]);
+              ctx.lineWidth = 3;
+              ctx.beginPath();
+              ctx.moveTo(x, y);
+              ctx.lineTo(xEnd, y);
+              ctx.stroke();
+              ctx.restore();
+            }
+          }
+        ],
+        options: {
+          scales: {
+            x: {
+              stacked: true
+            },
+            y: {
+              beginAtZero: true
+            }
           }
         }
-      }
-    });
-  }
+      });
+    }
+  }, 1000);
 });
 
 onUnmounted(() => {
-  pagination.clearSelected();
+  pagination.reset();
   unsubscribe();
 });
 </script>
