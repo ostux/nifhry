@@ -71,11 +71,11 @@ export const z_dayFilter = z.object({
 });
 export type Z_DayFilter = z.infer<typeof z_dayFilter>;
 
-export const z_rangeFilter = z.object({
+export const z_dateRangeFilter = z.object({
   from: z.coerce.date(),
   to: z.coerce.date()
 });
-export type Z_RangeFilter = z.infer<typeof z_rangeFilter>;
+export type z_dateRangeFilter = z.infer<typeof z_dateRangeFilter>;
 
 export const z_apiResponse = z.object({
   data: z.any(),
@@ -125,23 +125,18 @@ export const z_transactionStatus = z.nativeEnum({
 });
 export type Z_TransactionStatus = z.infer<typeof z_transactionStatus>;
 
-export const z_identityId = z.object({
-  from: z.string().nullable(),
-  to: z.string().nullable()
-});
-export type Z_IdentityId = z.infer<typeof z_identityId>;
-
 export const z_transaction = z.object({
   id: z.string().uuid(),
   desc: z.string(),
   category: z.string().nullable(),
-  from: z.string().uuid(),
-  amount: z.coerce.number(),
-  to: z.string().uuid(),
+  account: z.string().uuid(),
+  in: z.coerce.number(),
+  out: z.coerce.number(),
+  opId: z.string().uuid().nullable(),
   when: z.coerce.date(),
   status: z_transactionStatus,
   sId: z.string().uuid().nullable(),
-  iId: z_identityId
+  iId: z.string().nullable()
 });
 export type Z_Transaction = z.infer<typeof z_transaction>;
 

@@ -77,8 +77,9 @@
       </p>
     </div>
 
-    <pagination-component />
-    <transaction-multi-edit-form v-if="selectedRows.size" />
+    <ControlForm :categoryId="category.id" />
+
+    <TransactionMultiEditForm v-if="selectedRows.size" />
 
     <table-component
       :columns="columns"
@@ -86,23 +87,38 @@
       @select="selectedRows = $event"
       :checkbox="true"
     >
-      <template #from-data="{ row }">
-        {{ accountById(row.from)?.name }}
+      <template #account-data="{ row }">
+        {{ accountById(row.account)?.name }}
       </template>
 
-      <template #amount-data="{ row }">
-        <span :class="getAmountColor(row as unknown as Z_Transaction)">
+      <template #in-data="{ row }">
+        <span
+          :class="getAmountColor(row as unknown as Z_Transaction)"
+          v-if="row.in !== 0"
+        >
           {{
             new Intl.NumberFormat('en-GB', {
               style: 'currency',
               currency: 'GBP'
-            }).format(parseFloat(row.amount))
+            }).format(parseFloat(row.in))
           }}
         </span>
+        <span v-else>&nbsp;</span>
       </template>
 
-      <template #to-data="{ row }">
-        {{ accountById(row.to)?.name }}
+      <template #out-data="{ row }">
+        <span
+          :class="getAmountColor(row as unknown as Z_Transaction)"
+          v-if="row.out !== 0"
+        >
+          {{
+            new Intl.NumberFormat('en-GB', {
+              style: 'currency',
+              currency: 'GBP'
+            }).format(parseFloat(row.out))
+          }}
+        </span>
+        <span v-else>&nbsp;</span>
       </template>
 
       <template #category-data="{ row }">
@@ -124,12 +140,13 @@
 <script setup lang="ts">
 import TransactionActionMenu from '@/components/transaction/TransactionActionMenu.vue';
 import TransactionMultiEditForm from '@/components/transaction/TransactionMultiEditForm.vue';
-import PaginationComponent from '@/components/ui/PaginationComponent.vue';
+import ControlForm from '@/components/ui/ControlForm.vue';
 import RovasComponent from '@/components/ui/RovasComponent.vue';
 import TableComponent from '@/components/ui/TableComponent.vue';
 import { usePagination } from '@/composables/usePagination';
 import { useDataStore } from '@/stores/dataStore';
-import { nullUUID, z_filterBy, type Z_Category, type Z_Transaction, type Z_Transactions } from '@/types';
+import { z_filterBy, type Z_CategoriesArray, type Z_Category, type Z_Transaction, type Z_Transactions } from '@/types';
+import { getAmountColor } from '@/utils/helpers';
 import { ArrowUpTrayIcon, QueueListIcon } from '@heroicons/vue/24/outline';
 import moment from 'moment';
 import { storeToRefs } from 'pinia';
@@ -150,18 +167,18 @@ const columns = [
     label: 'Description'
   },
   {
-    key: 'from',
-    label: 'From',
+    key: 'account',
+    label: 'Account',
     sortable: true
   },
   {
-    key: 'amount',
-    label: 'Amount',
+    key: 'in',
+    label: 'In',
     sortable: true
   },
   {
-    key: 'to',
-    label: 'To',
+    key: 'out',
+    label: 'Out',
     sortable: true
   },
   {
@@ -186,10 +203,8 @@ const columns = [
 
 const rows: Ref<Z_Transactions> = ref([]);
 
-const totalIn: ComputedRef<number> = computed(() => rows.value.reduce((acc, cur) => acc + (cur.amount > 0 ? cur.amount : 0), 0));
-const totalOut: ComputedRef<number> = computed(
-  () => rows.value.reduce((acc, cur) => acc + (cur.amount < 0 ? Math.abs(cur.amount) : 0), 0) * -1
-);
+const totalIn: ComputedRef<number> = computed(() => rows.value.reduce((acc, cur) => acc + cur.in, 0));
+const totalOut: ComputedRef<number> = computed(() => rows.value.reduce((acc, cur) => acc - cur.out, 0));
 
 const category: ComputedRef<Z_Category | undefined> = computed(() =>
   categories.value.get(route.params.slug as unknown as string)
@@ -198,19 +213,15 @@ const category: ComputedRef<Z_Category | undefined> = computed(() =>
 const selectedRows: ComputedRef<Set<string>> = computed(() => pagination.selected.value);
 
 const childCategories: ComputedRef<Z_Category[]> = computed(() => {
-  return Array.from(categories.value.values()).filter((c) => c.parent === category.value?.id);
+  return (Array.from(categories.value.values()) as unknown as Z_CategoriesArray).filter(
+    (c: Z_Category) => c.parent === category.value?.id
+  );
 });
 
 const refetch = () => {
-  pagination.setFilter([{ column: 'category', by: z_filterBy.enum.eq, value: category.value?.name }]);
+  pagination.setFilter([{ column: 'category', by: z_filterBy.enum.eq, value: category.value?.id }]);
 
   rows.value = dataStore.fetchTransactions();
-};
-
-const getAmountColor = (row: Z_Transaction) => {
-  if (row.from !== nullUUID && row.to !== nullUUID) return 'text-sky-500';
-
-  return row.amount < 0 ? 'text-rose-500' : 'text-pine-green-500';
 };
 
 const unsubscribe = dataStore.$onAction(
@@ -242,9 +253,11 @@ watch(
 );
 
 onMounted(() => {
-  pagination.clearSelected();
-  pagination.setDayFilter(null);
-  pagination.setPagination(1, 1_00);
+  console.log('%cAccount view mouunted...', 'color:#17A589');
+  pagination.reset();
+  pagination.setPage(1);
+  pagination.setTotalCount(0);
+  pagination.setPerPage(10_000);
 
   refetch();
 });

@@ -154,7 +154,8 @@ const doImport = () => {
 
   if (data.value.transactions && z_transactions.safeParse(data.value.transactions).success) {
     transactions.value = data.value.transactions.map((t) => {
-      t.amount = z.coerce.number().parse(t.amount.toFixed(2));
+      t.in = z.coerce.number().parse(t.in.toFixed(2));
+      t.out = z.coerce.number().parse(t.out.toFixed(2));
       return t;
     });
   } else {

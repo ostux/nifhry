@@ -45,21 +45,6 @@ const router = createRouter({
       component: () => import('../views/TransactionsView.vue')
     },
     {
-      path: '/budget',
-      name: 'budget',
-      component: () => import('../views/AboutView.vue')
-    },
-    {
-      path: '/todo',
-      name: 'todo',
-      component: () => import('../views/AboutView.vue')
-    },
-    {
-      path: '/about',
-      name: 'about',
-      component: () => import('../views/AboutView.vue')
-    },
-    {
       path: '/:pathMatch(.*)*',
       name: 'ErrorView',
       component: () => import('../views/404View.vue')

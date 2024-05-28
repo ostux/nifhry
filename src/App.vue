@@ -1,21 +1,38 @@
 <template>
   <div class="fixed size-full overflow-auto bg-gray-100 text-black dark:bg-gray-900 dark:text-white">
-    <navigation-component />
+    <NavigationComponent />
     <main class="m-auto flex max-w-6xl justify-center py-4">
       <RouterView />
     </main>
-    <notifications-component />
+    <TransactionEditForm
+      v-if="openTransactionEditForm"
+      :modal-open="openTransactionEditForm"
+      @close="openTransactionEditForm = false"
+      :selectedTransaction="selectedTransaction"
+    />
+    <ScheduledTransactionEditForm
+      v-if="openScheduledTransactionEditForm"
+      :modal-open="openScheduledTransactionEditForm"
+      @close="openScheduledTransactionEditForm = false"
+      :selectedTransaction="selectedTransaction"
+    />
+    <NotificationsComponent />
   </div>
 </template>
 
 <script setup lang="ts">
-import { RouterView } from 'vue-router';
-import NavigationComponent from './components/NavigationComponent.vue';
+import ScheduledTransactionEditForm from '@/components/transaction/ScheduledTransactionEditForm.vue';
+import TransactionEditForm from '@/components/transaction/TransactionEditForm.vue';
+import { useTransactions } from '@/composables/useTransactions';
 import { useAppSettingStore } from '@/stores/appSetting';
 import { storeToRefs } from 'pinia';
-import { watch } from 'vue';
-import { onMounted } from 'vue';
+import { onMounted, watch } from 'vue';
+import { RouterView } from 'vue-router';
+import NavigationComponent from './components/NavigationComponent.vue';
 import NotificationsComponent from './components/NotificationsComponent.vue';
+
+const tr = useTransactions();
+const { selectedTransaction, openTransactionEditForm, openScheduledTransactionEditForm } = tr;
 
 const appSettingStore = useAppSettingStore();
 const { theme } = storeToRefs(appSettingStore);

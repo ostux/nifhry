@@ -17,6 +17,13 @@
             >
               {{ pagination.dayFilter.value.year }} - {{ moment().month(pagination.dayFilter.value.month).format('MMMM') }}
             </span>
+            <span
+              class="w-[200px] self-center text-center"
+              v-else
+            >
+              {{ moment().format('YYYY  - MMM') }}
+            </span>
+
             <ArrowRightCircleIcon
               class="size-8 text-pine-green-700 hover:cursor-pointer hover:text-pine-green-500"
               @click="changeMonth('next')"
@@ -98,13 +105,10 @@ const changeMonth = (direction: 'previous' | 'next' | 'reset') => {
       break;
   }
 
-  pagination.pagination.value.page = 1;
-  pagination.pagination.value.totalCount = 0;
-  pagination.filters.value = [];
-  pagination.dayFilter.value = {
+  pagination.setDayFilter({
     year: t.year(),
     month: t.month()
-  };
+  });
 
   pagination.startLoading();
 };
@@ -114,12 +118,12 @@ const changeTab = (i: number) => {
 
   switch (tabs[i].id) {
     case 'all':
-      pagination.reset();
+      pagination.setPerPage(50);
+      pagination.setDayFilter(null);
       pagination.startLoading();
       break;
     default:
-      pagination.reset();
-      pagination.setPagination(1, 1_00);
+      pagination.setPerPage(100);
       pagination.setDayFilter({
         year: moment().year(),
         month: moment().month()
@@ -127,6 +131,8 @@ const changeTab = (i: number) => {
       pagination.startLoading();
       break;
   }
+
+  console.log('range filter pagination set: ', pagination.dayFilter.value);
 };
 
 onMounted(() => {

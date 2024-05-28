@@ -1,55 +1,64 @@
 <template>
   <div class="mb-4 flex flex-col justify-between md:flex-row">
     <div class="flex justify-between gap-4 p-2">
-      <simple-button
+      <SimpleButton
         label="transaction.form.add.single.title"
         :icon="Squares2X2Icon"
-        @click="
-          selectedTransaction = undefined;
-          openTransactionEditForm = true;
-        "
+        @click="addTransaction"
       />
-      <simple-button
+      <SimpleButton
         label="transaction.form.add.single.title"
         :icon="SquaresPlusIcon"
-        @click="
-          selectedTransaction = undefined;
-          openScheduledTransactionEditForm = true;
-        "
+        @click="addTransactions"
       />
     </div>
-    <transaction-range-control-tab />
+    <TransactionRangeControlTab />
   </div>
 
-  <pagination-component />
-  <transaction-edit-form
-    v-if="openTransactionEditForm"
-    :modal-open="openTransactionEditForm"
-    @close="openTransactionEditForm = false"
-    :selectedTransaction="selectedTransaction"
-  />
-  <scheduled-transaction-edit-form
-    v-if="openScheduledTransactionEditForm"
-    :modal-open="openScheduledTransactionEditForm"
-    @close="openScheduledTransactionEditForm = false"
-    :selectedTransaction="selectedTransaction"
-  />
+  <PaginationComponent />
 </template>
 
 <script setup lang="ts">
-import ScheduledTransactionEditForm from '@/components/transaction/ScheduledTransactionEditForm.vue';
-import TransactionEditForm from '@/components/transaction/TransactionEditForm.vue';
 import TransactionRangeControlTab from '@/components/transaction/TransactionRangeControlTab.vue';
 import PaginationComponent from '@/components/ui/PaginationComponent.vue';
 import SimpleButton from '@/components/ui/SimpleButton.vue';
 import { useTransactions } from '@/composables/useTransactions';
+import type { Z_Transaction } from '@/types';
 import { Squares2X2Icon, SquaresPlusIcon } from '@heroicons/vue/24/outline';
-import { ref, type Ref } from 'vue';
+
+const props = defineProps({
+  accountId: {
+    type: String,
+    required: false
+  },
+  categoryId: {
+    type: String,
+    required: false
+  }
+});
 
 const tr = useTransactions();
+const { selectedTransaction, openTransactionEditForm, openScheduledTransactionEditForm } = tr;
 
-const { selectedTransaction } = tr;
+const addTransaction = () => {
+  if (props.accountId) {
+    selectedTransaction.value = { account: props.accountId } as Z_Transaction;
+  } else if (props.categoryId) {
+    selectedTransaction.value = { category: props.categoryId } as Z_Transaction;
+  } else {
+    selectedTransaction.value = undefined;
+  }
+  openTransactionEditForm.value = true;
+};
 
-const openTransactionEditForm: Ref<boolean> = ref(false);
-const openScheduledTransactionEditForm: Ref<boolean> = ref(false);
+const addTransactions = () => {
+  if (props.accountId) {
+    selectedTransaction.value = { account: props.accountId } as Z_Transaction;
+  } else if (props.categoryId) {
+    selectedTransaction.value = { category: props.categoryId } as Z_Transaction;
+  } else {
+    selectedTransaction.value = undefined;
+  }
+  openScheduledTransactionEditForm.value = true;
+};
 </script>

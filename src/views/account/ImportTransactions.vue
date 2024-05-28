@@ -90,7 +90,15 @@ import SelectBox from '@/components/ui/SelectBox.vue';
 import SimpleButton from '@/components/ui/SimpleButton.vue';
 import { useCapitalize } from '@/composables/useCapitalize';
 import { useDataStore } from '@/stores/dataStore';
-import { z_transaction, z_transactionStatus, type Z_Account, type Z_Transaction, nullUUID } from '@/types';
+import {
+  z_transaction,
+  z_transactionStatus,
+  type Z_Account,
+  type Z_Transaction,
+  nullUUID,
+  type Z_CategoriesArray,
+  type Z_Category
+} from '@/types';
 import { Cog6ToothIcon } from '@heroicons/vue/24/outline';
 import moment from 'moment';
 import Papa, { type ParseResult } from 'papaparse';
@@ -259,25 +267,20 @@ const createTransactions = () => {
           id: crypto.randomUUID(),
           desc: capitalize(row[state.value.desc]),
           category: null,
-          from: '',
-          amount: 0,
-          to: '',
+          account: '',
+          in: 0,
+          out: 0,
+          opId: null,
           when: moment(date).toDate(),
           status: z_transactionStatus.enum.Paid,
           sId: null,
-          iId: {
-            from: null,
-            to: null
-          }
+          iId: null
         };
 
         if (categoryName) {
-          //   const aExist: Z_Account | undefined = Array.from(accounts.value.values()).find((a) => a.name === categoryName);
-
-          //   if (aExist) {
-          //     transaction.category = nullUUID;
-          //   } else {
-          const cat = Array.from(categories.value.values()).find((a) => a.name === categoryName);
+          const cat: Z_Category | undefined = Array.from(categories.value.values() as unknown as Z_CategoriesArray).find(
+            (a) => a.name === categoryName
+          );
           const catID = crypto.randomUUID();
 
           if (!cat) {
@@ -293,25 +296,22 @@ const createTransactions = () => {
           } else {
             transaction.category = cat.id;
           }
-          //   }
         }
 
         const inValue = parseFloat(row[state.value.in]);
         const outValue = parseFloat(row[state.value.out]);
 
+        transaction.account = account.id;
+
         if (!isNaN(inValue)) {
-          transaction.amount = inValue;
-          transaction.to = account.id;
-          transaction.from = nullUUID;
-          transaction.iId.to = iId;
+          transaction.in = inValue;
         }
 
         if (!isNaN(outValue)) {
-          transaction.amount = Math.abs(outValue) * -1;
-          transaction.to = nullUUID;
-          transaction.from = account.id;
-          transaction.iId.from = iId;
+          transaction.out = outValue;
         }
+
+        transaction.iId = iId;
 
         if (z_transaction.safeParse(transaction).success) {
           dataStore.addTransaction(transaction, true);

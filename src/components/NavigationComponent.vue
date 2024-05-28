@@ -164,8 +164,6 @@ const navigation = computed(() => {
     { name: 'nav.account', href: '/accounts', current: true },
     { name: 'nav.category', href: '/categories', current: false },
     { name: 'nav.transaction', href: '/transaction', current: false },
-    { name: 'nav.todo', href: '/todo', current: false },
-    { name: 'nav.about', href: '/about', current: false },
     { name: 'nav.export', icon: CloudArrowDownIcon, click: () => downloadExportedAccounts(), id: 'downloadAnchorElem' },
     { name: 'nav.import', icon: CloudArrowUpIcon, click: () => (isImportModalOpen.value = true) },
     {
