@@ -5,18 +5,6 @@
     class="-mt-4"
   >
   </dropdown-menu>
-  <transaction-edit-form
-    v-if="openTransactionEditForm"
-    :modal-open="openTransactionEditForm"
-    @close="openTransactionEditForm = false"
-    :selectedTransaction="selectedTransaction"
-  />
-  <scheduled-transaction-edit-form
-    v-if="openScheduledTransactionEditForm"
-    :modal-open="openScheduledTransactionEditForm"
-    @close="openScheduledTransactionEditForm = false"
-    :selectedTransaction="selectedTransaction"
-  />
   <delete-confirmation-form
     v-if="openRemoveTransactionForm"
     :modal-open="openRemoveTransactionForm"
@@ -40,8 +28,6 @@ import { storeToRefs } from 'pinia';
 import { ref, type Ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import DeleteConfirmationForm from '@/components/ui/BaseModal.vue';
-import ScheduledTransactionEditForm from '@/components/transaction/ScheduledTransactionEditForm.vue';
-import TransactionEditForm from '@/components/transaction/TransactionEditForm.vue';
 import { usePagination } from '@/composables/usePagination';
 import { useTransactions } from '@/composables/useTransactions';
 
@@ -64,12 +50,10 @@ defineProps({
 });
 
 const tr = useTransactions();
-const { selectedTransaction } = tr;
+const { selectedTransaction, openTransactionEditForm, openScheduledTransactionEditForm } = tr;
 
 const transactionsToRemove: Ref<Z_Transactions> = ref([]);
 
-const openTransactionEditForm: Ref<boolean> = ref(false);
-const openScheduledTransactionEditForm: Ref<boolean> = ref(false);
 const openRemoveTransactionForm: Ref<boolean> = ref(false);
 
 const items = (row: Z_Transaction) => {
@@ -93,8 +77,7 @@ const items = (row: Z_Transaction) => {
           const tCopy = z_transaction.parse(row);
           tCopy.id = crypto.randomUUID();
           tCopy.desc = `${tCopy.desc} - copy`;
-          tCopy.iId.from = null;
-          tCopy.iId.to = null;
+          tCopy.iId = null;
 
           const res = dataStore.addTransaction(tCopy);
           if (res && res.success) {
@@ -112,8 +95,7 @@ const items = (row: Z_Transaction) => {
           const tCopy = z_transaction.parse(row);
           tCopy.id = crypto.randomUUID();
           tCopy.desc = `${tCopy.desc}`;
-          tCopy.iId.from = null;
-          tCopy.iId.to = null;
+          tCopy.iId = null;
 
           selectedTransaction.value = row;
           openScheduledTransactionEditForm.value = true;
@@ -150,7 +132,7 @@ const items = (row: Z_Transaction) => {
           return;
         }
 
-        const items = dataStore.transactions.filter((t) => {
+        const items = transactions.value.filter((t: Z_Transaction) => {
           return t.sId === row.sId && t.status === z_transactionStatus.enum.Pending;
         });
 
@@ -167,6 +149,16 @@ const items = (row: Z_Transaction) => {
       click: () => {
         const transaction = z_transaction.parse(row);
         transaction.status = z_transactionStatus.enum.Pending;
+        if (transaction.opId) {
+          const opTr = transactions.value.find((t: Z_Transaction) => t.id === transaction.opId);
+          if (opTr) {
+            opTr.status = z_transactionStatus.enum.Pending;
+            const res = dataStore.editTransaction(opTr);
+            if (res && !res.success) {
+              return;
+            }
+          }
+        }
         const res = dataStore.editTransaction(transaction);
         if (res && res.success) {
           addNotification('success', t('transaction.form.saved'));
@@ -183,6 +175,16 @@ const items = (row: Z_Transaction) => {
       click: () => {
         const transaction = z_transaction.parse(row);
         transaction.status = z_transactionStatus.enum.Paid;
+        if (transaction.opId) {
+          const opTr = transactions.value.find((t: Z_Transaction) => t.id === transaction.opId);
+          if (opTr) {
+            opTr.status = z_transactionStatus.enum.Paid;
+            const res = dataStore.editTransaction(opTr);
+            if (res && !res.success) {
+              return;
+            }
+          }
+        }
         const res = dataStore.editTransaction(transaction);
         if (res && res.success) {
           addNotification('success', t('transaction.form.saved'));

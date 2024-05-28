@@ -1,8 +1,5 @@
 export const messages = {
   en: {
-    pagination: {
-      search: 'search'
-    },
     account: {
       card: {
         new: 'Create new account'
@@ -38,17 +35,14 @@ export const messages = {
         saving: 'Saving'
       }
     },
-    select: {
-      nothingFound: 'Nothing Found'
-    },
     button: {
       cancel: 'Cancel',
       choose: 'Choose file',
       confirm: 'Ok',
       edit: 'Edit',
       import: 'Import',
-      save: 'Save',
-      ok: 'Ok'
+      ok: 'Ok',
+      save: 'Save'
     },
     category: {
       card: {
@@ -85,31 +79,38 @@ export const messages = {
         warning: 'This will delete everything witouth asking again...'
       }
     },
+    home: {
+      welcome: 'Welcome to Nifhry!',
+      has_accounts: {},
+      no_account: {
+        message: '404 - no accounts found 🤑'
+      }
+    },
     import_transactions: {
-      title: 'Import transactions for account: "{accountName}"',
-      step_one: 'Please select the appropriate columns from the bank provided CSV file.',
       select: {
+        category: 'Category',
         date: 'Transaction date',
         description: 'Description',
-        category: 'Category',
         in: 'Credit / In',
         out: 'Debit / Out'
-      }
+      },
+      step_one: 'Please select the appropriate columns from the bank provided CSV file.',
+      title: 'Import transactions for account: "{accountName}"'
     },
     menu: {
       account: {
         new: 'Create a new account'
       },
-      archive: 'Archive',
-      delete: 'Delete',
-      edit: 'Edit',
-      duplicate: 'Duplicate',
-      pending: 'Mark to pending',
-      paid: 'Mark to paid',
       all: {
         delete: 'Delete all occurrence',
         edit: 'Edit all occurrence'
       },
+      archive: 'Archive',
+      delete: 'Delete',
+      duplicate: 'Duplicate',
+      edit: 'Edit',
+      paid: 'Mark to paid',
+      pending: 'Mark to pending',
       schedule: 'Schedule from this'
     },
     nav: {
@@ -134,54 +135,65 @@ export const messages = {
         success: 'Import finished with success.',
         warningText: 'All existing data will be replaced with the new one if the import are valid!'
       },
-      reset: { success: 'All data succesfuly erased.' },
       recalculation: {
         finished: 'Balance  recalculation finished.'
+      },
+      reset: {
+        success: 'All data succesfuly erased.'
       }
+    },
+    pagination: {
+      search: 'search'
+    },
+    select: {
+      nothingFound: 'Nothing Found'
     },
     table: {
       empty: 'No items found.'
     },
     transaction: {
       error: {
+        account_not_exist: 'Account not exist',
         already_exist: 'Transaction already exist.',
-        not_found: 'Transaction not found.',
-        account_not_exist: 'Account not exist'
+        not_found: 'Transaction not found.'
       },
       form: {
         add: {
           multi: {
-            title: 'Add scheduled transaction',
             alert:
-              "Amount, account from and account to of already paid transactions won't change! Starting date, frequency and the transaction count can't be changed."
+              "Amount, account from and account to of already paid transactions won't change! Starting date, frequency and the transaction count can't be changed.",
+            title: 'Add scheduled transaction'
           },
           single: {
             title: 'Add Transaction'
           }
         },
         delete: {
-          info: 'Transaction "{name}" deleted!',
-          title: 'Are you sure?',
-          warning: 'Transaction will be deleted permanently with every associated data.',
           all: {
             warning:
               'Transactions will be deleted permanently with every associated data. Only pending transactions will be removed. Paid transactions need to be deleted one by one.'
-          }
+          },
+          failed: 'Transaction deletion failed!',
+          info: 'Transaction "{name}" deleted!',
+          title: 'Are you sure?',
+          warning: 'Transaction will be deleted permanently with every associated data.'
         },
         edit: {
-          multi: {
-            title: 'Edit scheduled transaction'
-          },
-          single: {
-            title: 'Edit Transaction'
-          },
-          amount: 'Amount',
+          account: 'Account',
+          accountTo: 'Is transfer? Target account:',
           category: 'Category',
           description: 'Description',
           frequency: 'Frequency',
+          in: 'In',
+          multi: {
+            title: 'Edit scheduled transaction'
+          },
+          opId: 'Oposite Transaction',
+          out: 'Out',
           repeat: 'How many times will be repeaded?',
-          from: 'From',
-          to: 'To',
+          single: {
+            title: 'Edit Transaction'
+          },
           start: 'Start',
           status: 'Status',
           when: 'When'
@@ -191,13 +203,13 @@ export const messages = {
         updated: 'Transaction updated'
       },
       tab: {
-        includePending: 'Show pending.',
         all: {
           title: 'All'
         },
         byMonth: {
           title: 'By month'
-        }
+        },
+        includePending: 'Show pending.'
       }
     }
   }

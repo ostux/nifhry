@@ -84,7 +84,7 @@
 import type { Z_SelectItemObject } from '@/types';
 import { Combobox, ComboboxButton, ComboboxInput, ComboboxOption, ComboboxOptions, TransitionRoot } from '@headlessui/vue';
 import { CheckIcon, ChevronUpDownIcon } from '@heroicons/vue/20/solid';
-import { computed, onMounted, ref, type PropType, type Ref } from 'vue';
+import { computed, onMounted, ref, watch, type PropType, type Ref } from 'vue';
 
 defineEmits(['select']);
 const props = defineProps({
@@ -120,6 +120,16 @@ let filteredOptions = computed(() =>
     : props.options.filter((item) =>
         item?.name?.toLowerCase().replace(/\s+/g, '').includes(query.value.toLowerCase().replace(/\s+/g, ''))
       )
+);
+
+watch(
+  [props],
+  () => {
+    if (props.preSelected) {
+      selected.value = props.options.find((o) => o.id === props.preSelected);
+    }
+  },
+  { deep: true }
 );
 
 onMounted(() => {

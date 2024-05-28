@@ -1,28 +1,43 @@
 <template>
   <div class="mx-auto w-full max-w-6xl px-4 sm:px-0">
-    <ControlForm />
+    <ControlForm v-if="pageMounted" />
 
     <table-component
       :columns="columns"
       :rows="rows"
     >
-      <template #from-data="{ row }">
-        {{ accountById(row.from)?.name }}
+      <template #account-data="{ row }">
+        {{ accountById(row.account)?.name }}
       </template>
 
-      <template #amount-data="{ row }">
-        <span :class="getAmountColor(row as unknown as Z_Transaction)">
+      <template #in-data="{ row }">
+        <span
+          :class="getAmountColor(row as unknown as Z_Transaction)"
+          v-if="row.in !== 0"
+        >
           {{
             new Intl.NumberFormat('en-GB', {
               style: 'currency',
               currency: 'GBP'
-            }).format(parseFloat(row.amount))
+            }).format(parseFloat(row.in))
           }}
         </span>
+        <span v-else>&nbsp;</span>
       </template>
 
-      <template #to-data="{ row }">
-        {{ accountById(row.to)?.name }}
+      <template #out-data="{ row }">
+        <span
+          :class="getAmountColor(row as unknown as Z_Transaction)"
+          v-if="row.out !== 0"
+        >
+          {{
+            new Intl.NumberFormat('en-GB', {
+              style: 'currency',
+              currency: 'GBP'
+            }).format(parseFloat(row.out))
+          }}
+        </span>
+        <span v-else>&nbsp;</span>
       </template>
 
       <template #category-data="{ row }">
@@ -48,15 +63,18 @@ import ControlForm from '@/components/ui/ControlForm.vue';
 import TableComponent from '@/components/ui/TableComponent.vue';
 import { usePagination } from '@/composables/usePagination';
 import { useDataStore } from '@/stores/dataStore';
-import { nullUUID, type Z_Transaction, type Z_Transactions } from '@/types';
+import { type Z_Transaction, type Z_Transactions } from '@/types';
+import { getAmountColor } from '@/utils/helpers';
 import moment from 'moment';
-import { onUnmounted, ref, watch, type Ref } from 'vue';
+import { onMounted, onUnmounted, ref, watch, type Ref } from 'vue';
 import { RouterLink } from 'vue-router';
 
 const dataStore = useDataStore();
 const { accountById, categoryById } = dataStore;
 
 const pagination = usePagination();
+
+const pageMounted: Ref<boolean> = ref(false);
 
 const columns = [
   // { key: "sId", label: "sId" },
@@ -65,18 +83,18 @@ const columns = [
     label: 'Description'
   },
   {
-    key: 'from',
-    label: 'From',
+    key: 'account',
+    label: 'Account',
     sortable: true
   },
   {
-    key: 'amount',
-    label: 'Amount',
+    key: 'in',
+    label: 'In',
     sortable: true
   },
   {
-    key: 'to',
-    label: 'To',
+    key: 'out',
+    label: 'Out',
     sortable: true
   },
   {
@@ -100,12 +118,6 @@ const columns = [
 ];
 
 const rows: Ref<Z_Transactions> = ref([]);
-
-const getAmountColor = (row: Z_Transaction) => {
-  if (row.from !== nullUUID && row.to !== nullUUID) return 'text-sky-500';
-
-  return row.amount < 0 ? 'text-rose-500' : 'text-pine-green-500';
-};
 
 const refetch = () => {
   rows.value = dataStore.fetchTransactions();
@@ -133,6 +145,16 @@ watch(
   },
   { deep: true }
 );
+
+onMounted(() => {
+  console.log('%Transactions view mouunted...', 'color:#17A589');
+  pagination.reset();
+  pagination.setPage(1);
+  pagination.setTotalCount(0);
+  pagination.setPerPage(50);
+
+  pageMounted.value = true;
+});
 
 onUnmounted(() => {
   pagination.reset();

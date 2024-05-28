@@ -1,9 +1,9 @@
-import { type Z_DayFilter, type Z_Filter, type Z_Pagination, type Z_RangeFilter, type Z_Sort } from '@/types';
+import { type Z_DayFilter, type Z_Filter, type Z_Pagination, type z_dateRangeFilter, type Z_Sort } from '@/types';
 import { ref, type Ref } from 'vue';
 
 const pagination: Ref<Z_Pagination> = ref({
   page: 1,
-  perPage: 1_00_000,
+  perPage: 1_000,
   totalCount: 0
 });
 const sorts: Ref<Z_Sort[]> = ref([]);
@@ -11,7 +11,7 @@ const filters: Ref<Z_Filter[]> = ref([]);
 const showPending: Ref<boolean> = ref(false);
 const selected: Ref<Set<string>> = ref(new Set());
 const dayFilter: Ref<Z_DayFilter | null> = ref(null);
-const rangeFilter: Ref<Z_RangeFilter | null> = ref(null);
+const rangeFilter: Ref<z_dateRangeFilter | null> = ref(null);
 const isLoading: Ref<boolean> = ref(false);
 
 export function usePagination() {
@@ -66,7 +66,7 @@ export function usePagination() {
     dayFilter.value = df;
   };
 
-  const setRangeFilter = (rf: Z_RangeFilter | null) => {
+  const setRangeFilter = (rf: z_dateRangeFilter | null) => {
     rangeFilter.value = rf;
   };
 

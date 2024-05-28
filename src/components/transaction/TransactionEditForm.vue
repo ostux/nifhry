@@ -7,7 +7,7 @@
     @modal-close="$emit('close', true)"
   >
     <template v-slot:header>
-      <template v-if="selectedTransaction">
+      <template v-if="selectedTransaction?.id">
         {{ $t('transaction.form.edit.single.title') }}
       </template>
       <template v-else>
@@ -16,18 +16,18 @@
     </template>
 
     <div class="flex flex-col gap-4">
-      <select-box
+      <SelectBox
         name="category"
         :options="categorySelectList"
         :pre-selected="categorySelectList.find((c) => c.id === state.category)?.id"
         @select="
           setCategory($event);
-          autoDescription();
+          state.desc = state.desc || dataStore.categoryById(state.category)?.description || '';
         "
         :label="$t('transaction.form.edit.category')"
       />
 
-      <input-field
+      <InputField
         name="description"
         type="text"
         v-model="state.desc"
@@ -36,33 +36,56 @@
         required
       />
 
-      <select-box
-        name="from"
-        :options="accountSelectList"
-        :pre-selected="accountSelectList.find((a) => a.id === state.from)?.id || nullUUID"
-        @select="setFrom"
-        :label="$t('transaction.form.edit.from')"
+      <div class="flex flex-row gap-2">
+        <SelectBox
+          name="account"
+          :options="accountSelectList"
+          :pre-selected="accountSelectList.find((a) => a.id === state.account)?.id || nullUUID"
+          @select="setAccount"
+          :label="$t('transaction.form.edit.account')"
+        />
+
+        <SelectBox
+          name="accountTo"
+          :options="accountSelectList.filter((a) => a.id !== state.account)"
+          :pre-selected="getOppositeTransactionAccountId"
+          @select="setTransferTarget"
+          :label="$t('transaction.form.edit.accountTo')"
+          :disabled="state.opId !== nullUUID && state.opId !== null"
+        />
+      </div>
+
+      <div class="flex flex-row gap-2">
+        <InputField
+          name="in"
+          type="number"
+          step="any"
+          v-model="state.in"
+          :label="$t('transaction.form.edit.in')"
+          :errors="errors?.in"
+          required
+        />
+
+        <InputField
+          name="out"
+          type="number"
+          step="any"
+          v-model="state.out"
+          :label="$t('transaction.form.edit.out')"
+          :errors="errors?.out"
+          required
+        />
+      </div>
+
+      <SelectBox
+        name="opId"
+        :options="transactionSelectList"
+        :pre-selected="preSelectedTransactionId"
+        @select="setOposite"
+        :label="$t('transaction.form.edit.opId')"
       />
 
-      <input-field
-        name="amount"
-        type="number"
-        step="any"
-        v-model="state.amount"
-        :label="$t('transaction.form.edit.amount')"
-        :errors="errors?.amount"
-        required
-      />
-
-      <select-box
-        name="to"
-        :options="accountSelectList"
-        :pre-selected="accountSelectList.find((a) => a.id === state.to)?.id || nullUUID"
-        @select="setTo"
-        :label="$t('transaction.form.edit.to')"
-      />
-
-      <input-field
+      <InputField
         name="date"
         type="date"
         v-model="when"
@@ -72,7 +95,7 @@
         required
       />
 
-      <select-box
+      <SelectBox
         name="status"
         :options="paidOptions"
         :pre-selected="paidOptions.find((s) => s.id === state.status)?.id"
@@ -95,9 +118,10 @@ import {
   nullUUID,
   z_transaction,
   z_transactionStatus,
+  type Z_Account,
   type Z_ApiResponse,
-  type Z_Category,
   type Z_FormError,
+  type Z_SelectItemObject,
   type Z_Transaction
 } from '@/types';
 import moment from 'moment';
@@ -123,23 +147,23 @@ const notifications = useNotification();
 const { addNotification } = notifications;
 const pagination = usePagination();
 
-const { categories, accountSelectList, categorySelectList } = storeToRefs(dataStore);
+const { accounts, transactions, accountSelectList, categorySelectList } = storeToRefs(dataStore);
 
 const state: Ref<Z_Transaction> = ref({
   id: selectedTransaction.value?.id || crypto.randomUUID(),
   desc: selectedTransaction.value?.desc || undefined,
   category: selectedTransaction.value?.category || null,
-  from: selectedTransaction.value?.from || nullUUID,
-  amount: selectedTransaction.value?.amount || undefined,
-  to: selectedTransaction.value?.to || nullUUID,
+  from: selectedTransaction.value?.account || nullUUID,
+  in: selectedTransaction.value?.in || 0,
+  out: selectedTransaction.value?.out || 0,
+  opId: selectedTransaction.value?.opId || nullUUID,
   when: moment(selectedTransaction.value?.when).toDate() || moment().toDate(),
   status: selectedTransaction.value?.status || z_transactionStatus.enum.Paid,
   sId: selectedTransaction.value?.sId || null,
-  iId: {
-    from: selectedTransaction.value?.iId.from || null,
-    to: selectedTransaction.value?.iId.to || null
-  }
+  iId: selectedTransaction.value?.iId || null
 } as unknown as Z_Transaction);
+
+const transferTarget: Ref<string> = ref(nullUUID);
 
 const when: Ref<string> = ref(moment(selectedTransaction.value?.when).format('YYYY-MM-DD') || moment().format('YYYY-MM-DD'));
 
@@ -151,18 +175,42 @@ const setWhen = (e: string) => {
 };
 
 const setCategory = (e: { id: string }) => {
-  const categoryId = categorySelectList.value.find((a) => a.id === e.id)?.id;
+  const categoryId = categorySelectList.value.find((a: Z_SelectItemObject) => a.id === e.id)?.id;
 
   if (categoryId) state.value.category = categoryId;
 };
 
-const setFrom = (e: { id: string }) => {
-  if (e && e.id) state.value.from = e.id;
+const setAccount = (e: { id: string }) => {
+  if (e && e.id) state.value.account = e.id;
 };
 
-const setTo = (e: { id: string }) => {
-  if (e && e.id) state.value.to = e.id;
+const setTransferTarget = (e: { id: string }) => {
+  if (e && e.id) transferTarget.value = e.id;
+
+  const targetAccountExist = accounts.value.get(e.id);
+
+  if (!targetAccountExist) transferTarget.value = nullUUID;
 };
+
+const setOposite = (e: { id: string }) => {
+  if (e && e.id) state.value.opId = e.id;
+};
+
+const getOppositeTransactionAccountId: ComputedRef<string> = computed(() => {
+  if (!selectedTransaction.value) return nullUUID;
+
+  const opTr = dataStore.transactionById(selectedTransaction.value.opId);
+
+  let opAccount: Z_Account | undefined = undefined;
+
+  if (opTr) {
+    opAccount = dataStore.accountById(opTr.account);
+  }
+
+  if (opAccount) return opAccount.id;
+
+  return nullUUID;
+});
 
 const paidOptions = [
   { id: z_transactionStatus.enum.Paid, name: z_transactionStatus.enum.Paid },
@@ -178,9 +226,10 @@ const prestine: ComputedRef<boolean> = computed(() => {
     state.value.id === selectedTransaction.value?.id &&
     state.value.desc === selectedTransaction.value?.desc &&
     state.value.category === selectedTransaction.value?.category &&
-    state.value.from === selectedTransaction.value?.from &&
-    state.value.amount === selectedTransaction.value?.amount &&
-    state.value.to === selectedTransaction.value?.to &&
+    state.value.account === selectedTransaction.value?.account &&
+    state.value.in === selectedTransaction.value?.in &&
+    state.value.out === selectedTransaction.value?.out &&
+    state.value.opId === selectedTransaction.value?.opId &&
     moment(state.value.when).isSame(moment(selectedTransaction.value.when), 'day') &&
     state.value.status === selectedTransaction.value.status &&
     state.value.sId === selectedTransaction.value.sId;
@@ -188,23 +237,25 @@ const prestine: ComputedRef<boolean> = computed(() => {
   return p;
 });
 
-const autoDescription = () => {
-  let desc = '';
-
-  if (state.value.desc) return;
-  if (state.value.category) {
-    const category: Z_Category | undefined = categories.value.get(state.value.category);
-
-    desc = `${category?.description}`;
-  }
-
-  state.value.desc = desc;
-};
+const transactionSelectList: Ref<Z_SelectItemObject[]> = ref(
+  dataStore.transactionSelectList(state.value.account, state.value.when, state.value.in, state.value.out)
+);
+const preSelectedTransactionId: Ref<string | undefined> = ref(dataStore.transactionById(state.value.opId)?.id);
 
 watch(
   [state],
   () => {
     console.log('prestine', prestine.value);
+
+    transactionSelectList.value = dataStore.transactionSelectList(
+      state.value.account,
+      state.value.when,
+      state.value.in,
+      state.value.out
+    );
+
+    preSelectedTransactionId.value = dataStore.transactionById(state.value.opId)?.id;
+
     if (!prestine.value) {
       errors.value = {};
 
@@ -235,38 +286,85 @@ onMounted(() => {
       id: selectedTransaction.value?.id || crypto.randomUUID(),
       desc: selectedTransaction.value?.desc,
       category: selectedTransaction.value?.category,
-      from: selectedTransaction.value?.from || nullUUID,
-      amount: selectedTransaction.value?.amount,
-      to: selectedTransaction.value?.to || nullUUID,
+      account: selectedTransaction.value?.account || nullUUID,
+      in: selectedTransaction.value?.in || 0,
+      out: selectedTransaction.value?.out || 0,
+      opId: selectedTransaction.value?.opId || nullUUID,
       when: moment(selectedTransaction.value?.when).toDate() || moment().toDate(),
       status: selectedTransaction.value?.status || z_transactionStatus.enum.Paid,
       sId: selectedTransaction.value?.sId || null,
-      iId: {
-        from: selectedTransaction.value?.iId?.from || null,
-        to: selectedTransaction.value?.iId?.to || null
-      }
+      iId: selectedTransaction.value?.iId || null
     } as unknown as Z_Transaction;
   }
 });
 
 const save = () => {
   let res: Z_ApiResponse | undefined = undefined;
+  let opRes: Z_ApiResponse | undefined = undefined;
+  let opTr: Z_Transaction | undefined = undefined;
+  let opOriginalTr: Z_Transaction | undefined = undefined;
 
-  if (selectedTransaction.value) {
-    res = dataStore.editTransaction(state.value);
+  if ((state.value.opId === nullUUID || state.value.opId === null) && transferTarget.value && transferTarget.value !== nullUUID) {
+    opTr = z_transaction.parse(state.value);
+
+    opTr.id = crypto.randomUUID();
+    opTr.account = transferTarget.value;
+    opTr.in = state.value.out;
+    opTr.out = state.value.in;
   } else {
-    res = dataStore.addTransaction(state.value);
+    if (state.value.opId !== nullUUID && state.value.opId !== null) {
+      if (selectedTransaction.value) {
+        opTr = transactions.value.find((f: Z_Transaction) => f.id === state.value.opId);
+
+        if (!opTr) {
+          state.value.opId = null;
+        } else {
+          opOriginalTr = z_transaction.parse(opTr);
+        }
+      }
+    }
+  }
+
+  const trExist: Z_Transaction | undefined = transactions.value.find((t: Z_Transaction) => t.id === state.value.id);
+  const opTrExist: Z_Transaction | undefined = transactions.value.find((t: Z_Transaction) => t.id === opTr?.id);
+
+  if (trExist && selectedTransaction.value) {
+    res = dataStore.editTransaction(state.value, true);
+    if (opTr) {
+      if (!opTrExist) {
+        opRes = dataStore.addTransaction(opTr, true);
+      }
+    }
+  } else {
+    res = dataStore.addTransaction(state.value, true);
+    if (opTr) {
+      const opTrExist: Z_Transaction | undefined = transactions.value.find((t: Z_Transaction) => t.id === opTr.id);
+      if (!opTrExist) opRes = dataStore.addTransaction(opTr, true);
+    }
+  }
+
+  dataStore.sortTransactions();
+  dataStore.recalculateBalances();
+
+  if (!opTrExist) {
+    if (opRes && !opRes.success) {
+      if (opOriginalTr) {
+        dataStore.editTransaction(opOriginalTr);
+      }
+      res?.errors.forEach((e) => {
+        errors.value['save'] = [e];
+      });
+      addNotification('danger', t('transaction.form.saveFailed'));
+      pagination.startLoading();
+      emit('close');
+      return;
+    }
   }
 
   if (res && res.success) {
     addNotification('success', t('transaction.form.saved'));
     pagination.startLoading();
     emit('close');
-  } else {
-    res?.errors.forEach((e) => {
-      errors.value['save'] = [e];
-    });
-    addNotification('danger', t('transaction.form.saveFailed'));
   }
 
   selectedTransaction.value = undefined;

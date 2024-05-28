@@ -83,7 +83,7 @@ export const useDataStore = defineStore(
       return selectList;
     });
 
-    const categorySelectList = computed(() => {
+    const categorySelectList = computed((): Z_SelectItemObject[] => {
       const selectList: Z_SelectItemObject[] = [];
 
       categories.value.forEach((value, key) => {
@@ -97,6 +97,29 @@ export const useDataStore = defineStore(
 
       return selectList;
     });
+
+    function transactionSelectList(accountId: string, when: Date, amountIn: number, amountOut: number): Z_SelectItemObject[] {
+      const selectList: Z_SelectItemObject[] = [];
+
+      const nearTransactions = transactions.value.filter(
+        (t) =>
+          t.account !== accountId &&
+          t.out === amountIn &&
+          t.in === amountOut &&
+          moment(t.when).isBetween(moment(when).subtract(6, 'days'), moment(when).add(6, 'days'), 'day')
+      );
+
+      nearTransactions.forEach((t) => {
+        selectList.push({
+          id: t.id,
+          name: `${accountById(t.account)?.name} - ${t.desc} - ${t.in > 0 ? 'in: ' + t.in : 'out: ' + t.out} - ${moment(t.when).format('YYYY-MM-DD')}`
+        });
+      });
+
+      selectList.push({ id: nullUUID, name: '-' });
+
+      return selectList;
+    }
 
     function fetchRangeTransactions(): Z_Transactions {
       let data: Z_Transactions = transactions.value;
@@ -116,7 +139,10 @@ export const useDataStore = defineStore(
     function fetchTransactions(): Z_Transactions {
       let data: Z_Transactions = transactions.value;
 
-      const filterableColumns = ['id', 'desc', 'category', 'account', 'from', 'amount', 'to', 'when', 'status', 'sId'];
+      console.log('fetching...');
+      console.log('filters: ', pagination.filters.value);
+
+      const filterableColumns = ['id', 'desc', 'category', 'account', 'in', 'out', 'opId', 'when', 'status', 'sId'];
       const filterableBy = ['eq', 'neq', 'lt', 'lg', 'in', 'nin'];
 
       const statusFilterSet = pagination.filters.value.find((f) => f.column === 'status');
@@ -130,12 +156,13 @@ export const useDataStore = defineStore(
 
         pagination.filters.value.forEach((filter: Z_Filter) => {
           if (!filterableColumns.includes(filter.column)) return;
+
           if (!filterableBy.includes(filter.by)) return;
 
           switch (filter.column) {
             case 'category':
               if (filter.by === z_filterBy.enum.eq) {
-                if (d.category && categories.value.get(d.category)?.name !== filter.value) m.push(false);
+                if (d.category !== filter.value) m.push(false);
               }
               break;
             case 'status':
@@ -146,19 +173,13 @@ export const useDataStore = defineStore(
 
             case 'account':
               if (filter.by === z_filterBy.enum.eq) {
-                if (!(d.from === filter.value || d.to === filter.value)) m.push(false);
+                if (d.account !== filter.value) m.push(false);
               }
               break;
 
-            case 'from':
+            case 'opId':
               if (filter.by === z_filterBy.enum.in) {
-                if (d.from !== filter.value) m.push(false);
-              }
-              break;
-
-            case 'to':
-              if (filter.by === z_filterBy.enum.in) {
-                if (d.to !== filter.value) m.push(false);
+                if (d.opId !== filter.value) m.push(false);
               }
               break;
 
@@ -175,6 +196,8 @@ export const useDataStore = defineStore(
 
         return !m.includes(false);
       });
+
+      console.log(pagination.dayFilter.value);
 
       if (pagination.dayFilter.value) {
         let y: Z_Year | null = null;
@@ -218,11 +241,8 @@ export const useDataStore = defineStore(
           case 'category':
             data = sortBy('category', data);
             break;
-          case 'from':
+          case 'account':
             data = sortBy('from', data);
-            break;
-          case 'to':
-            data = sortBy('to', data);
             break;
           case 'status':
             data = sortBy('status', data);
@@ -254,6 +274,7 @@ export const useDataStore = defineStore(
         } else if (moment(a.when).isBefore(moment(b.when))) {
           return -1;
         }
+
         return 0;
       });
 
@@ -274,6 +295,7 @@ export const useDataStore = defineStore(
         } else if (a > b) {
           return 1;
         }
+
         return 0;
       });
 
@@ -288,6 +310,7 @@ export const useDataStore = defineStore(
           } else if (a[1].name < b[1].name) {
             return -1;
           }
+
           return 0;
         })
       );
@@ -296,11 +319,12 @@ export const useDataStore = defineStore(
     function sortTransactions() {
       transactions.value = transactions.value.sort((a: Z_Transaction, b: Z_Transaction) => {
         // eturn a["one"] - b["one"] || a["two"] - b["two"];
-        if (moment(b.when).isBefore(moment(a.when)) || Math.abs(a.amount) - Math.abs(b.amount)) {
+        if (moment(b.when).isBefore(moment(a.when))) {
           return 1;
         } else if (moment(a.when).isBefore(moment(b.when))) {
           return -1;
         }
+
         return 0;
       });
     }
@@ -313,36 +337,45 @@ export const useDataStore = defineStore(
 
       accounts.value.forEach(balanceToZero);
 
+      const brokenTransactions: Z_Transactions = [];
+
       transactions.value
         .filter((t) => t.status === z_transactionStatus.enum.Paid)
         .forEach((t: Z_Transaction) => {
-          const aFrom = accounts.value.get(t.from);
+          const account = accounts.value.get(t.account);
 
-          if (aFrom) {
-            aFrom.balance = z.coerce.number().parse((aFrom.balance + t.amount).toFixed(2));
-            accounts.value.set(t.from, aFrom);
-          }
-
-          const aTo = accounts.value.get(t.to);
-
-          if (aTo) {
-            aTo.balance = z.coerce.number().parse((aTo.balance + Math.abs(t.amount)).toFixed(2));
-            accounts.value.set(t.to, aTo);
+          if (account) {
+            account.balance = z.coerce.number().parse((account.balance + t.in - t.out).toFixed(2));
+            accounts.value.set(t.account, account);
+          } else {
+            brokenTransactions.push(t);
           }
         });
+
+      const brIDs = brokenTransactions.map((x) => x.id);
+
+      console.log('broken transactions to delete:', brIDs);
+
+      transactions.value = transactions.value.filter((t) => !brIDs.includes(t.id));
 
       return true;
     }
 
-    function accountById(id: string): Z_Account | undefined {
+    function accountById(id: string | null): Z_Account | undefined {
+      if (!id) return undefined;
+
       return accounts.value.get(id);
     }
 
-    function categoryById(id: string): Z_Category | undefined {
+    function categoryById(id: string | null): Z_Category | undefined {
+      if (!id) return undefined;
+
       return categories.value.get(id);
     }
 
-    function transactionById(id: string): Z_Transaction | undefined {
+    function transactionById(id: string | null): Z_Transaction | undefined {
+      if (!id) return undefined;
+
       return transactions.value.find((t) => t.id === id);
     }
 
@@ -358,6 +391,7 @@ export const useDataStore = defineStore(
         if (exist) {
           response.success = false;
           response.errors.push('account.error.account_name_already_exist');
+
           return response;
         }
 
@@ -370,6 +404,7 @@ export const useDataStore = defineStore(
 
       response.success = false;
       response.errors.push('account.error.not_valid');
+
       return response;
     }
 
@@ -384,6 +419,7 @@ export const useDataStore = defineStore(
         if (!exist) {
           response.success = false;
           response.errors.push('account.error.not_found');
+
           return response;
         }
 
@@ -398,6 +434,7 @@ export const useDataStore = defineStore(
 
       response.success = false;
       response.errors.push('account.error.not_valid');
+
       return response;
     }
 
@@ -414,6 +451,17 @@ export const useDataStore = defineStore(
 
     function removeAccount(id: string) {
       const res = accounts.value.delete(id);
+
+      const trToRemove = transactions.value.filter((t) => t.account === id).map((x) => x.id);
+      transactions.value = transactions.value.map((t) => {
+        if (t.opId && trToRemove.includes(t.opId)) {
+          t.opId = null;
+        }
+
+        return t;
+      });
+
+      transactions.value = transactions.value.filter((t) => !trToRemove.includes(t.id));
 
       if (res) {
         recalculateCategoryUsage();
@@ -435,6 +483,7 @@ export const useDataStore = defineStore(
         if (exist) {
           response.success = false;
           response.errors.push('category.error.already_exist');
+
           return response;
         }
 
@@ -450,6 +499,7 @@ export const useDataStore = defineStore(
 
       response.success = false;
       response.errors.push('category.error.not_valid');
+
       return response;
     }
 
@@ -464,6 +514,7 @@ export const useDataStore = defineStore(
         if (!exist) {
           response.success = false;
           response.errors.push('category.error.not_found');
+
           return response;
         }
 
@@ -478,6 +529,7 @@ export const useDataStore = defineStore(
 
       response.success = false;
       response.errors.push('category.error.not_valid');
+
       return response;
     }
 
@@ -485,21 +537,21 @@ export const useDataStore = defineStore(
       const category = z_category.parse(categories.value.get(id));
 
       if (category) {
-        const childs: string[] = [];
+        const categoriesToRemove: string[] = [category.id];
         categories.value.forEach((v, k) => {
-          if (v.parent === category.id) childs.push(k);
+          if (v.parent === category.id) categoriesToRemove.push(k);
         });
 
         transactions.value = transactions.value.map((t) => {
-          if (t.category && childs.includes(t.category)) {
+          if (t.category && categoriesToRemove.includes(t.category)) {
             t.category = null;
-            return t;
           }
+
           return t;
         });
-      }
 
-      categories.value.delete(id);
+        categoriesToRemove.forEach((c) => categories.value.delete(c));
+      }
     }
 
     function increaseCategoryUsage(id: string) {
@@ -527,36 +579,54 @@ export const useDataStore = defineStore(
       const response: Z_ApiResponse = { success: true, errors: [] };
 
       if (z_transaction.safeParse(transaction).success) {
-        const t = z_transaction.parse(transaction);
+        const newTransaction = z_transaction.parse(transaction);
 
-        const exist = transactions.value.find(
-          (d) =>
-            d.id === t.id || (d.iId.from === t.iId.from && t.iId.from !== null) || (d.iId.to === t.iId.to && t.iId.to !== null)
-        );
+        const account = accounts.value.get(newTransaction.account);
+
+        if (!account) {
+          response.success = false;
+          response.errors.push('transaction.error.account_not_exist');
+          console.error('Account not exist');
+
+          return response;
+        }
+
+        let exist = transactions.value.find((d) => d.id === newTransaction.id);
+
+        if (!exist && newTransaction.iId) {
+          exist = transactions.value.find((d) => d.iId === newTransaction.iId);
+        }
 
         if (exist) {
           response.success = false;
           response.errors.push('transaction.error.already_exist');
+          console.error('Existing transaction found: ', newTransaction);
+
           return response;
         }
 
-        t.amount = z.coerce.number().parse(t.amount.toFixed(2));
-        t.when = moment(t.when).format('YYYY-MM-DD') as unknown as Date;
+        newTransaction.in = z.coerce.number().parse(Math.abs(newTransaction.in).toFixed(2));
+        newTransaction.out = z.coerce.number().parse(Math.abs(newTransaction.out).toFixed(2));
 
-        const from = accounts.value.get(t.from);
-        const to = accounts.value.get(t.to);
-
-        if (!from && !to) {
+        if (newTransaction.in === null && newTransaction.out === null) {
           response.success = false;
-          response.errors.push('transaction.error.account_not_exist');
-          console.error('Account not exist');
+          response.errors.push('transaction.error.no_in_or_out');
+          console.error("No in or out, can't be right: ", newTransaction);
+
           return response;
+        }
+
+        newTransaction.when = moment(newTransaction.when).format('YYYY-MM-DD') as unknown as Date;
+
+        if (newTransaction.opId === nullUUID) newTransaction.opId = null;
+        if (newTransaction.opId) {
+          newTransaction.opId = transactions.value.find((f) => f.id === newTransaction.opId)?.id || null;
         }
 
         if (!batch) {
-          transactions.value = [...transactions.value, t];
+          transactions.value = [...transactions.value, newTransaction];
 
-          if (t.category) increaseCategoryUsage(t.category);
+          if (newTransaction.category) increaseCategoryUsage(newTransaction.category);
 
           sortTransactions();
           recalculateBalances();
@@ -566,56 +636,68 @@ export const useDataStore = defineStore(
 
         let opositeTransaction: Z_Transaction[] = [];
 
-        if (t.category) {
-          const category = Array.from(categories.value.values()).find((c) => c.id == t.category);
+        opositeTransaction = transactions.value.filter(
+          (f) =>
+            f.opId === null &&
+            f.account !== newTransaction.account &&
+            (newTransaction.in !== 0 ? newTransaction.in === f.out : newTransaction.out === f.in) &&
+            moment(f.when).isSame(moment(newTransaction.when), 'day')
+        );
 
-          let aExist: Z_Account | undefined;
+        if (opositeTransaction.length === 1) {
+          const ot = opositeTransaction[0];
 
-          if (category) aExist = Array.from(accounts.value.values()).find((a) => a.name == category.name);
+          const otAccount = accounts.value.get(ot.account);
 
-          if (aExist) {
-            if (t.from && t.from !== nullUUID) {
-              opositeTransaction = transactions.value.filter(
-                (f) =>
-                  moment(f.when).isSame(moment(t.when), 'day') &&
-                  f.amount * -1 === t.amount &&
-                  f.to === aExist?.id &&
-                  f.from === nullUUID &&
-                  f.iId.from === null
-              );
-            } else if (t.to && t.to !== nullUUID) {
-              opositeTransaction = transactions.value.filter(
-                (f) =>
-                  moment(f.when).isSame(moment(t.when), 'day') &&
-                  f.amount * -1 === t.amount &&
-                  f.from === aExist?.id &&
-                  f.to === nullUUID &&
-                  f.iId.to === null
-              );
+          if (otAccount) {
+            if (newTransaction.in === 0) {
+              newTransaction.opId = ot.id;
+              ot.opId = newTransaction.id;
+
+              newTransaction.desc = `transfer to: ${otAccount.name}`;
+              ot.desc = `transfer from: ${account.name}`;
+            } else {
+              newTransaction.opId = ot.id;
+              ot.opId = newTransaction.id;
+
+              newTransaction.desc = `transfer from: ${otAccount.name}`;
+              ot.desc = `transfer to: ${account.name}`;
             }
+          }
 
-            if (opositeTransaction.length === 1) {
-              const ot = opositeTransaction[0];
-
-              if (ot.from === aExist.id) {
-                ot.to = t.to;
-                ot.desc = `${ot.desc}|${t.desc}`;
-                ot.iId.to = t.iId.to;
-              } else if (ot.to === aExist.id) {
-                ot.amount = t.amount;
-                ot.from = t.from;
-                ot.desc = `${t.desc}|${ot.desc}`;
-                ot.iId.from = t.iId.from;
-              }
-
-              editTransaction(ot, true);
-
-              return response;
-            }
+          const otIndex = transactions.value.findIndex((t) => t.id === transaction.id);
+          if (otIndex >= 0) {
+            transactions.value[otIndex] = ot;
           }
         }
 
-        transactions.value = [...transactions.value, t];
+        const pendingTrs: Z_Transaction[] | undefined = transactions.value.filter(
+          (t) =>
+            t.iId === null &&
+            t.status === z_transactionStatus.enum.Pending &&
+            t.account === newTransaction.account &&
+            t.in === newTransaction.in &&
+            t.out === newTransaction.out &&
+            moment(t.when).isSame(moment(newTransaction.when), 'day')
+        );
+
+        if (pendingTrs.length === 1) {
+          const pTr = pendingTrs[0];
+
+          pTr.status = z_transactionStatus.enum.Paid;
+          pTr.desc = newTransaction.desc;
+
+          if (newTransaction.iId) {
+            pTr.iId = newTransaction.iId;
+          }
+
+          const ntIndex = transactions.value.findIndex((t) => t.id === pTr.id);
+          if (ntIndex >= 0) {
+            transactions.value[ntIndex] = pTr;
+          }
+        } else {
+          transactions.value = [...transactions.value, newTransaction];
+        }
 
         return response;
       } else {
@@ -623,6 +705,7 @@ export const useDataStore = defineStore(
         response.errors.push('transaction.error.not_valid');
 
         console.error(response, z_transaction.parse(transaction));
+
         return response;
       }
     }
@@ -637,7 +720,39 @@ export const useDataStore = defineStore(
         if (transactionIndex < 0) {
           response.success = false;
           response.errors.push('transaction.error.not_found');
+
           return response;
+        }
+
+        if (newTransaction.opId === nullUUID) newTransaction.opId = null;
+
+        if (newTransaction.opId) {
+          const ot = transactions.value.find((f) => f.id === newTransaction.opId);
+
+          if (ot) {
+            newTransaction.opId = ot?.id || null;
+
+            const account = accounts.value.get(newTransaction.account);
+            const otAccount = accounts.value.get(ot.account);
+
+            if (otAccount && account) {
+              if (newTransaction.in === 0) {
+                newTransaction.desc = `transfer to: ${otAccount.name}`;
+                ot.desc = `transfer from: ${account.name}`;
+              } else {
+                newTransaction.desc = `transfer from: ${otAccount.name}`;
+                ot.desc = `transfer to: ${account.name}`;
+              }
+            }
+
+            ot.in = newTransaction.out;
+            ot.out = newTransaction.in;
+
+            const otIndex = transactions.value.findIndex((t) => t.id === transaction.id);
+            if (otIndex >= 0) {
+              transactions.value[otIndex] = ot;
+            }
+          }
         }
 
         transactions.value[transactionIndex] = newTransaction;
@@ -654,20 +769,29 @@ export const useDataStore = defineStore(
         }
 
         return response;
+      } else {
+        response.success = false;
+        response.errors.push('transaction.error.not_valid');
+
+        console.error(response, z_transaction.parse(transaction));
+
+        return response;
       }
     }
 
     function removeTransaction(i: string) {
       const id = z.string().parse(i);
 
-      const t = transactions.value.find((t) => t.id === id);
+      const tr = transactions.value.find((t) => t.id === id);
+      const optr = transactions.value.find((t) => t.id === tr?.opId);
 
-      transactions.value = transactions.value.filter((c) => c.id !== id);
+      if (tr || optr) {
+        if (tr && tr?.category) decreaseCategoryUsage(tr.category);
 
-      if (t && t?.category) decreaseCategoryUsage(t.category);
+        transactions.value = transactions.value.filter((c) => c.id !== tr?.id && c.id !== optr?.id);
 
-      recalculateBalances();
-
+        recalculateBalances();
+      }
       return true;
     }
 
@@ -685,12 +809,8 @@ export const useDataStore = defineStore(
         }
 
         allTransactions.forEach((t: Z_Transaction) => {
-          if (t.from === account.id) {
-            balance = z.coerce.number().parse((balance + t.amount).toFixed(2));
-          }
-
-          if (t.to === account.id) {
-            balance = z.coerce.number().parse((balance + Math.abs(t.amount)).toFixed(2));
+          if (t.account === account.id) {
+            balance = z.coerce.number().parse((balance + t.in - t.out).toFixed(2));
           }
         });
 
@@ -698,6 +818,7 @@ export const useDataStore = defineStore(
       }
 
       console.error('Account ID not exist in accounts!');
+
       return 0;
     }
 
@@ -713,7 +834,7 @@ export const useDataStore = defineStore(
 
         let ts = transactions.value.filter(
           (t) =>
-            (withPending || t.to === nullUUID) &&
+            t.account === accountId &&
             moment(t.when).isSame(moment(date), 'month') &&
             (withPending || t.status === z_transactionStatus.enum.Paid)
         );
@@ -723,17 +844,14 @@ export const useDataStore = defineStore(
         }
 
         ts.forEach((t: Z_Transaction) => {
-          if (t.from === account.id) {
-            balance = z.coerce.number().parse((balance + t.amount).toFixed(2));
-          }
-          // if (t.to === account.id) {
-          //   balance = z.coerce.number().parse((balance + Math.abs(t.amount)).toFixed(2));
-          // }
+          balance = z.coerce.number().parse((balance - t.out).toFixed(2));
         });
+
         return balance;
       }
 
       console.error('Account ID not exist in accounts!');
+
       return 0;
     }
 
@@ -744,7 +862,7 @@ export const useDataStore = defineStore(
 
         let ts = transactions.value.filter(
           (t) =>
-            (withPending || t.from === nullUUID) &&
+            t.account === accountId &&
             moment(t.when).isSame(moment(date), 'month') &&
             (withPending || t.status === z_transactionStatus.enum.Paid)
         );
@@ -754,17 +872,14 @@ export const useDataStore = defineStore(
         }
 
         ts.forEach((t: Z_Transaction) => {
-          // if (t.from === account.id) {
-          //   balance = z.coerce.number().parse((balance + t.amount).toFixed(2));
-          // }
-          if (t.to === account.id) {
-            balance = z.coerce.number().parse((balance + Math.abs(t.amount)).toFixed(2));
-          }
+          balance = z.coerce.number().parse((balance + t.in).toFixed(2));
         });
+
         return balance;
       }
 
       console.error('Account ID not exist in accounts!');
+
       return 0;
     }
 
@@ -781,6 +896,7 @@ export const useDataStore = defineStore(
 
       accountSelectList,
       categorySelectList,
+      transactionSelectList,
 
       fetchRangeTransactions,
       fetchTransactions,

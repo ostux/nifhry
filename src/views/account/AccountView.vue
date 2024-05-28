@@ -8,7 +8,7 @@
         <CreditCardIcon class="mr-4 size-6" />
         <div class="flex flex-col">
           <span>{{ account.name }}</span>
-          <rovas-component
+          <RovasComponent
             class="text-3xl"
             :msg="account.name"
           />
@@ -33,33 +33,51 @@
 
     <canvas ref="canvas"></canvas>
 
-    <ControlForm />
+    <ControlForm
+      :accountId="account.id"
+      v-if="pageMounted"
+    />
 
-    <transaction-multi-edit-form v-if="selectedRows.size" />
+    <TransactionMultiEditForm v-if="selectedRows.size" />
 
-    <table-component
+    <TableComponent
       :columns="columns"
       :rows="rows"
       @select="selectedRows = $event"
       :checkbox="true"
     >
-      <template #from-data="{ row }">
-        {{ accountById(row.from)?.name }}
+      <template #account-data="{ row }">
+        {{ accountById(row.account)?.name }}
       </template>
 
-      <template #amount-data="{ row }">
-        <span :class="getAmountColor(row as unknown as Z_Transaction)">
+      <template #in-data="{ row }">
+        <span
+          :class="getAmountColor(row as unknown as Z_Transaction)"
+          v-if="row.in !== 0"
+        >
           {{
             new Intl.NumberFormat('en-GB', {
               style: 'currency',
               currency: 'GBP'
-            }).format(parseFloat(row.amount))
+            }).format(parseFloat(row.in))
           }}
         </span>
+        <span v-else>&nbsp;</span>
       </template>
 
-      <template #to-data="{ row }">
-        {{ accountById(row.to)?.name }}
+      <template #out-data="{ row }">
+        <span
+          :class="getAmountColor(row as unknown as Z_Transaction)"
+          v-if="row.out !== 0"
+        >
+          {{
+            new Intl.NumberFormat('en-GB', {
+              style: 'currency',
+              currency: 'GBP'
+            }).format(parseFloat(row.out))
+          }}
+        </span>
+        <span v-else>&nbsp;</span>
       </template>
 
       <template #category-data="{ row }">
@@ -71,30 +89,31 @@
       </template>
 
       <template #actions-data="{ row }">
-        <transaction-action-menu
+        <TransactionActionMenu
           :row="row"
           @refetch="refetch"
         />
       </template>
-    </table-component>
+    </TableComponent>
   </div>
 </template>
 
 <script setup lang="ts">
-import { usePagination } from '@/composables/usePagination';
-import { useDataStore } from '@/stores/dataStore';
-import { z_filterBy, type Z_Account, type Z_Transactions, nullUUID, type Z_Transaction } from '@/types';
-import { storeToRefs } from 'pinia';
-import { watch, type Ref, ref, type ComputedRef, computed, onMounted, onUnmounted } from 'vue';
-import { useRoute } from 'vue-router';
-import { CreditCardIcon } from '@heroicons/vue/24/outline';
-import RovasComponent from '@/components/ui/RovasComponent.vue';
-import moment from 'moment';
-import TableComponent from '@/components/ui/TableComponent.vue';
 import TransactionActionMenu from '@/components/transaction/TransactionActionMenu.vue';
 import TransactionMultiEditForm from '@/components/transaction/TransactionMultiEditForm.vue';
 import ControlForm from '@/components/ui/ControlForm.vue';
+import RovasComponent from '@/components/ui/RovasComponent.vue';
+import TableComponent from '@/components/ui/TableComponent.vue';
+import { usePagination } from '@/composables/usePagination';
+import { useDataStore } from '@/stores/dataStore';
+import { z_filterBy, type Z_Account, type Z_Transaction, type Z_Transactions } from '@/types';
+import { getAmountColor } from '@/utils/helpers';
+import { CreditCardIcon } from '@heroicons/vue/24/outline';
 import Chart from 'chart.js/auto';
+import moment from 'moment';
+import { storeToRefs } from 'pinia';
+import { computed, onMounted, onUnmounted, ref, watch, type ComputedRef, type Ref } from 'vue';
+import { useRoute } from 'vue-router';
 
 const route = useRoute();
 
@@ -103,6 +122,8 @@ const { accountById, categoryById } = dataStore;
 const { accounts } = storeToRefs(dataStore);
 
 const pagination = usePagination();
+
+const pageMounted: Ref<boolean> = ref(false);
 
 const account: ComputedRef<Z_Account | undefined> = computed(() => accounts.value.get(route.params.slug as unknown as string));
 
@@ -123,18 +144,18 @@ const columns = [
     label: 'Description'
   },
   {
-    key: 'from',
-    label: 'From',
+    key: 'account',
+    label: 'Account',
     sortable: true
   },
   {
-    key: 'amount',
-    label: 'Amount',
+    key: 'in',
+    label: 'In',
     sortable: true
   },
   {
-    key: 'to',
-    label: 'To',
+    key: 'out',
+    label: 'Out',
     sortable: true
   },
   {
@@ -163,12 +184,6 @@ const refetch = () => {
   rows.value = dataStore.fetchTransactions();
 };
 
-const getAmountColor = (row: Z_Transaction) => {
-  if (row.from !== nullUUID && row.to !== nullUUID) return 'text-sky-500';
-
-  return row.amount < 0 ? 'text-rose-500' : 'text-pine-green-500';
-};
-
 const unsubscribe = dataStore.$onAction(
   ({
     name, // name of the action
@@ -186,6 +201,7 @@ const unsubscribe = dataStore.$onAction(
 
 watch([account], () => {
   pagination.reset();
+
   refetch();
 });
 
@@ -276,6 +292,12 @@ const populateLineChart = () => {
 
 onMounted(() => {
   console.log('%cAccount view mouunted...', 'color:#17A589');
+  pagination.reset();
+  pagination.setPage(1);
+  pagination.setTotalCount(0);
+  pagination.setPerPage(50);
+
+  pageMounted.value = true;
 
   setTimeout(() => {
     refetch();
