@@ -139,9 +139,6 @@ export const useDataStore = defineStore(
     function fetchTransactions(): Z_Transactions {
       let data: Z_Transactions = transactions.value;
 
-      console.log('fetching...');
-      console.log('filters: ', pagination.filters.value);
-
       const filterableColumns = ['id', 'desc', 'category', 'account', 'in', 'out', 'opId', 'when', 'status', 'sId'];
       const filterableBy = ['eq', 'neq', 'lt', 'lg', 'in', 'nin'];
 
