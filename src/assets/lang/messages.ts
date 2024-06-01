@@ -88,6 +88,7 @@ export const messages = {
     },
     import_transactions: {
       select: {
+        amount: "Amount (Can't be used with In or Out)",
         category: 'Category',
         date: 'Transaction date',
         description: 'Description',

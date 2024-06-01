@@ -62,6 +62,13 @@
           @select="setInField"
           :label="$t('import_transactions.select.in')"
         />
+
+        <select-box
+          name="amount"
+          :options="fields"
+          @select="setAmountField"
+          :label="$t('import_transactions.select.amount')"
+        />
       </div>
       <div
         v-if="stepTwo"
@@ -137,8 +144,9 @@ const selectedFields = z.object({
   date: z.string().min(1),
   desc: z.string().min(1),
   category: z.string().min(1).nullable(),
-  in: z.string().min(1),
-  out: z.string().min(1)
+  in: z.string().min(1).nullable(),
+  out: z.string().min(1).nullable(),
+  amount: z.string().min(1).nullable()
 });
 type SelectedFields = z.infer<typeof selectedFields>;
 
@@ -146,8 +154,9 @@ const state: Ref<SelectedFields> = ref({
   date: '',
   desc: '',
   category: null,
-  in: '',
-  out: ''
+  in: null,
+  out: null,
+  amount: null
 });
 
 const setDateField = (f: Field) => {
@@ -166,6 +175,10 @@ const setInField = (f: Field) => {
   state.value.in = f.id;
 };
 
+const setAmountField = (f: Field) => {
+  state.value.amount = f.id;
+};
+
 const setOutField = (f: Field) => {
   state.value.out = f.id;
 };
@@ -174,6 +187,8 @@ watch(
   [state],
   () => {
     const valid = selectedFields.safeParse(state.value);
+
+    console.log(valid);
 
     if (!valid.success) {
       stepTwo.value = false;
@@ -251,7 +266,13 @@ const createTransactions = () => {
   }
 
   res.value?.data.forEach((row) => {
-    if (row[state.value.desc] || row[state.value.date] || row[state.value.in] || row[state.value.out]) {
+    if (
+      row[state.value.desc] ||
+      row[state.value.date] ||
+      (state.value?.in && row[state.value.in]) ||
+      (state.value?.out && row[state.value.out]) ||
+      (state.value?.amount && row[state.value?.amount])
+    ) {
       digestMessage(JSON.stringify(row)).then((digestHex) => {
         const iId = digestHex;
         let categoryName: string | null = null;
@@ -298,8 +319,25 @@ const createTransactions = () => {
           }
         }
 
-        const inValue = parseFloat(row[state.value.in]);
-        const outValue = parseFloat(row[state.value.out]);
+        let inValue = 0;
+        let outValue = 0;
+
+        console.log(state.value);
+
+        if (state.value.in && state.value.out) {
+          inValue = parseFloat(row[state.value.in]);
+          outValue = parseFloat(row[state.value.out]);
+        } else if (state.value?.amount) {
+          const amount = parseFloat(row[state.value.amount]);
+
+          console.log(amount);
+
+          if (amount < 0) {
+            inValue = amount;
+          } else {
+            outValue = amount;
+          }
+        }
 
         transaction.account = account.id;
 
