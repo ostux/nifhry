@@ -31,7 +31,7 @@
       </div>
     </div>
 
-    <canvas ref="canvas"></canvas>
+    <!-- <canvas ref="canvas"></canvas> -->
 
     <ControlForm
       :accountId="account.id"
@@ -127,7 +127,7 @@ const pageMounted: Ref<boolean> = ref(false);
 
 const account: ComputedRef<Z_Account | undefined> = computed(() => accounts.value.get(route.params.slug as unknown as string));
 
-const canvas: Ref<HTMLCanvasElement | undefined> = ref(undefined);
+// const canvas: Ref<HTMLCanvasElement | undefined> = ref(undefined);
 
 const chartData: Ref<any[]> = ref([]);
 const chartLabels: Ref<string[]> = ref([]);
@@ -299,71 +299,70 @@ onMounted(() => {
 
   pageMounted.value = true;
 
-  setTimeout(() => {
-    refetch();
+  // setTimeout(() => {
+  //   refetch();
 
-    populateLineChart();
-    chartLabels.value = chartLabels.value.map((l) => (l === todayLabel ? 'Today' : l));
+  //   populateLineChart();
+  //   chartLabels.value = chartLabels.value.map((l) => (l === todayLabel ? 'Today' : l));
 
-    if (canvas.value) {
-      new Chart(canvas.value, {
-        data: {
-          datasets: [...chartData.value],
-          labels: [...chartLabels.value]
-        },
-        plugins: [
-          {
-            id: 'today',
-            afterDraw: (chart) => {
-              const ctx = chart.ctx;
-              const xAxis = chart.scales.x;
-              const todayTick = xAxis.getTicks().findIndex((t) => t.label === 'Today');
-              const yAxis = chart.scales.y;
-              var x = xAxis.getPixelForTick(todayTick);
-              ctx.save();
-              ctx.strokeStyle = '#17A589';
-              ctx.lineWidth = 2;
-              ctx.beginPath();
-              ctx.moveTo(x, yAxis.bottom);
-              ctx.lineTo(x, 50);
-              ctx.stroke();
-              ctx.restore();
-            }
-          },
-          {
-            id: 'zero',
-            afterDraw: (chart) => {
-              const ctx = chart.ctx;
-              const xAxis = chart.scales.x;
-              const yAxis = chart.scales.y;
-              var x = xAxis.getPixelForTick(0);
-              var xEnd = xAxis.getPixelForTick(xAxis.getTicks().length - 1);
-              var y = yAxis.getPixelForTick(yAxis.getTicks().findIndex((f) => f.value === 0));
-              ctx.save();
-              ctx.strokeStyle = '#17A589';
-              ctx.setLineDash([15, 5]);
-              ctx.lineWidth = 3;
-              ctx.beginPath();
-              ctx.moveTo(x, y);
-              ctx.lineTo(xEnd, y);
-              ctx.stroke();
-              ctx.restore();
-            }
-          }
-        ],
-        options: {
-          scales: {
-            x: {
-              stacked: true
-            },
-            y: {
-              beginAtZero: true
-            }
-          }
-        }
-      });
-    }
-  }, 1000);
+  //   if (canvas.value) {
+  //     new Chart(canvas.value, {
+  //       data: {
+  //         datasets: [...chartData.value]
+  //       },
+  //       plugins: [
+  //         {
+  //           id: 'today',
+  //           afterDraw: (chart) => {
+  //             const ctx = chart.ctx;
+  //             const xAxis = chart.scales.x;
+  //             const todayTick = xAxis.getTicks().findIndex((t) => t.label === 'Today');
+  //             const yAxis = chart.scales.y;
+  //             var x = xAxis.getPixelForTick(todayTick);
+  //             ctx.save();
+  //             ctx.strokeStyle = '#17A589';
+  //             ctx.lineWidth = 2;
+  //             ctx.beginPath();
+  //             ctx.moveTo(x, yAxis.bottom);
+  //             ctx.lineTo(x, 50);
+  //             ctx.stroke();
+  //             ctx.restore();
+  //           }
+  //         },
+  //         {
+  //           id: 'zero',
+  //           afterDraw: (chart) => {
+  //             const ctx = chart.ctx;
+  //             const xAxis = chart.scales.x;
+  //             const yAxis = chart.scales.y;
+  //             var x = xAxis.getPixelForTick(0);
+  //             var xEnd = xAxis.getPixelForTick(xAxis.getTicks().length - 1);
+  //             var y = yAxis.getPixelForTick(yAxis.getTicks().findIndex((f) => f.value === 0));
+  //             ctx.save();
+  //             ctx.strokeStyle = '#17A589';
+  //             ctx.setLineDash([15, 5]);
+  //             ctx.lineWidth = 3;
+  //             ctx.beginPath();
+  //             ctx.moveTo(x, y);
+  //             ctx.lineTo(xEnd, y);
+  //             ctx.stroke();
+  //             ctx.restore();
+  //           }
+  //         }
+  //       ],
+  //       options: {
+  //         scales: {
+  //           x: {
+  //             stacked: true
+  //           },
+  //           y: {
+  //             beginAtZero: true
+  //           }
+  //         }
+  //       }
+  //     });
+  //   }
+  // }, 1000);
 });
 
 onUnmounted(() => {
