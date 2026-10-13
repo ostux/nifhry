@@ -1,72 +1,153 @@
 <template>
-  <div class="flex min-h-96 flex-grow items-center justify-center">
-    <template v-if="acs.length > 0">
-      <div>
-        <h1 class="py-10 text-center text-5xl text-pine-green-500">{{ $t('home.welcome') }}</h1>
-        <div class="text-2xl">
-          <p class="text-pine-green-900 dark:text-pine-green-300">
-            <span class="flex justify-center"> You have {{ positiveAccounts.length }} accounts with positive ballance:</span>
-            <span class="flex justify-center p-8 text-4xl">
-              {{
-                new Intl.NumberFormat('en-GB', {
-                  style: 'currency',
-                  currency: 'GBP'
-                }).format(positiveAccountsTotalBallance)
-              }}
-            </span>
+  <div class="mb-2 min-h-screen">
+    <!-- Hero Section -->
+    <section class="bg-linear-to-br from-violet-900 to-violet-400 py-20 text-white">
+      <div class="container mx-auto px-4">
+        <div class="mx-auto max-w-4xl text-center">
+          <h1 class="mb-6 text-5xl font-bold md:text-6xl">{{ $t('home.hero.title') }}</h1>
+          <p class="mb-8 text-xl md:text-2xl">{{ $t('home.hero.subtitle') }}</p>
+          <p class="mb-8 text-lg opacity-90">
+            {{ $t('home.hero.description') }}
           </p>
-          <p class="text-red-800 dark:text-red-300">
-            <span class="flex justify-center">You have {{ negativeAccounts.length }} accounts with negative ballance:</span>
-            <span class="flex justify-center p-8 text-4xl">
-              {{
-                new Intl.NumberFormat('en-GB', {
-                  style: 'currency',
-                  currency: 'GBP'
-                }).format(negativeAccountsTotalBallance)
-              }}
-            </span>
-          </p>
-          <p class="flex flex-col justify-center text-purple-800 dark:text-purple-400">
-            <span class="flex justify-center text-3xl"> Your total ballance: </span>
-            <span class="flex justify-center p-8 text-6xl">
-              {{
-                new Intl.NumberFormat('en-GB', {
-                  style: 'currency',
-                  currency: 'GBP'
-                }).format(totalBallance)
-              }}
-            </span>
-          </p>
+
+          <!-- Development Notice -->
+          <div class="mb-8 inline-block rounded-lg bg-yellow-500 px-6 py-3 text-yellow-950">
+            <i class="pi pi-info-circle mr-2"></i>
+            <strong>{{ $t('home.devNotice.title') }}</strong> {{ $t('home.devNotice.message') }}
+          </div>
+
+          <div class="flex flex-col items-center justify-center gap-4 sm:flex-row">
+            <Button
+              :label="$t('home.hero.signIn')"
+              icon="pi pi-sign-in"
+              size="large"
+              severity="secondary"
+              @click="$router.push('/login')"
+            />
+            <Button
+              :label="$t('home.hero.learnMore')"
+              icon="pi pi-arrow-down"
+              size="large"
+              outlined
+              severity="secondary"
+              @click="scrollToFeatures"
+            />
+          </div>
         </div>
       </div>
-    </template>
-    <template v-else>
-      <h1 class="py-10 text-center text-5xl text-pine-green-500">{{ $t('home.welcome') }}</h1>
-      <div class="text-5xl text-red-800 dark:text-red-300">
-        {{ $t('home.no_account.message') }}
+    </section>
+
+    <!-- Features Section -->
+    <section
+      id="features"
+      class="py-20"
+    >
+      <div class="container mx-auto px-4">
+        <div class="mb-16 text-center">
+          <h2 class="mb-4 text-4xl font-bold">{{ $t('home.features.title') }}</h2>
+          <p class="text-surface-600 dark:text-surface-400 mx-auto max-w-2xl text-lg">
+            {{ $t('home.features.subtitle') }}
+          </p>
+        </div>
+
+        <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+          <!-- Feature 1 -->
+          <div class="border-surface-200 dark:border-surface-700 rounded-lg border p-6">
+            <div class="bg-primary-100 dark:bg-primary-900 mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg">
+              <i class="pi pi-wallet text-primary-600 dark:text-primary-400 text-2xl"></i>
+            </div>
+            <h3 class="mb-3 text-xl font-semibold">{{ $t('home.features.multiAccount.title') }}</h3>
+            <p class="text-surface-600 dark:text-surface-400">
+              {{ $t('home.features.multiAccount.description') }}
+            </p>
+          </div>
+
+          <!-- Feature 2 -->
+          <div class="border-surface-200 dark:border-surface-700 rounded-lg border p-6">
+            <div class="bg-primary-100 dark:bg-primary-900 mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg">
+              <i class="pi pi-tags text-primary-600 dark:text-primary-400 text-2xl"></i>
+            </div>
+            <h3 class="mb-3 text-xl font-semibold">{{ $t('home.features.categorization.title') }}</h3>
+            <p class="text-surface-600 dark:text-surface-400">
+              {{ $t('home.features.categorization.description') }}
+            </p>
+          </div>
+
+          <!-- Feature 3 -->
+          <div class="border-surface-200 dark:border-surface-700 rounded-lg border p-6">
+            <div class="bg-primary-100 dark:bg-primary-900 mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg">
+              <i class="pi pi-upload text-primary-600 dark:text-primary-400 text-2xl"></i>
+            </div>
+            <h3 class="mb-3 text-xl font-semibold">{{ $t('home.features.csvImport.title') }}</h3>
+            <p class="text-surface-600 dark:text-surface-400">
+              {{ $t('home.features.csvImport.description') }}
+            </p>
+          </div>
+
+          <!-- Feature 4 -->
+          <div class="border-surface-200 dark:border-surface-700 rounded-lg border p-6">
+            <div class="bg-primary-100 dark:bg-primary-900 mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg">
+              <i class="pi pi-chart-line text-primary-600 dark:text-primary-400 text-2xl"></i>
+            </div>
+            <h3 class="mb-3 text-xl font-semibold">{{ $t('home.features.analytics.title') }}</h3>
+            <p class="text-surface-600 dark:text-surface-400">
+              {{ $t('home.features.analytics.description') }}
+            </p>
+          </div>
+
+          <!-- Feature 5 -->
+          <div class="border-surface-200 dark:border-surface-700 rounded-lg border p-6">
+            <div class="bg-primary-100 dark:bg-primary-900 mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg">
+              <i class="pi pi-sync text-primary-600 dark:text-primary-400 text-2xl"></i>
+            </div>
+            <h3 class="mb-3 text-xl font-semibold">{{ $t('home.features.transfers.title') }}</h3>
+            <p class="text-surface-600 dark:text-surface-400">
+              {{ $t('home.features.transfers.description') }}
+            </p>
+          </div>
+
+          <!-- Feature 6 -->
+          <div class="border-surface-200 dark:border-surface-700 rounded-lg border p-6">
+            <div class="bg-primary-100 dark:bg-primary-900 mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg">
+              <i class="pi pi-cloud text-primary-600 dark:text-primary-400 text-2xl"></i>
+            </div>
+            <h3 class="mb-3 text-xl font-semibold">{{ $t('home.features.cloudSync.title') }}</h3>
+            <p class="text-surface-600 dark:text-surface-400">
+              {{ $t('home.features.cloudSync.description') }}
+            </p>
+          </div>
+        </div>
       </div>
-    </template>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="bg-surface-50 dark:bg-surface-900 py-20">
+      <div class="container mx-auto px-4 text-center">
+        <h2 class="mb-4 text-3xl font-bold">{{ $t('home.callToAction.title') }}</h2>
+        <p class="text-surface-600 dark:text-surface-400 mb-8 text-lg">{{ $t('home.callToAction.description') }}</p>
+        <Button
+          :label="$t('home.callToAction.signInButton')"
+          icon="pi pi-sign-in"
+          size="large"
+          @click="$router.push('/login')"
+        />
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="border-surface-200 dark:border-surface-700 border-t py-8">
+      <div class="container mx-auto px-4 text-center">
+        <p class="text-surface-600 dark:text-surface-400">&copy; {{ new Date().getFullYear() }} {{ $t('home.footer.copyright') }}</p>
+      </div>
+    </footer>
   </div>
 </template>
 
 <script setup lang="ts">
-import { useDataStore } from '@/stores/dataStore';
-import type { Z_Account, Z_AccountsArray, z_account } from '@/types';
-import { storeToRefs } from 'pinia';
-import { computed, type ComputedRef } from 'vue';
-
-const dataStore = useDataStore();
-const { accounts } = storeToRefs(dataStore);
-
-const acs = computed(() => Array.from(accounts.value.values()) as unknown as Z_AccountsArray);
-
-const positiveAccounts: ComputedRef<Z_AccountsArray> = computed(() => {
-  return Array.from(accounts.value.values() as unknown as Z_AccountsArray).filter((a: Z_Account) => a.balance >= 0);
-});
-const negativeAccounts: ComputedRef<Z_AccountsArray> = computed(() => {
-  return Array.from(accounts.value.values() as unknown as Z_AccountsArray).filter((a: Z_Account) => a.balance < 0);
-});
-const positiveAccountsTotalBallance = computed(() => positiveAccounts.value.reduce((acc, cur) => acc + cur.balance, 0));
-const negativeAccountsTotalBallance = computed(() => negativeAccounts.value.reduce((acc, cur) => acc + cur.balance, 0));
-const totalBallance = positiveAccountsTotalBallance.value + negativeAccountsTotalBallance.value;
+const scrollToFeatures = () => {
+  const featuresSection = document.getElementById('features');
+  if (featuresSection) {
+    featuresSection.scrollIntoView({ behavior: 'smooth' });
+  }
+};
 </script>

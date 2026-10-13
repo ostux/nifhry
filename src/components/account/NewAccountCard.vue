@@ -1,32 +1,39 @@
 <template>
-  <div
-    class="h-[175px] w-[350px] cursor-pointer rounded-lg border-2 border-pine-green-800 bg-pine-green-400/20 pb-4 pl-4 pr-2 pt-1 text-purple-900 dark:bg-pine-green-400"
-    @click="modalOpen = true"
+  <Card
+    style="width: 25rem; overflow: hidden"
+    :pt="passThrough"
+    @click="openCreateDialog"
   >
-    <div class="flex flex-row p-4 pt-8">
-      <FolderPlusIcon class="mr-4 size-6" />
-      <div class="flex flex-col">
-        <span> {{ $t('account.card.new') }} </span>
+    <template #header>
+      <div class="flex flex-col px-2 pt-2">
+        <span><i class="pi pi-plus"></i> {{ $t('accounts.createAccount') }}</span>
         <rovas-component
-          class="text-2xl"
-          :msg="$t('account.card.new')"
+          class="ml-4 text-2xl"
+          :msg="$t('accounts.createAccount')"
         />
       </div>
-    </div>
-    <div class="mt-4 flex flex-grow justify-center font-mono text-4xl text-gray-800"></div>
-    <edit-account-form
-      v-if="modalOpen"
-      :modal-open="modalOpen"
-      @close="modalOpen = false"
-    />
-  </div>
+    </template>
+    <template #content>
+      <div class="mt-4 flex grow justify-center font-mono text-4xl text-gray-700 dark:text-white"></div>
+    </template>
+  </Card>
+  <AccountFormDialog v-model:visible="createDialogVisible" />
 </template>
 
 <script setup lang="ts">
-import EditAccountForm from '@/components/account/EditAccountForm.vue';
-import { FolderPlusIcon } from '@heroicons/vue/24/outline';
-import { ref, type Ref } from 'vue';
-import RovasComponent from '../ui/RovasComponent.vue';
+import { computed, ref } from 'vue';
+import AccountFormDialog from '@/components/account/AccountFormDialog.vue';
 
-const modalOpen: Ref<boolean> = ref(false);
+const createDialogVisible = ref(false);
+
+const passThrough = computed(() => {
+  return {
+    body: '!p-0',
+    root: 'border-2 border-teal-500 !bg-teal-600/20 hover:!bg-teal-600/10',
+  };
+});
+
+const openCreateDialog = () => {
+  createDialogVisible.value = true;
+};
 </script>

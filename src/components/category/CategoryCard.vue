@@ -1,128 +1,135 @@
 <template>
-  <div
-    class="relative flex-col rounded-lg border border-pine-green-500 bg-transparent p-4 hover:bg-pine-green-500/10"
-    :class="[isChild ? 'flex min-h-[156px] min-w-[316px]' : 'flex min-h-[175px] min-w-[350px]']"
+  <Card
+    style="width: 100%; overflow: hidden"
+    :pt="passThrough"
   >
-    <dropdown-menu
-      :items="items"
-      class="-mt-2"
-    />
-    <RouterLink :to="`category/${category.id}`">
-      <div class="flex flex-row">
-        <QueueListIcon class="mr-4 size-6" />
-        <div class="flex flex-col">
-          <span>{{ category.name }}</span>
+    <template #header>
+      <div class="flex justify-between px-2 pt-2">
+        <div
+          class="flex flex-col"
+          @click="openCategoryDetails(category.id)"
+        >
+          <span><i class="pi pi-tag"></i> {{ category.name }}</span>
           <rovas-component
-            class="text-3xl"
+            class="ml-4 text-2xl"
             :msg="category.name"
           />
         </div>
+        <Button
+          type="button"
+          icon="pi pi-ellipsis-h"
+          size="small"
+          @click="toggle"
+          aria-haspopup="true"
+          aria-controls="overlay_tmenu"
+          severity="secondary"
+          variant="text"
+          rounded
+          aria-label="Category menu"
+        />
+        <TieredMenu
+          ref="menu"
+          id="overlay_tmenu"
+          :model="items"
+          popup
+        />
       </div>
-    </RouterLink>
-
-    <div class="flex flex-grow flex-col justify-end p-2 font-mono text-gray-700 dark:text-white">
-      <span
-        v-if="category.used > 0"
-        class="text-sm"
+    </template>
+    <template #content>
+      <div
+        class="mt-2 mb-4 flex grow justify-center text-gray-700 dark:text-white"
+        @click="openCategoryDetails(category.id)"
       >
-        {{ $t('category.card.used', { count: category.used }) }}
-      </span>
-    </div>
-    <div class="flex flex-row flex-wrap justify-evenly gap-4">
-      <category-card
-        v-for="child in Array.from(categories.values()).filter((c) => c.parent === category.id)"
-        :category="child"
-        :key="child.id"
-        :is-child="true"
-      />
-    </div>
-    <edit-category-form
-      v-if="openEditModal"
-      :category="category"
-      :modal-open="openEditModal"
-      @close="openEditModal = false"
-    />
-    <delete-confirmation-form
-      :modal-open="confirmDeletionModal"
-      :ok-disabled="false"
-      ok-translation-slug="button.confirm"
-      info-text="account.form.delete.warning"
-      @modal-close="confirmDeletionModal = false"
-      @modal-ok-clicked="deleteCategory"
-    >
-      <template v-slot:header> {{ $t('account.form.delete.title') }} </template>
-    </delete-confirmation-form>
-  </div>
+        {{ category.desc || $t('categories.noDescription') }}
+      </div>
+    </template>
+  </Card>
 </template>
 
 <script setup lang="ts">
-import { type Z_Category } from '@/types';
-
-import { QueueListIcon, PencilSquareIcon, TrashIcon } from '@heroicons/vue/24/outline';
-import { ref, type PropType, type Ref, onMounted } from 'vue';
-import DropdownMenu from '@/components/ui/DropdownMenu.vue';
-import EditCategoryForm from '@/components/category/EditCategoryForm.vue';
-import DeleteConfirmationForm from '@/components/ui/BaseModal.vue';
+import { useCategoryStore } from '@/stores/category';
+import { useAuthStore } from '@/stores/auth';
+import type { Category } from '@/types';
+import { useConfirm } from 'primevue/useconfirm';
+import { computed, ref, type PropType } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useDataStore } from '@/stores/dataStore';
-import { useNotification } from '@/composables/useNotification';
-import RovasComponent from '../ui/RovasComponent.vue';
-import { storeToRefs } from 'pinia';
+import RovasComponent from '@/components/common/RovasComponent.vue';
+import { useRouter } from 'vue-router';
 
 const { t } = useI18n();
-const notifications = useNotification();
-const { addNotification } = notifications;
-
-const dataStore = useDataStore();
-const { categories } = storeToRefs(dataStore);
+const categoryStore = useCategoryStore();
+const authStore = useAuthStore();
+const confirm = useConfirm();
+const router = useRouter();
 
 const props = defineProps({
   category: {
-    type: Object as PropType<Z_Category>,
-    required: true
+    type: Object as PropType<Category>,
+    required: true,
   },
-  isChild: {
-    type: Boolean,
-    default: false
-  }
 });
 
-const openEditModal: Ref<boolean> = ref(false);
-const confirmDeletionModal: Ref<boolean> = ref(false);
-const categoryParent: Ref<Z_Category | undefined> = ref(undefined);
+const emit = defineEmits<{
+  edit: [category: Category];
+}>();
 
-const items = [
-  [
-    {
-      label: 'menu.edit',
-      icon: PencilSquareIcon,
-      click: () => {
-        openEditModal.value = true;
+const menu = ref();
+const items = computed(() => [
+  {
+    label: 'Edit',
+    icon: 'pi pi-file-edit',
+    command: () => {
+      emit('edit', props.category);
+    },
+  },
+  {
+    separator: true,
+  },
+  {
+    label: 'Delete',
+    icon: 'pi pi-trash',
+    command: () => {
+      handleDeleteCategory();
+    },
+  },
+]);
+
+const passThrough = computed(() => {
+  return {
+    body: '!p-0',
+    root: 'border-2 border-teal-500 hover:!bg-teal-700/10',
+  };
+});
+
+const errorMessage = ref('');
+
+const handleDeleteCategory = () => {
+  if (!authStore.currentUser || !props.category) return;
+
+  confirm.require({
+    message: t('categories.confirmDelete'),
+    header: t('common.delete'),
+    icon: 'pi pi-trash',
+    acceptLabel: t('common.delete'),
+    rejectLabel: t('common.cancel'),
+    acceptClass: 'p-button-danger',
+    accept: async () => {
+      try {
+        await categoryStore.deleteCategory(authStore.currentUser!.uid, props.category!.id);
+      } catch (error) {
+        console.error('Error deleting category:', error);
+        errorMessage.value = t('categories.errors.deleteFailed');
       }
     },
-    {
-      label: 'menu.delete',
-      icon: TrashIcon,
-      click: () => {
-        confirmDeletionModal.value = true;
-      }
-    }
-  ]
-];
-
-const deleteCategory = () => {
-  if (props.category && props.category.id) {
-    dataStore.removeCategory(props.category.id);
-
-    addNotification('success', t('account.form.delete.info', { id: props.category.name }));
-
-    confirmDeletionModal.value = false;
-  }
+  });
 };
 
-onMounted(() => {
-  if (props.category.parent) {
-    categoryParent.value = categories.value.get(props.category.parent);
-  }
-});
+const openCategoryDetails = (id: string) => {
+  router.push(`category/details/${id}`);
+};
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const toggle = (event: any) => {
+  menu.value.toggle(event);
+};
 </script>

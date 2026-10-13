@@ -1,0 +1,29 @@
+@import 'tailwindcss';
+@custom-variant dark (&:where(.dark, .dark *));
+@import 'tailwindcss-primeui';
+
+@theme {
+  --color-etoro-50: #ecfef0;
+  --color-etoro-100: #d0fbd8;
+  --color-etoro-200: #a2f5b3;
+  --color-etoro-300: #6af085;
+  --color-etoro-400: #33eb58;
+  --color-etoro-500: #13c636;
+  --color-etoro-600: #0f9d2c;
+  --color-etoro-700: #0f7623;
+  --color-etoro-800: #0d4f1a;
+  --color-etoro-900: #0a2e11;
+  --color-etoro-950: #071c0b;
+}
+
+[role='tooltip'] {
+  white-space: pre; /* Preserves spaces and prevents wrapping */
+  min-width: fit-content;
+}
+
+.p-menubar.p-menubar {
+  border-radius: 0;
+  border-left: unset;
+  border-top: unset;
+  border-right: unset;
+}

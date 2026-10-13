@@ -1,0 +1,32 @@
+{
+  "emulators": {
+    "auth": {
+      "host": "0.0.0.0",
+      "port": 9099
+    },
+    "firestore": {
+      "host": "0.0.0.0",
+      "port": 8080
+    },
+    "singleProjectMode": true,
+    "ui": {
+      "enabled": true
+    }
+  },
+  "firestore": {
+    "database": "(default)",
+    "indexes": "firestore.indexes.json",
+    "location": "europe-west2",
+    "rules": "firestore.rules"
+  },
+  "hosting": {
+    "ignore": ["**/.*", "**/node_modules/**", "firebase.json"],
+    "public": "dist",
+    "rewrites": [
+      {
+        "destination": "/index.html",
+        "source": "**"
+      }
+    ]
+  }
+}

@@ -1,0 +1,45 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Old+Hungarian&display=swap');
+
+$pine-teal-50: #f1fcfa;
+$pine-teal-100: #cef9ee;
+$pine-teal-200: #9df2de;
+$pine-teal-300: #64e4cb;
+$pine-teal-400: #34cdb4;
+$pine-teal-500: #1bb19a;
+$pine-teal-600: #138e7e;
+$pine-teal-700: #157a6e;
+$pine-teal-800: #145b53;
+$pine-teal-900: #164b46;
+$pine-teal-950: #062d2a;
+
+.noto-sans-old-hungarian-regular {
+  font-display: auto; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+  font-family: 'Noto Sans Old Hungarian', sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: $pine-teal-300;
+  box-shadow: inset 0 0 5px grey;
+}
+
+::-webkit-scrollbar-thumb {
+  background: $pine-teal-600;
+  border-radius: 16px;
+}
+
+html,
+body {
+  font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+  font-family: 'Noto Sans Old Hungarian', sans-serif;
+  font-weight: 400;
+  font-style: normal;
+  max-width: 100vw;
+  max-height: 100vh;
+  overflow: hidden;
+}
