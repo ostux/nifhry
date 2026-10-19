@@ -81,12 +81,12 @@
             :icon-tooltip="$t('dashboard.tooltips.investment')"
             border-color="border-emerald-500"
             :values="{
-              text: formatCurrency(accountsByKind.investment),
-              subtext: formatSecondaryCurrency(accountsByKind.investment),
+              text: formatCurrency(investedAmount),
+              subtext: formatSecondaryCurrency(investedAmount),
               subtextClass: 'text-surface-500 text-xs',
             }"
-            :change="investmentPeriodChange"
-            :change-text="`${formatCurrency(Math.abs(investmentPeriodChange))} (${investmentPeriodChangePercent.toFixed(1)}%) (${CASH_FLOW_MONTHS}mo)`"
+            :change="investmentProfitLoss"
+            :change-text="`${formatCurrency(Math.abs(investmentProfitLoss))} (${CASH_FLOW_MONTHS}mo)`"
           />
 
           <!-- Total Liabilities Card -->
@@ -799,6 +799,39 @@ const investmentAccountIds = computed(() =>
       .map((a) => a.id),
   ),
 );
+
+// Find Investment category ID by name
+const investmentCategoryId = computed(() => {
+  const investmentCategory = categoryStore.categories.find((c) => c.name === 'Investment');
+  return investmentCategory?.id;
+});
+
+// Calculate total invested amount (sum of all Investment category transactions in investment accounts)
+// This represents the user's actual capital deposited into investment accounts
+const investedAmount = computed(() => {
+  if (!investmentCategoryId.value) return 0;
+
+  const periodStart = getMonthStart(CASH_FLOW_MONTHS - 1);
+  const periodEnd = getMonthEnd(0);
+
+  return dashboardTransactionStore.transactions
+    .filter(
+      (t) =>
+        t.at >= periodStart &&
+        t.at <= periodEnd &&
+        t.s === 'paid' &&
+        investmentAccountIds.value.has(t.a) &&
+        t.c === investmentCategoryId.value,
+    )
+    .reduce((sum, t) => sum + currenciesStore.convertToMain(t.i - t.o, getTransactionCurrency(t)), 0);
+});
+
+// Calculate investment profit/loss
+// Profit/Loss = Current Balance - Invested Amount
+// This includes fees, profits, losses, unrealized gains/losses
+const investmentProfitLoss = computed(() => {
+  return accountsByKind.value.investment - investedAmount.value;
+});
 
 // Investment value change over the full fetched data window (CASH_FLOW_MONTHS) from investmentValueChangeCategories
 const investmentPeriodChange = computed(() => {

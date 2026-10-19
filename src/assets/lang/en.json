@@ -315,7 +315,7 @@
       "netWorth": "Total value of all assets minus liabilities - your overall financial position",
       "totalAssets": "Combined balance of debit, saving, and lending accounts - all money you have or are owed",
       "totalLiabilities": "Sum of credit card balances and loans - total amount you owe",
-      "investment": "Current value of all investment accounts. Change shows last month's market value change (gains/losses only, excluding deposits and withdrawals)"
+      "investment": "Total amount invested (capital deposited via Investment category). Change shows profit/loss over the data period including fees, gains, and losses"
     },
     "total": "total",
     "investment": "Investment Portfolio",
@@ -475,6 +475,7 @@
     "debitMoneyOut": "Debit (Money Out)",
     "description": "Description",
     "done": "Done",
+    "download_template": "Download CSV Template",
     "duplicatesInfo": "These transactions appear to be duplicates. Review them carefully - if they are genuine, you can force import them individually.",
     "duplicatesSkipped": "duplicate transactions were skipped",
     "forceImport": "Force Import",

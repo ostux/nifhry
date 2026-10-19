@@ -1,13 +1,25 @@
 <template>
   <div class="upload-section">
-    <FileUpload
-      mode="basic"
-      accept=".csv"
-      :auto="true"
-      :chooseLabel="$t('importTransactions.selectFile')"
-      @select="onFileSelect"
-      :maxFileSize="5000000"
-    />
+    <div class="flex flex-col gap-4">
+      <FileUpload
+        mode="basic"
+        accept=".csv"
+        :auto="true"
+        :chooseLabel="$t('importTransactions.selectFile')"
+        @select="onFileSelect"
+        :maxFileSize="5000000"
+      />
+
+      <div class="flex justify-center">
+        <Button
+          :label="$t('importTransactions.download_template')"
+          icon="pi pi-download"
+          severity="secondary"
+          outlined
+          @click="downloadTemplate"
+        />
+      </div>
+    </div>
   </div>
 </template>
 
@@ -61,6 +73,39 @@ const onFileSelect = async (event: { files: File[] }) => {
       life: 5000,
     });
   }
+};
+
+const downloadTemplate = () => {
+  // Create sample CSV data with In/Out columns (recommended format)
+  const csvContent = [
+    ['Date', 'Description', 'In', 'Out', 'Category'],
+    ['01/01/2024', 'Salary', '5000', '', 'Income'],
+    ['02/01/2024', 'Groceries', '', '150', 'Food'],
+    ['03/01/2024', 'Freelance income', '1200', '', 'Income'],
+    ['04/01/2024', 'Restaurant', '', '45.50', 'Food'],
+    ['05/01/2024', 'Rent payment', '', '1500', 'Housing'],
+    ['', '', '', '', ''],
+    ['# For credit card statements, you can use Amount column instead:', '', '', '', ''],
+    ['Date', 'Description', 'Amount', 'Category', ''],
+    ['01/02/2024', 'Payment received', '1200', 'Income', ''],
+    ['02/02/2024', 'Purchase', '-45.50', 'Shopping', '']
+  ];
+
+  // Convert array to CSV string
+  const csv = csvContent.map(row => row.join(',')).join('\n');
+
+  // Create blob and download
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+
+  link.setAttribute('href', url);
+  link.setAttribute('download', 'nifhry_template.csv');
+  link.style.visibility = 'hidden';
+
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 };
 </script>
 

@@ -2,21 +2,31 @@
   <div class="flex w-full flex-grow flex-col gap-4">
     <template v-if="account">
       <h1 class="text-2xl">{{ $t('import_transactions.title', { accountName: account.name }) }}</h1>
-      <div class="flex justify-between gap-4 rounded-md border border-gray-400/50 p-4">
-        <input
-          type="file"
-          id="transactionFile"
-          tabindex="0"
-          accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
-          @change="fileChanged"
-        />
-        <button
-          class="button"
-          @click="importTransactions"
-          :disabled="!fileSelected"
-        >
-          import
-        </button>
+      <div class="flex flex-col gap-4 rounded-md border border-gray-400/50 p-4">
+        <div class="flex justify-between gap-4">
+          <input
+            type="file"
+            id="transactionFile"
+            tabindex="0"
+            accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
+            @change="fileChanged"
+          />
+          <button
+            class="button"
+            @click="importTransactions"
+            :disabled="!fileSelected"
+          >
+            import
+          </button>
+        </div>
+        <div class="flex gap-2">
+          <button
+            class="rounded-md border border-gray-400/50 px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800"
+            @click="downloadTemplate"
+          >
+            {{ $t('import_transactions.download_template') }}
+          </button>
+        </div>
       </div>
       <div
         v-if="stepOne"
@@ -373,5 +383,33 @@ const doImport = () => {
   importing.value = true;
 
   setTimeout(createTransactions, 100);
+};
+
+const downloadTemplate = () => {
+  // Create sample CSV data with two format examples
+  const csvContent = [
+    ['Date', 'Description', 'In', 'Out', 'Amount', 'Category'],
+    ['01/01/2024', 'Salary', '5000', '', '', 'Income'],
+    ['02/01/2024', 'Groceries', '', '150', '', 'Food'],
+    ['03/01/2024', 'Freelance income', '', '', '1200', 'Income'],
+    ['04/01/2024', 'Restaurant', '', '', '-45.50', 'Food'],
+    ['05/01/2024', 'Rent payment', '', '1500', '', 'Housing']
+  ];
+
+  // Convert array to CSV string
+  const csv = csvContent.map(row => row.join(',')).join('\n');
+
+  // Create blob and download
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+
+  link.setAttribute('href', url);
+  link.setAttribute('download', 'nifhry_template.csv');
+  link.style.visibility = 'hidden';
+
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 };
 </script>

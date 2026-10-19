@@ -316,7 +316,7 @@
       "netWorth": "Az összes eszköz értéke mínusz kötelezettségek - teljes pénzügyi helyzete",
       "totalAssets": "Folyószámlák, megtakarítási és kölcsönadott számlák összesített egyenlege - az összes pénze vagy tartozás",
       "totalLiabilities": "Hitelkártya egyenlegek és kölcsönök összege - teljes tartozás",
-      "investment": "Az összes befektetési számla aktuális értéke. A változás az előző havi piaci értékváltozást mutatja (csak nyereség/veszteség, befizetések és kivonások nélkül)"
+      "investment": "Teljes befektetett összeg (Befektetés kategórián keresztül befizetett tőke). A változás a profitot/veszteséget mutatja az adatperiódusra, beleértve a díjakat, nyereségeket és veszteségeket"
     },
     "total": "összes",
     "investment": "Befektetési portfólió",
@@ -476,6 +476,7 @@
     "debitMoneyOut": "Terhelés (Kimenő pénz)",
     "description": "Leírás",
     "done": "Kész",
+    "download_template": "CSV sablon letöltése",
     "duplicatesInfo": "Ezek a tranzakciók duplikátumoknak tűnnek. Tekintse át őket alaposan - ha valódiak, egyenként kényszerítheti az importálást.",
     "duplicatesSkipped": "duplikált tranzakció kihagyva",
     "forceImport": "Kényszerített import",

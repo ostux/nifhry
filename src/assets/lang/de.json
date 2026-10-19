@@ -305,7 +305,7 @@
       "netWorth": "Gesamtwert aller Vermögenswerte minus Verbindlichkeiten - Ihre gesamte finanzielle Position",
       "totalAssets": "Kombinierter Saldo von Giro-, Spar- und Darlehenskonten - Ihr gesamtes Geld oder ausstehende Forderungen",
       "totalLiabilities": "Summe der Kreditkartensalden und Darlehen - Gesamtbetrag Ihrer Schulden",
-      "investment": "Aktueller Wert aller Anlagekonten. Die Änderung zeigt die Marktwertänderung des letzten Monats (nur Gewinne/Verluste, ohne Ein- und Auszahlungen)"
+      "investment": "Gesamtinvestitionsbetrag (über Investitionskategorie eingezahltes Kapital). Die Änderung zeigt Gewinn/Verlust über den Datenzeitraum einschließlich Gebühren, Gewinnen und Verlusten"
     },
     "total": "gesamt",
     "investment": "Anlageportfolio",
@@ -465,6 +465,7 @@
     "debitMoneyOut": "Belastung (Geldausgang)",
     "description": "Beschreibung",
     "done": "Fertig",
+    "download_template": "CSV-Vorlage herunterladen",
     "duplicatesInfo": "Diese Transaktionen scheinen Duplikate zu sein. Überprüfen Sie sie sorgfältig - wenn sie echt sind, können Sie sie einzeln zwangsweise importieren.",
     "duplicatesSkipped": "Doppelte Transaktionen wurden übersprungen",
     "forceImport": "Import erzwingen",
