@@ -117,7 +117,7 @@ const deleteSelected = () => {
 const save = () => {
   if (pagination.selected.value.size < 1) return;
 
-  let res: Z_ApiResponse | undefined = { success: true, errors: [] };
+  let res: Z_ApiResponse | undefined = { success: true, errors: [], data: null };
 
   const selected = Array.from(pagination.selected.value.values());
 

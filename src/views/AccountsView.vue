@@ -3,7 +3,7 @@
     <NewAccountCard />
 
     <AccountCard
-      v-for="account in acs"
+      v-for="account in visibleAccounts"
       :account="account"
       :key="account.id"
     />
@@ -13,13 +13,9 @@
 <script setup lang="ts">
 import AccountCard from '@/components/account/AccountCard.vue';
 import NewAccountCard from '@/components/account/NewAccountCard.vue';
-import { useDataStore } from '@/stores/dataStore';
-import type { Z_AccountsArray } from '@/types';
+import { useAccountStore } from '@/stores/account';
 import { storeToRefs } from 'pinia';
-import { computed } from 'vue';
 
-const dataStore = useDataStore();
-const { accounts } = storeToRefs(dataStore);
-
-const acs = computed(() => Array.from(accounts.value.values()) as unknown as Z_AccountsArray);
+const accountStore = useAccountStore();
+const { visibleAccounts } = storeToRefs(accountStore);
 </script>

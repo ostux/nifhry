@@ -44,7 +44,7 @@ export function usePagination() {
     const newFilters: Z_Filter[] = [];
     fs.forEach((newFilter) => {
       const existIndex = filters.value.findIndex((oldFilter) => oldFilter.column === newFilter.column);
-      if (existIndex >= 0) {
+      if (existIndex >= 0 && filters.value[existIndex]) {
         filters.value[existIndex].value = newFilter.value;
       } else {
         newFilters.push(newFilter);

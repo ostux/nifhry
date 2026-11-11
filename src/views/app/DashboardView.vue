@@ -81,12 +81,12 @@
             :icon-tooltip="$t('dashboard.tooltips.investment')"
             border-color="border-emerald-500"
             :values="{
-              text: formatCurrency(investedAmount),
-              subtext: formatSecondaryCurrency(investedAmount),
+              text: formatCurrency(investmentDisplayValue),
+              subtext: formatSecondaryCurrency(investmentDisplayValue),
               subtextClass: 'text-surface-500 text-xs',
             }"
-            :change="investmentProfitLoss"
-            :change-text="`${formatCurrency(Math.abs(investmentProfitLoss))} (${CASH_FLOW_MONTHS}mo)`"
+            :change="investmentDisplayChange"
+            :change-text="`${formatCurrency(Math.abs(investmentDisplayChange))} (${CASH_FLOW_MONTHS}mo)`"
           />
 
           <!-- Total Liabilities Card -->
@@ -831,6 +831,37 @@ const investedAmount = computed(() => {
 // This includes fees, profits, losses, unrealized gains/losses
 const investmentProfitLoss = computed(() => {
   return accountsByKind.value.investment - investedAmount.value;
+});
+
+// Investment display logic - handles two scenarios:
+// 1. If investmentValueChangeCategories is configured (e.g., "Investment change" category):
+//    - Show current balance as main value
+//    - Show period change from investmentValueChangeCategories as change
+// 2. If NOT configured (traditional "Investment" category for deposits):
+//    - Show invested amount as main value
+//    - Show profit/loss (balance - invested) as change
+const investmentDisplayValue = computed(() => {
+  const hasValueChangeCategories = settingsStore.investmentValueChangeCategories.length > 0;
+
+  if (hasValueChangeCategories) {
+    // Show current balance when tracking value changes separately
+    return accountsByKind.value.investment;
+  } else {
+    // Show invested amount (traditional approach)
+    return investedAmount.value;
+  }
+});
+
+const investmentDisplayChange = computed(() => {
+  const hasValueChangeCategories = settingsStore.investmentValueChangeCategories.length > 0;
+
+  if (hasValueChangeCategories) {
+    // Show period change from value change categories
+    return investmentPeriodChange.value;
+  } else {
+    // Show profit/loss (traditional approach)
+    return investmentProfitLoss.value;
+  }
 });
 
 // Investment value change over the full fetched data window (CASH_FLOW_MONTHS) from investmentValueChangeCategories

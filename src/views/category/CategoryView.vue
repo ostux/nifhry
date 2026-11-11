@@ -84,7 +84,7 @@
     <table-component
       :columns="columns"
       :rows="rows"
-      @select="selectedRows = $event"
+      @select="pagination.selected.value = $event"
       :checkbox="true"
     >
       <template #account-data="{ row }">

@@ -377,7 +377,7 @@ export const useDataStore = defineStore(
     }
 
     function addAccount(account: Z_Account) {
-      const response: Z_ApiResponse = { success: true, errors: [] };
+      const response: Z_ApiResponse = { success: true, errors: [], data: null };
 
       if (z_account.safeParse(account).success) {
         const acc = z_account.parse(account);
@@ -406,7 +406,7 @@ export const useDataStore = defineStore(
     }
 
     function editAccount(account: Z_Account) {
-      const response: Z_ApiResponse = { success: true, errors: [] };
+      const response: Z_ApiResponse = { success: true, errors: [], data: null };
 
       if (z_account.safeParse(account).success) {
         const newAccount = z_account.parse(account);
@@ -469,7 +469,7 @@ export const useDataStore = defineStore(
     }
 
     function addCategory(category: Z_Category) {
-      const response: Z_ApiResponse = { success: true, errors: [] };
+      const response: Z_ApiResponse = { success: true, errors: [], data: null };
 
       if (z_category.safeParse(category).success) {
         const cat = z_category.parse(category);
@@ -501,7 +501,7 @@ export const useDataStore = defineStore(
     }
 
     function editCategory(category: Z_Category) {
-      const response: Z_ApiResponse = { success: true, errors: [] };
+      const response: Z_ApiResponse = { success: true, errors: [], data: null };
 
       if (z_category.safeParse(category).success) {
         const newCategory = z_category.parse(category);
@@ -573,7 +573,7 @@ export const useDataStore = defineStore(
     }
 
     function addTransaction(transaction: Z_Transaction, batch: boolean = false) {
-      const response: Z_ApiResponse = { success: true, errors: [] };
+      const response: Z_ApiResponse = { success: true, errors: [], data: null };
 
       if (z_transaction.safeParse(transaction).success) {
         const newTransaction = z_transaction.parse(transaction);
@@ -644,27 +644,29 @@ export const useDataStore = defineStore(
         if (opositeTransaction.length === 1) {
           const ot = opositeTransaction[0];
 
-          const otAccount = accounts.value.get(ot.account);
+          if (ot) {
+            const otAccount = accounts.value.get(ot.account);
 
-          if (otAccount) {
-            if (newTransaction.in === 0) {
-              newTransaction.opId = ot.id;
-              ot.opId = newTransaction.id;
+            if (otAccount) {
+              if (newTransaction.in === 0) {
+                newTransaction.opId = ot.id;
+                ot.opId = newTransaction.id;
 
-              newTransaction.desc = `transfer to: ${otAccount.name}`;
-              ot.desc = `transfer from: ${account.name}`;
-            } else {
-              newTransaction.opId = ot.id;
-              ot.opId = newTransaction.id;
+                newTransaction.desc = `transfer to: ${otAccount.name}`;
+                ot.desc = `transfer from: ${account.name}`;
+              } else {
+                newTransaction.opId = ot.id;
+                ot.opId = newTransaction.id;
 
-              newTransaction.desc = `transfer from: ${otAccount.name}`;
-              ot.desc = `transfer to: ${account.name}`;
+                newTransaction.desc = `transfer from: ${otAccount.name}`;
+                ot.desc = `transfer to: ${account.name}`;
+              }
             }
-          }
 
-          const otIndex = transactions.value.findIndex((t) => t.id === transaction.id);
-          if (otIndex >= 0) {
-            transactions.value[otIndex] = ot;
+            const otIndex = transactions.value.findIndex((t) => t.id === transaction.id);
+            if (otIndex >= 0 && transactions.value[otIndex]) {
+              transactions.value[otIndex] = ot;
+            }
           }
         }
 
@@ -681,16 +683,18 @@ export const useDataStore = defineStore(
         if (pendingTrs.length === 1) {
           const pTr = pendingTrs[0];
 
-          pTr.status = z_transactionStatus.enum.Paid;
-          pTr.desc = newTransaction.desc;
+          if (pTr) {
+            pTr.status = z_transactionStatus.enum.Paid;
+            pTr.desc = newTransaction.desc;
 
-          if (newTransaction.iId) {
-            pTr.iId = newTransaction.iId;
-          }
+            if (newTransaction.iId) {
+              pTr.iId = newTransaction.iId;
+            }
 
-          const ntIndex = transactions.value.findIndex((t) => t.id === pTr.id);
-          if (ntIndex >= 0) {
-            transactions.value[ntIndex] = pTr;
+            const ntIndex = transactions.value.findIndex((t) => t.id === pTr.id);
+            if (ntIndex >= 0 && transactions.value[ntIndex]) {
+              transactions.value[ntIndex] = pTr;
+            }
           }
         } else {
           transactions.value = [...transactions.value, newTransaction];
@@ -708,7 +712,7 @@ export const useDataStore = defineStore(
     }
 
     function editTransaction(transaction: Z_Transaction, batch: boolean = false) {
-      const response: Z_ApiResponse = { success: true, errors: [] };
+      const response: Z_ApiResponse = { success: true, errors: [], data: null };
 
       if (z_transaction.safeParse(transaction).success) {
         const newTransaction = z_transaction.parse(transaction);
@@ -923,6 +927,7 @@ export const useDataStore = defineStore(
     };
   },
   {
+    // @ts-ignore - persist plugin not configured in newer version
     persist: {
       key: import.meta.env.VITE_LOCALSTORAGE_DATA_KEY,
       serializer: {

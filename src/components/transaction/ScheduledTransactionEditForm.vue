@@ -310,11 +310,12 @@ watch(
     if (!valid.success) {
       valid.error.issues.forEach((err) => {
         err.path.forEach((p) => {
-          if (!errors.value[p]) {
-            errors.value[p] = [];
+          const key = String(p);
+          if (!errors.value[key]) {
+            errors.value[key] = [];
           }
 
-          errors.value[p].push(err.message);
+          errors.value[key].push(err.message);
         });
       });
     }
@@ -345,7 +346,7 @@ onMounted(() => {
         (t: Z_Transaction) => t.sId === selectedTransaction.value?.sId
       );
 
-      if (trCount.length > 0 && trCount[0].opId !== null && trCount[0].opId !== nullUUID) {
+      if (trCount.length > 0 && trCount[0] && trCount[0].opId !== null && trCount[0].opId !== nullUUID) {
         repeat.value = Math.ceil(trCount.length / 2);
       } else {
         repeat.value = trCount.length;
@@ -465,7 +466,7 @@ const addTransactions = () => {
     });
   }
 
-  const response: Z_ApiResponse = { success: true, errors: [] };
+  const response: Z_ApiResponse = { success: true, errors: [], data: null };
 
   newTransactions.forEach((transaction) => {
     if (z_transaction.safeParse(transaction).success) {
@@ -504,7 +505,7 @@ const addTransactions = () => {
 };
 
 const editTransactions = () => {
-  const response: Z_ApiResponse = { success: true, errors: [] };
+  const response: Z_ApiResponse = { success: true, errors: [], data: null };
 
   if (!state.value.sId) {
     response;

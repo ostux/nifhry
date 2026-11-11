@@ -123,11 +123,12 @@ watch(
       valid.error.issues.forEach((err) => {
         console.error(valid.error.issues);
         err.path.forEach((p) => {
-          if (!errors.value[p]) {
-            errors.value[p] = [];
+          const key = String(p);
+          if (!errors.value[key]) {
+            errors.value[key] = [];
           }
 
-          errors.value[p].push(err.message);
+          errors.value[key].push(err.message);
         });
       });
     }

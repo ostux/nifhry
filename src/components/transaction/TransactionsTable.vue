@@ -70,6 +70,15 @@
                 variant="outlined"
                 @click="clearFilters"
               />
+              <Button
+                type="button"
+                icon="pi pi-download"
+                :label="$t('transactions.downloadCsv')"
+                variant="outlined"
+                severity="secondary"
+                :disabled="filteredTransactions.length === 0"
+                @click="handleDownloadCSV"
+              />
             </div>
 
             <div class="flex flex-col items-center gap-2 md:flex-row">
@@ -406,6 +415,7 @@ import { useToast } from 'primevue/usetoast';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import moment from 'moment';
+import { useTransactionCsvExport } from '@/composables/useTransactionCsvExport';
 
 interface Props {
   accountId?: string;
@@ -427,6 +437,7 @@ const transactionStore = useTransactionStore();
 const categoryStore = useCategoryStore();
 const accountStore = useAccountStore();
 const authStore = useAuthStore();
+const { downloadCSV } = useTransactionCsvExport();
 
 const showFormDialog = ref(false);
 const showBatchEditDialog = ref(false);
@@ -687,6 +698,35 @@ const formatDate = (date: Date): string => {
 };
 
 // formatCurrency is imported from @/utils/currency
+
+const handleDownloadCSV = () => {
+  // Generate filename based on context
+  let filename = 'transactions';
+
+  if (props.accountId) {
+    const accountName = getAccountName(props.accountId).replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    filename = `${accountName}_transactions`;
+  } else if (props.categoryId) {
+    const categoryName = getCategoryName(props.categoryId).replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    filename = `${categoryName}_transactions`;
+  }
+
+  // Add date range to filename if month filter is enabled
+  if (monthFilterEnabled.value) {
+    const monthYear = moment(selectedMonth.value).format('YYYY_MM');
+    filename = `${filename}_${monthYear}`;
+  }
+
+  filename = `${filename}.csv`;
+
+  // Download the CSV
+  downloadCSV({
+    transactions: filteredTransactions.value,
+    getAccountName,
+    getCategoryName,
+    filename,
+  });
+};
 
 onMounted(async () => {
   if (authStore.currentUser) {

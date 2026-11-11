@@ -316,7 +316,7 @@
       "netWorth": "Az összes eszköz értéke mínusz kötelezettségek - teljes pénzügyi helyzete",
       "totalAssets": "Folyószámlák, megtakarítási és kölcsönadott számlák összesített egyenlege - az összes pénze vagy tartozás",
       "totalLiabilities": "Hitelkártya egyenlegek és kölcsönök összege - teljes tartozás",
-      "investment": "Teljes befektetett összeg (Befektetés kategórián keresztül befizetett tőke). A változás a profitot/veszteséget mutatja az adatperiódusra, beleértve a díjakat, nyereségeket és veszteségeket"
+      "investment": "Befektetési számlák teljes értéke. Ha beállítja a 'Befektetés értékváltozás kategóriák'-at a Profil beállításokban, akkor az aktuális egyenleget mutatja az adott kategóriák időszaki változásával. Egyébként a befektetett tőkét (a 'Befektetés' kategórián keresztül) mutatja a teljes profit/veszteséggel."
     },
     "total": "összes",
     "investment": "Befektetési portfólió",
@@ -643,6 +643,7 @@
     "amountFrom": "Összeg innen: {account} ({currency})",
     "amountTo": "Összeg ide: {account} ({currency})",
     "crossCurrencyTransfer": "Devizaátváltás: 1 {fromCurrency} = {rate} {toCurrency}. Kérjük, adja meg mindkét összeget manuálisan.",
+    "downloadCsv": "CSV letöltése",
     "batchEdit": {
       "button": "Kötegelt szerkesztés",
       "deleteButton": "Tranzakciók törlése",

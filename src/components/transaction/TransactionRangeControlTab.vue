@@ -116,7 +116,7 @@ const changeMonth = (direction: 'previous' | 'next' | 'reset') => {
 const changeTab = (i: number) => {
   pagination.setDayFilter(null);
 
-  switch (tabs[i].id) {
+  switch (tabs[i]?.id) {
     case 'all':
       pagination.setPerPage(50);
       pagination.setDayFilter(null);

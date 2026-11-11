@@ -157,3 +157,6 @@ export const z_schedulable = z.object({
   frequency: z_frequency
 });
 export type Z_Schedulable = z.infer<typeof z_schedulable>;
+
+// Re-export types from types/index.ts
+export * from '@/types/index';

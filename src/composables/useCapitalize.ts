@@ -8,7 +8,7 @@ export function useCapitalize() {
 
     words = words.map((word) => {
       if (word.length > 1) {
-        return word[0].toUpperCase() + word.substring(1).toLowerCase();
+        return (word[0] || '').toUpperCase() + word.substring(1).toLowerCase();
       }
       return word;
     });
